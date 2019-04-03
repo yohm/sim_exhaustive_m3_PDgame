@@ -5,6 +5,7 @@ require_relative 'graph'
 class Strategy
 
   def initialize( actions )
+    raise unless actions.size == 64
     raise unless actions.all? {|a| a == :c or a == :d }
     @strategy = actions.dup
     @strategy.freeze
@@ -55,7 +56,14 @@ class Strategy
   end
 
   def action( state )
-    @strategy[state.to_i]
+    if state.is_a? State
+      @strategy[state.to_i]
+    elsif state.is_a? Array
+      s = State.new(*state)
+      @strategy[s.to_i]
+    else
+      raise "invalid input"
+    end
   end
 
   def valid?
@@ -127,7 +135,7 @@ class Strategy
       a = self.new
 
       N.times do |i|
-        s = FullState.make_from_id(i)
+        s = State.make_from_id(i)
         N.times do |j|
           a.a[i][j] = :inf
         end
@@ -137,7 +145,7 @@ class Strategy
           a.a[i][j] = n.relative_payoff
         end
       end
-      a_b
+      a
     end
 
     attr_reader :a
@@ -195,81 +203,59 @@ if __FILE__ == $0 and ARGV.size != 1
   class StrategyTest < Minitest::Test
 
     def test_allD
-      bits = "d"*40
+      bits = "d"*64
       strategy = Strategy.make_from_bits(bits)
       assert_equal bits, strategy.to_bits
-      assert_equal :d, strategy.action([:c,:c,0,0] )
-      assert_equal :d, strategy.action([:d,:d,2,2] )
+      assert_equal :d, strategy.action([:d,:d,:d,:d,:d,:d])
+      assert_equal :d, strategy.action([:d,:d,:c,:d,:d,:c])
 
-      s = FullState.new(:c,:c,:d,:c,:c,:d)
-      nexts = strategy.possible_next_full_states(s).map(&:to_s)
-      expected = ['cdccdc', 'cdccdd', 'cdcddc', 'cdcddd']
+      s = State.new(:c,:c,:d,:c,:c,:d)
+      nexts = strategy.possible_next_states(s).map(&:to_s)
+      expected = ['cddcdc', 'cddcdd']
       assert_equal expected, nexts
 
-      next_state = strategy.next_full_state_with_self(s)
-      assert_equal 'cdcddd', next_state.to_s
-
+      next_state = strategy.next_state_with_self(s)
+      assert_equal 'cddcdd', next_state.to_s
       assert_equal true, strategy.defensible?
     end
 
     def test_allC
-      bits = "c"*40
+      bits = "c"*64
       strategy = Strategy.make_from_bits(bits)
       assert_equal bits, strategy.to_bits
-      assert_equal :c, strategy.action([:c,:c,0,0] )
-      assert_equal :c, strategy.action([:d,:d,2,2] )
+      assert_equal :c, strategy.action([:c,:c,:c,:c,:c,:c])
+      assert_equal :c, strategy.action([:d,:d,:d,:d,:d,:d])
 
-      s = FullState.new(:c,:c,:d,:c,:c,:d)
-      nexts = strategy.possible_next_full_states(s).map(&:to_s)
-      expected = ['ccccdc', 'ccccdd', 'cccddc', 'cccddd']
+      s = State.new(:c,:c,:d,:c,:c,:d)
+      nexts = strategy.possible_next_states(s).map(&:to_s)
+      expected = ['cdccdc','cdccdd']
       assert_equal expected, nexts
 
-      next_state = strategy.next_full_state_with_self(s)
-      assert_equal 'ccccdc', next_state.to_s
+      next_state = strategy.next_state_with_self(s)
+      assert_equal 'cdccdc', next_state.to_s
 
       assert_equal false, strategy.defensible?
     end
 
-    def test_a_strategy
-      bits = "ccccdddcdddccccddcdddccccddcddcccccddddd"
+    def test_tft
+      bits = "cd"*32
       strategy = Strategy.make_from_bits(bits)
       assert_equal bits, strategy.to_bits
-      assert_equal :c, strategy.action([:c,:c,0,0] )
-      assert_equal :d, strategy.action([:d,:d,2,2] )
+      assert_equal :c, strategy.action([:d,:c,:d,:c,:d,:c] )
+      assert_equal :d, strategy.action([:d,:c,:d,:c,:d,:d] )
 
-      s = FullState.new(:c,:c,:d,:c,:c,:d)
-      sid = State.index(s.to_ss)
-      move_a = strategy.action([:c,:c,1,1])  #=> d
-      nexts = strategy.possible_next_full_states(s).map(&:to_s)
-      expected = ['cdccdc', 'cdccdd', 'cdcddc', 'cdcddd']
+      s = State.new(:c,:c,:d,:c,:c,:d)
+      nexts = strategy.possible_next_states(s).map(&:to_s)
+      expected = ['cddcdc', 'cddcdd']
       assert_equal expected, nexts
 
-      next_state = strategy.next_full_state_with_self(s)
-      move_b = strategy.action([:d,:c,0,1])
-      move_c = strategy.action([:c,:d,1,0])
-      assert_equal "c#{move_a}c#{move_b}d#{move_c}", next_state.to_s
+      next_state = strategy.next_state_with_self(s)
+      assert_equal 'cddcdd', next_state.to_s
 
-      assert_equal false, strategy.defensible?
-    end
-
-    def test_most_generous_PS2
-      bits = "cddcdddcddcccdcddddddcccdddcccccddcddddd"
-      strategy = Strategy.make_from_bits(bits)
-      assert_equal bits, strategy.to_bits
-      assert_equal :c, strategy.action([:c,:c,0,0] )
-      assert_equal :d, strategy.action([:d,:d,2,2] )
-
-      s = FullState.new(:c,:c,:d,:c,:c,:d)
-      move_a = strategy.action([:c,:c,1,1]) #=> d
-      nexts = strategy.possible_next_full_states(s).map(&:to_s)
-      expected = ['cdccdc', 'cdccdd', 'cdcddc', 'cdcddd']
-      assert_equal expected, nexts
-
-      next_state = strategy.next_full_state_with_self(s)
-      move_b = strategy.action([:d,:c,0,1])
-      move_c = strategy.action([:c,:d,1,0])
-      assert_equal "c#{move_a}c#{move_b}d#{move_c}", next_state.to_s
       assert_equal true, strategy.defensible?
+    end
+
+    def test_tft_atft
     end
 
   end
