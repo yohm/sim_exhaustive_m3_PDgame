@@ -116,85 +116,22 @@ class Strategy
   end
 
   def defensible?
-    a1 = AMatrix.construct_a1_matrix(self) # construct_a1_matrix
-    a = AMatrix.construct_a1_matrix(self)
-    return false if a.has_negative_diagonal?
-
-    63.times do |t|
-      a.update( a1 )
-      return false if a.has_negative_diagonal?
-    end
-    true
+    g = construct_transition_graph
+    !(g.has_negative_cycle?)
   end
 
-  class AMatrix  # class used for judging defensibility
-
-    N=64
-
-    def self.construct_a1_matrix(stra)
-      a = self.new
-
-      N.times do |i|
-        s = State.make_from_id(i)
-        N.times do |j|
-          a.a[i][j] = :inf
-        end
-        ns = stra.possible_next_states(s)
-        ns.each do |n|
-          j = n.to_id
-          a.a[i][j] = n.relative_payoff
-        end
+  def construct_transition_graph
+    g = DirectedWeightedGraph.new(64)
+    64.times do |i|
+      s = State.make_from_id(i)
+      ns = possible_next_states(s)
+      ns.each do |n|
+        j = n.to_id
+        g.add_link(i,j,n.relative_payoff)
       end
-      a
     end
-
-    attr_reader :a
-
-    def initialize
-      @a = Array.new(64) {|i| Array.new(64,0) }
-    end
-
-    def inspect
-      sio = StringIO.new
-      @a.size.times do |i|
-        @a[i].size.times do |j|
-          if @a[i][j] == :inf
-            sio.print(" ##,")
-          else
-            sio.printf("%3d,", @a[i][j])
-          end
-        end
-        sio.print "\n"
-      end
-      sio.string
-    end
-
-    def has_negative_diagonal?
-      @a.size.times do |i|
-        if @a[i][i] != :inf and @a[i][i] < 0
-          return true
-        end
-      end
-      false
-    end
-
-    def update( a1 )
-      temp = Array.new(64) {|i| Array.new(64,:inf) }
-
-      @a.size.times do |i|
-        @a.size.times do |j|
-          @a.size.times do |k|
-            x = @a[i][k]
-            y = a1.a[k][j]
-            next if x == :inf or y == :inf
-            temp[i][j] = x+y if temp[i][j] == :inf or x+y < temp[i][j]
-          end
-        end
-      end
-      @a = temp
-    end
+    g
   end
-
 end
 
 if __FILE__ == $0 and ARGV.size != 1
@@ -255,8 +192,8 @@ if __FILE__ == $0 and ARGV.size != 1
       assert_equal true, strategy.defensible?
     end
 
-    def test_tft_atft
-    end
+    # def test_tft_atft
+    # end
 
   end
 end
