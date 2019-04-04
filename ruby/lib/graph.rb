@@ -31,10 +31,6 @@ class DirectedGraph
     (0..(@n-1)).to_a - transient_nodes
   end
 
-  def remove_duplicated_links!
-    @links.values.each {|ns| ns.uniq! }
-  end
-
   def to_dot(io, node_attributes: {}, remove_isolated: false, node_ranks: [])
     io.puts "digraph \"\" {"
     @n.times do |ni|
@@ -98,6 +94,49 @@ class DirectedGraph
     common_links = links1 & links2
     common_links.each {|l| g.add_link(*l) }
     g
+  end
+end
+
+class DirectedWeightedGraph < DirectedGraph
+
+  attr_reader :weights
+
+  def initialize(size)
+    super size
+    @weights = Hash.new {|h,k| h[k] = {} }
+  end
+
+  def add_link( from, to, weight )
+    super(from, to)
+    @weights[from][to] = weight
+  end
+
+  def for_each_link
+    super do |i,j|
+      yield i, j, @weights[i][j]
+    end
+  end
+
+  def has_negative_cycle?
+    d = Array.new(@n) {|i| Array.new(@n,Float::INFINITY) }
+    for_each_link do |i,j,w|
+      d[i][j] = w
+    end
+    @n.times do |i|
+      d[i][i] = 0 if d[i][i] > 0
+    end
+    @n.times do |k|
+      @n.times do |i|
+        @n.times do |j|
+          x = d[i][k] + d[k][j]
+          d[i][j] = x if d[i][j] > x
+          if j == i and d[i][j] < 0
+            return true
+          end
+        end
+      end
+    end
+    false
   end
 end
 
@@ -200,6 +239,53 @@ if __FILE__ == $0
     def test_accessible
       assert_equal true, @g.is_accessible?(0,4)
       assert_equal false, @g.is_accessible?(3,0)
+    end
+  end
+
+  class TestDirectedWeightedGraph < Minitest::Test
+
+    def setup
+      @g = DirectedWeightedGraph.new(5)
+      @g.add_link(1, 0, 0.1)
+      @g.add_link(0, 2, 0.2)
+      @g.add_link(2, 1, 0.3)
+      @g.add_link(0, 3, 0.4)
+      @g.add_link(3, 4, 0.5)
+      @g.add_link(4, 4, 0.6)
+    end
+
+    def test_add_link
+      assert_equal 5, @g.n
+      expected = {0=>[2,3],1=>[0],2=>[1],3=>[4],4=>[4]}
+      assert_equal expected, @g.links
+    end
+
+    def test_weights
+      w_expected = {0=>{2=>0.2,3=>0.4} ,1=>{0=>0.1}, 2=>{1=>0.3}, 3=>{4=>0.5}, 4=>{4=>0.6} }
+      assert_equal w_expected, @g.weights
+    end
+
+    def test_for_each_link
+      count = 0
+      @g.for_each_link do |i,j,w|
+        count += 1
+        assert_equal @g.weights[i][j], w
+      end
+      assert_equal count, 6
+    end
+
+    def test_negative_cycle
+      assert_equal false, @g.has_negative_cycle?
+      @g.add_link( 0, 0, -1 )
+      assert_equal true, @g.has_negative_cycle?
+    end
+
+    def test_negative_cycle2
+      g = DirectedWeightedGraph.new(3)
+      g.add_link(0, 1, 1)
+      g.add_link(1, 2, 1)
+      g.add_link(2, 0, -3)
+      assert_equal true, g.has_negative_cycle?
     end
   end
 end
