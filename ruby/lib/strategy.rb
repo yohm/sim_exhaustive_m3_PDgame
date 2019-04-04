@@ -202,14 +202,5 @@ if __FILE__ == $0 and ARGV.size == 1
   bits = ARGV[0]
   stra = Strategy.make_from_bits(bits)
   stra.show_actions($stdout)
-  stra.show_actions_using_full_state($stdout)
-  #stra.transition_graph_with_self.to_dot($stdout)
-  #stra.show_actions_latex($stdout)
-  #a1_b, a1_c = Strategy::AMatrix.construct_a1_matrix(stra)
-  #pp a1_b
-  #pp a1_b.has_negative_diagonal?
-  #a1_b.update(a1_b)
-  #pp a1_b
-  #pp "def: #{stra.defensible?}"
 end
 
