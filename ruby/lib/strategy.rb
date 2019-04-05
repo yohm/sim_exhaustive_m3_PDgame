@@ -61,6 +61,9 @@ class Strategy
     elsif state.is_a? Array
       s = State.new(*state)
       @strategy[s.to_i]
+    elsif state.is_a? String
+      s = State.make_from_str(state)
+      @strategy[s.to_i]
     else
       raise "invalid input"
     end

@@ -18,17 +18,6 @@ class MetaStrategy < Strategy
     self.new( actions )
   end
 
-  def action( state )
-    if state.is_a? State
-      @strategy[state.to_i]
-    elsif state.is_a? Array
-      s = State.new(*state)
-      @strategy[s.to_i]
-    else
-      raise "invalid input"
-    end
-  end
-
   def valid?
     @strategy.all? {|a| a == :c or a == :d or a == :_ }
   end
