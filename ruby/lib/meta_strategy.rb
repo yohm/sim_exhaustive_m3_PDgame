@@ -187,6 +187,38 @@ if __FILE__ == $0 and ARGV.size != 1
       assert_equal false, strategy.defensible?
     end
 
+    def test_tft_against_for_3d2d
+      bits = 64.times.each.map {|i|
+        if i[0]+i[1]+i[2] >= 2  # (***ddd),(***cdd),(***dcd),(***ddc)
+          (i[0] == 1) ? 'd' : 'c'
+        else
+          '_'
+        end
+      }.join
+      strategy = MetaStrategy.make_from_str(bits)
+      # require 'pry'; binding.pry
+      assert_equal bits, strategy.to_s
+      assert_equal :d, strategy.action([:d,:d,:c,:d,:d,:d])
+      assert_equal :c, strategy.action([:d,:d,:d,:d,:d,:c])
+      assert_equal :_, strategy.action([:d,:c,:d,:c,:d,:c])
+
+      s = State.new(:c,:c,:d,:c,:c,:d)
+      assert_nil strategy.possible_next_states(s) # returns nil when the next state is not determined
+
+      s = State.new(:c,:c,:d,:d,:d,:c)
+      nexts = strategy.possible_next_states(s).map(&:to_s)
+      expected = ['cdcdcc', 'cdcdcd']
+      assert_equal expected, nexts
+
+      assert_nil strategy.next_state_with_self(s)
+
+      s = State.new(:d,:c,:d,:c,:d,:d)
+      n = strategy.next_state_with_self(s)
+      assert_equal 'cddddd', n.to_s
+
+      assert_equal true, strategy.defensible?
+    end
+
   end
 end
 
