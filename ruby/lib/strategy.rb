@@ -116,11 +116,11 @@ class Strategy
   end
 
   def defensible?
-    g = construct_transition_graph
+    g = weighted_transition_graph
     !(g.has_negative_cycle?)
   end
 
-  def construct_transition_graph
+  def weighted_transition_graph
     g = DirectedWeightedGraph.new(64)
     64.times do |i|
       s = State.make_from_id(i)
