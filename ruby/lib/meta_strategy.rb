@@ -123,6 +123,68 @@ if __FILE__ == $0 and ARGV.size != 1
       s = State.new(:d,:d,:d,:d,:d,:d)
       n = strategy.next_state_with_self(s)
       assert_equal 'dddddd', n.to_s
+
+      assert_equal true, strategy.defensible?
+    end
+
+    def test_allC_against_allD
+      bits = 64.times.each.map {|i|
+        if i[0]==1 and i[1]==1 and i[2]==1  # fix action only for the states (***ddd)
+          'c'
+        else
+          '_'
+        end
+      }.join
+      strategy = MetaStrategy.make_from_str(bits)
+      assert_equal bits, strategy.to_s
+      assert_equal :c, strategy.action([:d,:d,:c,:d,:d,:d])
+      assert_equal :_, strategy.action([:d,:d,:d,:d,:d,:c])
+
+      s = State.new(:c,:c,:d,:c,:c,:d)
+      assert_nil strategy.possible_next_states(s) # returns nil when the next state is not determined
+
+      s = State.new(:c,:c,:d,:d,:d,:d)
+      nexts = strategy.possible_next_states(s).map(&:to_s)
+      expected = ['cdcddc', 'cdcddd']
+      assert_equal expected, nexts
+
+      assert_nil strategy.next_state_with_self(s)
+
+      s = State.new(:d,:d,:d,:d,:d,:d)
+      n = strategy.next_state_with_self(s)
+      assert_equal 'ddcddc', n.to_s
+
+      assert_equal false, strategy.defensible?
+    end
+
+    def test_wsls_against_allD
+      bits = 64.times.each.map {|i|
+        if i[0]==1 and i[1]==1 and i[2]==1  # fix action only for the states (***ddd)
+          (i[3] == 1) ? 'c' : 'd'
+        else
+          '_'
+        end
+      }.join
+      strategy = MetaStrategy.make_from_str(bits)
+      assert_equal bits, strategy.to_s
+      assert_equal :d, strategy.action([:d,:d,:c,:d,:d,:d])
+      assert_equal :_, strategy.action([:d,:d,:d,:d,:d,:c])
+
+      s = State.new(:c,:c,:d,:c,:c,:d)
+      assert_nil strategy.possible_next_states(s) # returns nil when the next state is not determined
+
+      s = State.new(:c,:c,:d,:d,:d,:d)
+      nexts = strategy.possible_next_states(s).map(&:to_s)
+      expected = ['cdcddc', 'cdcddd']
+      assert_equal expected, nexts
+
+      assert_nil strategy.next_state_with_self(s)
+
+      s = State.new(:d,:d,:d,:d,:d,:d)
+      n = strategy.next_state_with_self(s)
+      assert_equal 'ddcddc', n.to_s
+
+      assert_equal false, strategy.defensible?
     end
 
   end
