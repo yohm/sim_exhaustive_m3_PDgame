@@ -192,8 +192,23 @@ if __FILE__ == $0 and ARGV.size != 1
       assert_equal true, strategy.defensible?
     end
 
-    # def test_tft_atft
-    # end
+    def test_wsls
+      bits = 64.times.each.map {|i| (i[0] == i[3]) ? 'c' : 'd' }.join  # i[0],i[3] : the last move of b and a
+      strategy = Strategy.make_from_bits(bits)
+      assert_equal bits, strategy.to_bits
+      assert_equal :d, strategy.action([:d,:c,:d,:c,:d,:c] )
+      assert_equal :c, strategy.action([:d,:c,:d,:c,:d,:d] )
+
+      s = State.new(:c,:c,:d,:c,:c,:d)
+      nexts = strategy.possible_next_states(s).map(&:to_s)
+      expected = ['cdccdc', 'cdccdd']
+      assert_equal expected, nexts
+
+      next_state = strategy.next_state_with_self(s)
+      assert_equal 'cdccdc', next_state.to_s
+
+      assert_equal false, strategy.defensible?
+    end
 
   end
 end
