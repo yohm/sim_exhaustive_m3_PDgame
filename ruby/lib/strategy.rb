@@ -11,7 +11,7 @@ class Strategy
     @strategy.freeze
   end
 
-  def to_bits
+  def to_s
     @strategy.join('')
   end
 
@@ -49,7 +49,7 @@ class Strategy
 =end
   end
 
-  def self.make_from_bits( bits )
+  def self.make_from_str( bits )
     raise "invalid format" unless bits =~ /\A[cd]{64}\z/
     actions = bits.each_char.map(&:to_sym)
     self.new( actions )
@@ -141,8 +141,8 @@ if __FILE__ == $0 and ARGV.size != 1
 
     def test_allD
       bits = "d"*64
-      strategy = Strategy.make_from_bits(bits)
-      assert_equal bits, strategy.to_bits
+      strategy = Strategy.make_from_str(bits)
+      assert_equal bits, strategy.to_s
       assert_equal :d, strategy.action([:d,:d,:d,:d,:d,:d])
       assert_equal :d, strategy.action([:d,:d,:c,:d,:d,:c])
 
@@ -158,8 +158,8 @@ if __FILE__ == $0 and ARGV.size != 1
 
     def test_allC
       bits = "c"*64
-      strategy = Strategy.make_from_bits(bits)
-      assert_equal bits, strategy.to_bits
+      strategy = Strategy.make_from_str(bits)
+      assert_equal bits, strategy.to_s
       assert_equal :c, strategy.action([:c,:c,:c,:c,:c,:c])
       assert_equal :c, strategy.action([:d,:d,:d,:d,:d,:d])
 
@@ -176,8 +176,8 @@ if __FILE__ == $0 and ARGV.size != 1
 
     def test_tft
       bits = "cd"*32
-      strategy = Strategy.make_from_bits(bits)
-      assert_equal bits, strategy.to_bits
+      strategy = Strategy.make_from_str(bits)
+      assert_equal bits, strategy.to_s
       assert_equal :c, strategy.action([:d,:c,:d,:c,:d,:c] )
       assert_equal :d, strategy.action([:d,:c,:d,:c,:d,:d] )
 
@@ -194,8 +194,8 @@ if __FILE__ == $0 and ARGV.size != 1
 
     def test_wsls
       bits = 64.times.each.map {|i| (i[0] == i[3]) ? 'c' : 'd' }.join  # i[0],i[3] : the last move of b and a
-      strategy = Strategy.make_from_bits(bits)
-      assert_equal bits, strategy.to_bits
+      strategy = Strategy.make_from_str(bits)
+      assert_equal bits, strategy.to_s
       assert_equal :d, strategy.action([:d,:c,:d,:c,:d,:c] )
       assert_equal :c, strategy.action([:d,:c,:d,:c,:d,:d] )
 
@@ -209,13 +209,12 @@ if __FILE__ == $0 and ARGV.size != 1
 
       assert_equal false, strategy.defensible?
     end
-
   end
 end
 
 if __FILE__ == $0 and ARGV.size == 1
   bits = ARGV[0]
-  stra = Strategy.make_from_bits(bits)
+  stra = Strategy.make_from_str(bits)
   stra.show_actions($stdout)
 end
 
