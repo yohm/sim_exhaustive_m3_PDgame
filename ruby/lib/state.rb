@@ -33,6 +33,11 @@ class State
     self.new(*a)
   end
 
+  def self.make_from_str(s)
+    raise unless s =~ /\A[cd]{6}\z/
+    self.new( *s.each_char.map(&:to_sym) )
+  end
+
   attr_reader :a_3,:a_2,:a_1,:b_3,:b_2,:b_1
 
   def initialize(a_3,a_2,a_1,b_3,b_2,b_1)
@@ -135,6 +140,11 @@ if __FILE__ == $0
       fs1 = State.make_from_id(15)
       fs2 = State.new(:c,:c,:d,:d,:d,:d)
       assert_equal true, fs1 == fs2
+    end
+
+    def test_make_from_str
+      s = State.make_from_str('dcdccd')
+      assert_equal State.new(:d,:c,:d,:c,:c,:d), s
     end
   end
 end
