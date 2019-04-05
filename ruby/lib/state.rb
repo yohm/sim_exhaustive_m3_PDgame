@@ -60,10 +60,7 @@ class State
   end
 
   def to_id
-    to_a.map.with_index do |x,i|
-      b = (x==:d ? 1 : 0)
-      b * 2**(5-i)
-    end.inject(:+)
+    to_a.map {|x| x==:d ? '1' : '0' }.join.to_i(2)
   end
   alias :to_i :to_id
 
