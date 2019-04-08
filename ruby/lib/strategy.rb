@@ -72,17 +72,18 @@ class Strategy
   end
 
   def action( state )
-    if state.is_a? State
-      @strategy[state.to_i]
-    elsif state.is_a? Array
-      s = State.new(*state)
-      @strategy[s.to_i]
-    elsif state.is_a? String
-      s = State.make_from_str(state)
-      @strategy[s.to_i]
-    else
-      raise "invalid input"
-    end
+    s =
+      case state
+      when State
+        state
+      when Array
+        State.new(*state)
+      when String
+        State.make_from_str(state)
+      else
+        raise "invalid input"
+      end
+    @strategy[s.to_i]
   end
 
   def valid?
@@ -91,17 +92,18 @@ class Strategy
 
   def set( state, act )
     raise "#{self.class::A.inspect}" unless self.class::A.include?(act)
-    if state.is_a? State
-      @strategy[state.to_i] = act
-    elsif state.is_a? Array
-      s = State.new(*state)
-      @strategy[s.to_i] = act
-    elsif state.is_a? String
-      s = State.make_from_str(state)
-      @strategy[s.to_i] = act
-    else
-      raise "invalid input"
-    end
+    s =
+      case state
+      when State
+        state
+      when Array
+        State.new(*state)
+      when String
+        State.make_from_str(state)
+      else
+        raise "invalid input"
+      end
+    @strategy[s.to_i] = act
   end
 
   def possible_next_states(current)

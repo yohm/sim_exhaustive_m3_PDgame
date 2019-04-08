@@ -108,7 +108,6 @@ if __FILE__ == $0 and ARGV.size != 1
       s.set('ddcddd',:d)
       s.set('dcdddd',:d)
       s.set('cddddd',:d)
-      pp s
       assert_equal false, s.defensible?
     end
 
