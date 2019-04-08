@@ -5,9 +5,11 @@ require 'stringio'
 
 class Strategy
 
+  A = [:c,:d]
+
   def initialize( actions )
     raise unless actions.size == 64
-    raise unless actions.all? {|a| a == :c or a == :d }
+    raise unless actions.all? {|a| self.class::A.include?(a) }
     @strategy = actions.dup
   end
 
@@ -84,11 +86,11 @@ class Strategy
   end
 
   def valid?
-    @strategy.all? {|a| a == :c or a == :d }
+    @strategy.all? {|a| self.class::A.include?(a) }
   end
 
   def set( state, act )
-    raise unless act == :c or act == :d
+    raise "#{self.class::A.inspect}" unless self.class::A.include?(act)
     if state.is_a? State
       @strategy[state.to_i] = act
     elsif state.is_a? Array

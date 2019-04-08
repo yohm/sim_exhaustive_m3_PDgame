@@ -8,20 +8,10 @@ class MetaStrategy < Strategy
   # _: undefined action, *: wild-card
   A = [:c,:d,:_,:*]
 
-  def initialize( actions )
-    raise unless actions.size == 64
-    raise unless actions.all? {|a| A.include?(a) }
-    @strategy = actions.dup
-  end
-
   def self.make_from_str( bits )
     raise "invalid format" unless bits =~ /\A[cd_*]{64}\z/
     actions = bits.each_char.map(&:to_sym)
     self.new( actions )
-  end
-
-  def valid?
-    @strategy.all? {|a| A.include?(a) }
   end
 
   def possible_next_states(current)
@@ -95,6 +85,31 @@ if __FILE__ == $0 and ARGV.size != 1
       assert_equal expected, nexts
 
       assert_equal true, strategy.defensible?
+    end
+
+    def test_wildcar
+      bits = 64.times.each.map {|i|
+        if i[0]==1 and i[1]==1 and i[2]==1  # fix action only for the states (***ddd)
+          'd'
+        else
+          '_'
+        end
+      }.join
+      strategy = MetaStrategy.make_from_str(bits)
+      strategy.set('ddcddc', :*)
+      strategy.set('ddcddd', :*)
+      strategy.set('cddcdd', :d)
+      strategy.set('cddddd', :d)
+      strategy.set('dddcdd', :d)
+      strategy.set('dddddd', :d)  # `ddcdd*` is unreachable state
+      assert_equal true, strategy.defensible?
+
+      s = MetaStrategy.make_from_str('_'*63+'*')
+      s.set('ddcddd',:d)
+      s.set('dcdddd',:d)
+      s.set('cddddd',:d)
+      pp s
+      assert_equal false, s.defensible?
     end
 
     def test_allC_against_allD
