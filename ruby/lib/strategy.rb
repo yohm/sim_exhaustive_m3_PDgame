@@ -1,6 +1,7 @@
 require 'pp'
 require_relative 'state'
 require_relative 'graph'
+require 'stringio'
 
 class Strategy
 
@@ -13,6 +14,16 @@ class Strategy
 
   def to_s
     @strategy.join('')
+  end
+
+  def inspect
+    sio = StringIO.new
+    sio.puts to_s
+    State::ALL_STATES.each_with_index do |stat,idx|
+      sio.print "#{@strategy[idx]}|#{stat.map(&:to_s).join}\t"
+      sio.print "\n" if idx % 8 == 7
+    end
+    sio.string
   end
 
   def show_actions(io)
