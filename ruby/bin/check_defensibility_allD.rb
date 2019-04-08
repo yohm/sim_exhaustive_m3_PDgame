@@ -33,6 +33,7 @@ dfs(8, '') do |s|
 end
 
 pp defensibles.count
+puts defensibles
 
 # check against 'ddd'->'ddc'->'dcd'->'cdd'->'ddd'
 defensibles2 = []

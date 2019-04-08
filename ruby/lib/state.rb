@@ -66,6 +66,10 @@ class State
     to_a.join('')
   end
 
+  def inspect
+    self.class.c(to_s)
+  end
+
   def ==(other)
     self.to_id == other.to_id
   end
