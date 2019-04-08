@@ -245,8 +245,6 @@ if __FILE__ == $0 and ARGV.size != 1
 end
 
 if __FILE__ == $0 and ARGV.size == 1
-  bits = ARGV[0]
-  stra = Strategy.make_from_str(bits)
-  stra.show_actions($stdout)
+  pp Strategy.make_from_str(ARGV[0])
 end
 

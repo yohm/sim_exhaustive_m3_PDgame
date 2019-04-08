@@ -57,9 +57,10 @@ defensibles.each do |d|
 end
 
 pp defensibles2.count
+puts defensibles2
 
 defensibles3 = []
-# check against 'ddd'->'ddc'->'dcd'->'cdc'->'dcd'->'ddd'
+# check against 'ddd'->'ddc'->'dcd'->'cdc'->'dcd'->'cdd'->'ddd'
 defensibles2.each do |d|
   s0 = "dddddc"
   s1 = "dd#{d.action(s0)}dcd"
