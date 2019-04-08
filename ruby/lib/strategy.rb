@@ -23,12 +23,12 @@ class Strategy
       sio.print "#{@strategy[idx]}|#{stat.map(&:to_s).join}\t"
       sio.print "\n" if idx % 8 == 7
     end
-    sio.string
+    State.c(sio.string)
   end
 
   def show_actions(io)
     State::ALL_STATES.each_with_index do |stat,idx|
-      io.print "#{@strategy[idx]}|#{stat}\t"
+      io.print "#{@strategy[idx]}|#{stat.map(&:to_s).join}\t"
       io.print "\n" if idx % 8 == 7
     end
   end

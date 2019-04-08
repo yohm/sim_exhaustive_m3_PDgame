@@ -38,6 +38,12 @@ class State
     self.new( *s.each_char.map(&:to_sym) )
   end
 
+  def self.c(str)
+    str
+      .gsub('c',"\e[42m\e[30mc\e[0m")
+      .gsub('d',"\e[45m\e[30md\e[0m")
+  end
+
   attr_reader :a_3,:a_2,:a_1,:b_3,:b_2,:b_1
 
   def initialize(a_3,a_2,a_1,b_3,b_2,b_1)
