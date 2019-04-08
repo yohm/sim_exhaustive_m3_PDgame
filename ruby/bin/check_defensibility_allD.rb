@@ -79,5 +79,7 @@ defensibles2.each do |d|
   end
 end
 
+defensibles3.uniq! {|s| s.to_s }
+
 pp defensibles3.count
 puts defensibles3

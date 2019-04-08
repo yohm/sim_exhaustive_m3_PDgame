@@ -42,6 +42,8 @@ end
 # end
 
 if ARGV.size == 3
+  # usage: ruby #{__FILE__} [strategy file] [initial state] [b moves]
+  #    eg: ruby #{__FILE__} strategies.txt dddddd cddd
   lines = File.open(ARGV[0]).readlines
   strategies = lines.map {|l| MetaStrategy.make_from_str(l.chomp) }
   init_state = State.make_from_str(ARGV[1])
