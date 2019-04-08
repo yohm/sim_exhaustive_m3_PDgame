@@ -83,6 +83,18 @@ class State
     self.class.new(@a_2,@a_1,act_a,@b_2,@b_1,act_b)
   end
 
+  def prev_state(act_a,act_b)
+    self.class.new(act_a,@a_3,@a_2,act_b,@b_3,@b_2)
+  end
+
+  def possible_prev_states
+    [:c,:d].map do |a|
+      [:c,:d].map do |b|
+        prev_state(a,b)
+      end
+    end.flatten
+  end
+
   def swap
     self.class.new(@b_3,@b_2,@b_1,@a_3,@a_2,@a_1)
   end
@@ -128,6 +140,7 @@ if __FILE__ == $0
       assert_equal 43, fs.to_id
       assert_equal 0, fs.relative_payoff
       assert_equal [:c,:d,:c,:d,:d,:d], fs.next_state(:c,:d).to_a
+      assert_equal 'cdcdcd', fs.prev_state(:c,:d).to_s
     end
 
     def test_state44
@@ -137,6 +150,7 @@ if __FILE__ == $0
       ns = fs.next_state(:c,:d)
       assert_equal [:c,:d,:c,:c,:c,:d], ns.to_a
       assert_equal -1, ns.relative_payoff
+      assert_equal 'ddccdc', fs.prev_state(:d,:c).to_s
     end
 
     def test_swap
@@ -155,6 +169,12 @@ if __FILE__ == $0
     def test_make_from_str
       s = State.make_from_str('dcdccd')
       assert_equal State.new(:d,:c,:d,:c,:c,:d), s
+    end
+
+    def test_prev_states
+      s = State.make_from_str('dcdccd')
+      a = s.possible_prev_states.map(&:to_s)
+      assert_equal ['cdcccc','cdcdcc','ddcccc','ddcdcc'], a
     end
   end
 end
