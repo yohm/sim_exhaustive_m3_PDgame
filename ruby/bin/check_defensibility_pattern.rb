@@ -29,7 +29,8 @@ end
 def select_defensible( strategies, init_state, b_moves )
   _b_moves = b_moves.dup
   found = []
-  strategies.each do |stra|
+  strategies.each_with_index do |stra,idx|
+    $stderr.puts " #{idx} / #{strategies.size}" if idx % 10 == 0
     explore(stra, init_state, _b_moves) do |s|
       found << s if s.defensible?
     end
