@@ -9,7 +9,6 @@ class Strategy
     raise unless actions.size == 64
     raise unless actions.all? {|a| a == :c or a == :d }
     @strategy = actions.dup
-    @strategy.freeze
   end
 
   def to_s
@@ -60,6 +59,10 @@ class Strategy
 =end
   end
 
+  def dup
+    self.class.new( @strategy )
+  end
+
   def self.make_from_str( bits )
     raise "invalid format" unless bits =~ /\A[cd]{64}\z/
     actions = bits.each_char.map(&:to_sym)
@@ -82,6 +85,21 @@ class Strategy
 
   def valid?
     @strategy.all? {|a| a == :c or a == :d }
+  end
+
+  def set( state, act )
+    raise unless act == :c or act == :d
+    if state.is_a? State
+      @strategy[state.to_i] = act
+    elsif state.is_a? Array
+      s = State.new(*state)
+      @strategy[s.to_i] = act
+    elsif state.is_a? String
+      s = State.make_from_str(state)
+      @strategy[s.to_i] = act
+    else
+      raise "invalid input"
+    end
   end
 
   def possible_next_states(current)

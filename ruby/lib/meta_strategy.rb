@@ -9,7 +9,6 @@ class MetaStrategy < Strategy
     raise unless actions.size == 64
     raise unless actions.all? {|a| a == :c or a == :d or a == :_ }  # :_ denotes a wildcard
     @strategy = actions.dup
-    @strategy.freeze
   end
 
   def self.make_from_str( bits )

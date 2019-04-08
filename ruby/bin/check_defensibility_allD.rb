@@ -18,11 +18,11 @@ def construct_strategy(s)
 end
 
 def dfs(depth, s, &block)
-  if depth == 0
+  if depth == s.length
     block.call(s)
   else
-    dfs(depth-1, s+'c', &block)
-    dfs(depth-1, s+'d', &block)
+    dfs(depth, s+'c', &block)
+    dfs(depth, s+'d', &block)
   end
 end
 
@@ -32,21 +32,50 @@ dfs(8, '') do |s|
   defensibles << str if str.defensible?
 end
 
+pp defensibles.count
+
+# check against 'ddd'->'ddc'->'dcd'->'cdd'->'ddd'
+defensibles2 = []
 defensibles.each do |d|
   # make state change
   s0 = 'dddddd'
   a0 = d.action(s0)
-  s1 = "dd{a0}ddc"
-  dfs(3, '') do |s|
-    a1 = s[0]
-    d.
-  # a1 = d.action(s1)
-  # s2 = "d{a0+a1}dcd"
-  # a2 = d.action(s2)
-  # s3 = "{a0+a1+a2}cdd"
-  # a3 = d.action(s3)
-  # s4 = "{a1+a2+a3}ddd"
-  # (a1,a2,a3)がまだ決まっていない状態。それぞれに対して256通りの戦略が存在する。
-
-  puts d
+  s1 = "dddddc"
+  dfs(3, '') do |acts|
+    a1 = acts[0].to_sym
+    a2 = acts[1].to_sym
+    a3 = acts[2].to_sym
+    _d = d.dup
+    _d.set(s1, a1)
+    s2 = "dd#{a1}dcd"
+    _d.set(s2,a2)
+    s3 = "d#{a1}#{a2}cdd"
+    _d.set(s3,a3)
+    defensibles2 << _d if _d.defensible?
+  end
 end
+
+pp defensibles2.count
+
+defensibles3 = []
+# check against 'ddd'->'ddc'->'dcd'->'cdc'->'dcd'->'ddd'
+defensibles2.each do |d|
+  s0 = "dddddc"
+  s1 = "dd#{d.action(s0)}dcd"
+  s2 = "d#{d.action(s0)}#{d.action(s1)}cdc" # この状態に対する行動は未定
+  dfs(3, '') do |acts|
+    a2 = acts[0].to_sym
+    a3 = acts[1].to_sym
+    a4 = acts[2].to_sym
+    _d = d.dup
+    _d.set(s2,a2) if _d.action(s2) == :_
+    s3 = "#{_d.action(s0)}#{_d.action(s1)}#{_d.action(s2)}dcd"
+    _d.set(s3,a3) if _d.action(s3) == :_
+    s4 = "#{_d.action(s1)}#{_d.action(s2)}#{_d.action(s3)}cdd"
+    _d.set(s4,a4) if _d.action(s4) == :_
+    defensibles3 << _d if _d.defensible?
+  end
+end
+
+pp defensibles3.count
+puts defensibles3
