@@ -5,35 +5,34 @@ require_relative 'strategy'
 
 class MetaStrategy < Strategy
 
+  # _: undefined action, *: wild-card
+  A = [:c,:d,:_,:*]
+
   def initialize( actions )
     raise unless actions.size == 64
-    raise unless actions.all? {|a| a == :c or a == :d or a == :_ }  # :_ denotes a wildcard
+    raise unless actions.all? {|a| A.include?(a) }
     @strategy = actions.dup
   end
 
   def self.make_from_str( bits )
-    raise "invalid format" unless bits =~ /\A[cd_]{64}\z/
+    raise "invalid format" unless bits =~ /\A[cd_*]{64}\z/
     actions = bits.each_char.map(&:to_sym)
     self.new( actions )
   end
 
   def valid?
-    @strategy.all? {|a| a == :c or a == :d or a == :_ }
+    @strategy.all? {|a| A.include?(a) }
   end
 
   def possible_next_states(current)
     act_a = action(current)
     return nil if act_a == :_
-    n1 = current.next_state(act_a,:c)
-    n2 = current.next_state(act_a,:d)
-    [n1,n2]
-  end
-
-  def next_state_with_self(current)
-    act_a = action(current)
-    act_b = action(current.swap)
-    return nil if act_a == :_ or act_b == :_
-    current.next_state(act_a,act_b)
+    if act_a == :*
+      [current.next_state(:c,:c),current.next_state(:c,:d),
+       current.next_state(:d,:c),current.next_state(:d,:d)]
+    else
+      [current.next_state(act_a,:c), current.next_state(act_a,:d)]
+    end
   end
 
   def transition_graph
@@ -45,17 +44,6 @@ class MetaStrategy < Strategy
       next_ss.each do |n|
         g.add_link(i,n.to_i)
       end
-    end
-    g
-  end
-
-  def transition_graph_with_self
-    g = DirectedGraph.new(64)
-    64.times do |i|
-      next if @strategy[i] == :_
-      s = State.make_from_id(i)
-      n = next_state_with_self(s)
-      g.add_link( i, n.to_i )
     end
     g
   end
@@ -83,7 +71,7 @@ end
 if __FILE__ == $0 and ARGV.size != 1
   require 'minitest/autorun'
 
-  class StrategyTest < Minitest::Test
+  class MetaStrategyTest < Minitest::Test
 
     def test_allD_against_allD
       bits = 64.times.each.map {|i|
@@ -105,12 +93,6 @@ if __FILE__ == $0 and ARGV.size != 1
       nexts = strategy.possible_next_states(s).map(&:to_s)
       expected = ['cddddc', 'cddddd']
       assert_equal expected, nexts
-
-      assert_nil strategy.next_state_with_self(s)
-
-      s = State.new(:d,:d,:d,:d,:d,:d)
-      n = strategy.next_state_with_self(s)
-      assert_equal 'dddddd', n.to_s
 
       assert_equal true, strategy.defensible?
     end
@@ -136,12 +118,6 @@ if __FILE__ == $0 and ARGV.size != 1
       expected = ['cdcddc', 'cdcddd']
       assert_equal expected, nexts
 
-      assert_nil strategy.next_state_with_self(s)
-
-      s = State.new(:d,:d,:d,:d,:d,:d)
-      n = strategy.next_state_with_self(s)
-      assert_equal 'ddcddc', n.to_s
-
       assert_equal false, strategy.defensible?
     end
 
@@ -165,12 +141,6 @@ if __FILE__ == $0 and ARGV.size != 1
       nexts = strategy.possible_next_states(s).map(&:to_s)
       expected = ['cdcddc', 'cdcddd']
       assert_equal expected, nexts
-
-      assert_nil strategy.next_state_with_self(s)
-
-      s = State.new(:d,:d,:d,:d,:d,:d)
-      n = strategy.next_state_with_self(s)
-      assert_equal 'ddcddc', n.to_s
 
       assert_equal false, strategy.defensible?
     end
@@ -197,12 +167,6 @@ if __FILE__ == $0 and ARGV.size != 1
       nexts = strategy.possible_next_states(s).map(&:to_s)
       expected = ['cdcdcc', 'cdcdcd']
       assert_equal expected, nexts
-
-      assert_nil strategy.next_state_with_self(s)
-
-      s = State.new(:d,:c,:d,:c,:d,:d)
-      n = strategy.next_state_with_self(s)
-      assert_equal 'cddddd', n.to_s
 
       assert_equal true, strategy.defensible?
     end
