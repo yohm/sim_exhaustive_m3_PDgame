@@ -44,16 +44,3 @@ end
 
 puts shortened.uniq
 
-=begin
-indexes.combination(2).each do |i1,i2|
-  acts = strategies.map {|chars| chars[i1]+chars[i2] }
-  histo = Hash.new(0)
-  acts.each do |c12|
-    histo[c12] += 1
-  end
-  if acts.uniq.size <= 4
-    p i1,i2, histo
-  end
-end
-=end
-
