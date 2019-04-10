@@ -76,7 +76,8 @@ public:
     return true;
   }
 
-  Action ActionAt( State s ) const { return actions[s.ID()]; }
+  Action ActionAt( const State& s ) const { return actions[s.ID()]; }
+  void SetAction( const State& s, Action a ) { actions[s.ID()] = a; }
   bool IsDefensible() const; // check defensibility
   Graph TransitionGraph() const;
 private:

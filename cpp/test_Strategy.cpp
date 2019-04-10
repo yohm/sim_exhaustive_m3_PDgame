@@ -37,76 +37,48 @@ void test_Strategy() {
       C,C,C,C,D,D,D,D
   };
   Strategy s1(acts);
+  assert( s1.actions[0] == C );
+  assert( s1.actions[7] == D );
+  assert( s1.actions[59] == C );
+  assert( s1.actions[63] == D );
 
   std::string bits("ccccddddccccddddccccddddccccddddccccddddccccddddccccddddccccdddd");
   assert( s1.ToString() == bits );
   assert( s1 == Strategy(bits.c_str()) );
 
+  assert( s1.ActionAt(State("cccccc")) == C );
+  assert( s1.ActionAt("ddddcc") == D );  // implicit conversion
+
+  Strategy alld("dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd");
+  assert( alld.IsDefensible() == true );
+  Strategy allc("cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc");
+  assert( allc.IsDefensible() == false );
+  Strategy tft("cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd");
+  assert( tft.IsDefensible() == true );
+  Strategy wsls("cdcdcdcddcdcdcdccdcdcdcddcdcdcdccdcdcdcddcdcdcdccdcdcdcddcdcdcdc");
+  assert( wsls.IsDefensible() == false );
+  Strategy tf2t("dddcdddcdddcdddcdddcdddcdddcdddcdddcdddcdddcdddcdddcdddcdddcdddc");
+  assert( tf2t.IsDefensible() == false );
 }
 
-/*
-void test_TransitionGraph() {
-  const std::array<Action,40> acts = {
-      C,C,C,C,D,D,D,D,
-      C,C,C,C,D,D,D,D,
-      C,C,C,C,D,D,D,D,
-      C,C,C,C,D,D,D,D,
-      C,C,C,C,D,D,D,D
-  };
+void test_MetaStrategy() {
+  Strategy s1("_______d_______c_______d_______d_______c_______d_______c_______d");
+  assert( s1.IsDefensible() == true );
+  Strategy s2("_______*_______c_______d_______d_______c_______d_______c_______d");
+  assert( s2.IsDefensible() == false );
 
-  Strategy str(acts);
-  Graph g = str.TransitionGraph();
-  std::cout << g;
-
-  Graph g2 = str.TransitionGraphWithoutPositiveStates();
-  std::cout << g2;
-
-  std::cout << str.ToDot();
+  s1.SetAction("ccdccc", C);
+  s1.SetAction("dddccc", W);
+  assert( s1.ToString() == "_______dc______c_______d_______d_______c_______d_______c*______d" );
+  assert( s1.IsDefensible() );
 }
-
-void test_Defensible() {
-  std::cout << "test_Defensible" << std::endl;
-
-  const std::array<Action,40> acts = {
-      C,C,C,C,D,D,D,D,
-      C,C,C,C,D,D,D,D,
-      C,C,C,C,D,D,D,D,
-      C,C,C,C,D,D,D,D,
-      C,C,C,C,D,D,D,D
-  };
-  Strategy str(acts);
-  std::cout << str << std::endl;
-  std::cout << "  is defensible?" << str.IsDefensible() << std::endl;
-
-  const std::array<Action,40> actsD = {
-      C,D,D,D,D,D,D,D,
-      D,D,D,D,D,D,D,D,
-      D,D,D,D,D,D,D,D,
-      D,D,D,D,D,D,D,D,
-      D,D,D,D,D,D,D,D
-  };
-  Strategy allD(actsD);
-  std::cout << allD << std::endl;
-  std::cout << "  is defensible?" << allD.IsDefensible() << std::endl;
-}
-
-
- */
 
 int main() {
   std::cout << "Testing Strategy class" << std::endl;
 
   test_State();
   test_Strategy();
-
-  /*
-  test_TransitionGraph();
-  test_Defensible1();
-  test_Defensible();
-
-  test_Distinguishable();
-   */
-
+  test_MetaStrategy();
   return 0;
 }
 
