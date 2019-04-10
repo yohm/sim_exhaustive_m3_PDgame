@@ -17,7 +17,7 @@ public:
   State(uint64_t id):  // upper bit [a_3,a_2,a_1,b_3,b_2,b_1] lower bit
       a_3( ((id>>5)&1)?D:C ), a_2( ((id>>4)&1)?D:C ), a_1( ((id>>3)&1)?D:C ),
       b_3( ((id>>2)&1)?D:C ), b_2( ((id>>1)&1)?D:C ), b_1( ((id>>0)&1)?D:C ) { assert(AllCorD());};
-  State(char str[6]):
+  State(const char str[6]):
       a_3(C2A(str[0])), a_2(C2A(str[1])), a_1(C2A(str[2])),
       b_3(C2A(str[3])), b_2(C2A(str[4])), b_1(C2A(str[5])) {assert(AllCorD());};
   const Action a_3, a_2, a_1, b_3, b_2, b_1;
@@ -34,6 +34,7 @@ public:
 
   friend std::ostream &operator<<(std::ostream &os, const State &s) {
     os << s.a_3 << s.a_2 << s.a_1 << s.b_3 << s.b_2 << s.b_1;
+    return os;
   };
 
   State NextState(Action act_a, Action act_b) const {
@@ -41,7 +42,7 @@ public:
   };
 
   int RelativePayoff() const {
-    else if( a_1 == C && b_1 == D ) { return -1; }
+    if( a_1 == C && b_1 == D ) { return -1; }
     else if( a_1 == D && b_1 == C ) { return  1; }
     else if( a_1 == b_1 ) { return 0; }
     else { assert(false); return -10000; }
@@ -54,8 +55,9 @@ public:
     if( a_3 == D ) { id += 1 << 5; }
     if( a_2 == D ) { id += 1 << 4; }
     if( a_1 == D ) { id += 1 << 3; }
-    if( b_2 == D ) { id += 1 << 3; }
-    if( b_1 == D ) { id += 1 << 2; }
+    if( b_3 == D ) { id += 1 << 2; }
+    if( b_2 == D ) { id += 1 << 1; }
+    if( b_1 == D ) { id += 1 << 0; }
     return id;
   }
 };
@@ -63,12 +65,16 @@ public:
 
 class Strategy {
 public:
-  Strategy( std::array<Action,64> acts ); // construct a strategy from a list of actions
+  Strategy( const std::array<Action,64>& acts ); // construct a strategy from a list of actions
   Strategy( const char acts[64] );
   std::array<Action,64> actions;
 
   std::string ToString() const;
   friend std::ostream &operator<<(std::ostream &os, const Strategy &strategy);
+  bool operator==(const Strategy & rhs) const {
+    for(size_t i=0; i<64; i++) { if(actions[i] != rhs.actions[i]) return false; }
+    return true;
+  }
 
   Action ActionAt( State s ) const { return actions[s.ID()]; }
   bool IsDefensible() const; // check defensibility

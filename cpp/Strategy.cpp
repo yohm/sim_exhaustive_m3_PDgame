@@ -2,7 +2,7 @@
 #include <set>
 #include "Strategy.hpp"
 
-Strategy::Strategy(std::array<Action,64> acts): actions(acts) {}
+Strategy::Strategy(const std::array<Action,64>& acts): actions(acts) {}
 
 Strategy::Strategy(const char acts[64]) {
   for( size_t i=0; i<64; i++) {
@@ -51,10 +51,11 @@ std::ostream &operator<<(std::ostream &os, const Strategy &strategy) {
 }
 
 std::string Strategy::ToString() const {
-  char c[64];
+  char c[65];
   for(size_t i=0; i<64; i++) {
     c[i] = A2C(actions[i]);
   }
+  c[64] = '\0';
   return std::string(c);
 }
 

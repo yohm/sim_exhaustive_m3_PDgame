@@ -9,12 +9,15 @@ char A2C( Action act ) {
   return ' ';
 }
 
-char C2A( char c ) {
+Action C2A( char c ) {
   if(c == 'c') { return C; }
   else if(c == 'd') { return D; }
   else if(c == '_') { return U; }
   else if(c == '*') { return W; }
-  return ' ';
+  else {
+    assert(false);
+    return C;
+  }
 }
 
 std::ostream &operator<<(std::ostream &os, const Action &act) {
