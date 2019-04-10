@@ -9,5 +9,6 @@ enum Action {
 };
 
 char A2C(Action act);
+Action C2A(char c);
 
 #endif // ACTION_HPP
