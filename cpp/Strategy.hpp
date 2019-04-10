@@ -1,9 +1,9 @@
 #include <string>
 #include <array>
+#include <vector>
 #include <sstream>
 #include <cstdint>
 #include <ostream>
-#include "Graph.hpp"
 #include "Action.hpp"
 
 #ifndef STRATEGY_HPP
@@ -79,7 +79,6 @@ public:
   Action ActionAt( const State& s ) const { return actions[s.ID()]; }
   void SetAction( const State& s, Action a ) { actions[s.ID()] = a; }
   bool IsDefensible() const; // check defensibility
-  Graph TransitionGraph() const;
 private:
   void NextPossibleStates( State current, std::vector<State>& next_states) const;
   typedef std::array<std::array<int,64>,64> int_matrix_t;

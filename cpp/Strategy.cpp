@@ -1,5 +1,4 @@
 #include <iostream>
-#include <set>
 #include "Strategy.hpp"
 
 Strategy::Strategy(const std::array<Action,64>& acts): actions(acts) {}
@@ -8,21 +7,6 @@ Strategy::Strategy(const char acts[64]) {
   for( size_t i=0; i<64; i++) {
     actions[i] = C2A(acts[i]);
   }
-}
-
-Graph Strategy::TransitionGraph() const {
-  Graph g(64);
-  for( size_t i=0; i<64; i++) {
-    State s(i);
-    std::vector<State> next_states;
-    NextPossibleStates( s, next_states);
-    for( auto next_s: next_states) {
-      size_t u = s.ID();
-      size_t v = next_s.ID();
-      g.AddLink(u,v);
-    }
-  }
-  return std::move(g);
 }
 
 void Strategy::NextPossibleStates(State current, std::vector<State> &next_states) const {
