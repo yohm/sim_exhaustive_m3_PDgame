@@ -45,19 +45,47 @@ std::string Strategy::ToString() const {
 
 bool Strategy::IsDefensible() const {
   // make adjacency graph
-  int_matrix_t d;
-  ConstructAdjacencyMatrix(d);
-
+  int idx[64];
+  int n = 0;
   for(size_t i=0; i<64; i++) {
-    if(d[i][i] < 0) { return false; }
+    if(actions[i] == U) { idx[i] = -1; }
+    else { idx[i] = n; n++; }
   }
 
-  for(size_t k=0; k<64; k++) {
-    for(size_t i=0; i<64; i++) {
-      for(size_t j=0; j<64; j++) {
-        d[i][j] = std::min(d[i][j], d[i][k]+d[k][j]);
+  const size_t N = n;
+  std::vector<int> d(N*N);
+
+  // construct adjacency matrix
+  const int INFINITE = 10000;
+  for(size_t i=0; i<N; i++) {
+    for(size_t j=0; j<N; j++) {
+      d[i*N+j] = INFINITE;
+    }
+  }
+
+  for(size_t i=0; i<64; i++) {
+    int I = idx[i];
+    if(I<0) continue;
+    State si(i);
+    std::vector<State> sjs;
+    NextPossibleStates(si, sjs);
+    for( auto sj: sjs) {
+      int J = idx[sj.ID()];
+      if(J<0) continue;
+      d[I*N+J] = sj.RelativePayoff();
+    }
+  }
+
+  for(size_t i=0; i<N; i++) {
+    if(d[i*N+i] < 0) { return false; }
+  }
+
+  for(size_t k=0; k<N; k++) {
+    for(size_t i=0; i<N; i++) {
+      for(size_t j=0; j<N; j++) {
+        d[i*N+j] = std::min(d[i*N+j], d[i*N+k]+d[k*N+j]);
       }
-      if(d[i][i] < 0) { return false; }
+      if(d[i*N+i] < 0) { return false; }
     }
   }
   return true;
