@@ -1,7 +1,3 @@
-//
-// Created by Yohsuke Muraes on 2017/06/05.
-//
-
 #ifndef GRAPH_HPP
 #define GRAPH_HPP
 

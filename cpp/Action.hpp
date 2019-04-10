@@ -3,9 +3,11 @@
 
 enum Action {
   C,
-  D
+  D,
+  U, // undetermined
+  W  // wild-card
 };
 
-char A2C( Action act);
+char A2C(Action act);
 
 #endif // ACTION_HPP

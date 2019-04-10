@@ -2,7 +2,11 @@
 #include "Action.hpp"
 
 char A2C( Action act ) {
-  return act == C ? 'c' : 'd';
+  if(act == C) { return 'c'; }
+  else if(act == D) { return 'd'; }
+  else if(act == U) { return '_'; }
+  else if(act == W) { return '*'; }
+  return ' ';
 }
 
 std::ostream &operator<<(std::ostream &os, const Action &act) {

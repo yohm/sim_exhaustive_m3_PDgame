@@ -1,7 +1,3 @@
-//
-// Created by Yohsuke Muraes on 2017/05/22.
-//
-
 #include <array>
 //#include <tuple>
 #include "Strategy.hpp"
