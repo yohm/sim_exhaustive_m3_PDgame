@@ -63,30 +63,20 @@ public:
 
 class Strategy {
 public:
-  Strategy( std::array<Action,40> acts ); // construct a strategy from a list of actions
-  Strategy( const char acts[40] );
-  std::array<Action,40> actions;
-  std::array<Action,64> fullActions;
+  Strategy( std::array<Action,64> acts ); // construct a strategy from a list of actions
+  Strategy( const char acts[64] );
+  std::array<Action,64> actions;
 
   std::string ToString() const;
   friend std::ostream &operator<<(std::ostream &os, const Strategy &strategy);
 
-  Action ActionAt( State fs ) const { return fullActions[fs.ID()]; }
-  Action ActionAt( ShortState s ) const { return actions[s.ID()]; };
-  bool IsDefensible1() const; // check a necessary condition for defensibility using graph topology
-  bool IsDefensible() const; // check necessary sufficient condition for defensibility
-  bool IsDistinguishable() const;
+  Action ActionAt( State s ) const { return actions[s.ID()]; }
+  bool IsDefensible() const; // check defensibility
   Graph TransitionGraph() const;
-  Graph TransitionGraphWithoutPositiveStates() const;
-  std::string ToDot() const; // dump in dot format
 private:
-  void ConstructFullActions();
-  void NextPossibleFullStates( State current, std::vector<State>& next_states) const;
+  void NextPossibleStates( State current, std::vector<State>& next_states) const;
   typedef std::array<std::array<int,64>,64> int_matrix_t;
-  void ConstructA1Matrix( int_matrix_t& A1_b, int_matrix_t& A1_c ) const;
-  int_matrix_t Transpose(const int_matrix_t &a) const;
-  void UpdateAMatrix( int_matrix_t& A, const int_matrix_t& A1 ) const;
-  bool HasNegativeDiagonal( const int_matrix_t& A ) const;
+  void ConstructAdjacencyMatrix( int_matrix_t& a ) const;
 };
 
 #endif //STRATEGY_HPP
