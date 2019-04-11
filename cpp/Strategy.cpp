@@ -74,6 +74,7 @@ bool Strategy::IsDefensible() const {
   }
 
   for(size_t k=0; k<N; k++) {
+    if(!has_out_links[k]) continue;
     for(size_t i=0; i<N; i++) {
       if(!has_out_links[i]) continue;
       for(size_t j=0; j<N; j++) {
