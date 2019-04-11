@@ -77,10 +77,13 @@ public:
   }
 
   Action ActionAt( const State& s ) const { return actions[s.ID()]; }
-  void SetAction( const State& s, Action a ) { actions[s.ID()] = a; }
-  bool IsDefensible() const; // check defensibility
+  void SetAction( const State& s, Action a ) { assert(actions[s.ID()]==U); actions[s.ID()] = a; }
+  bool IsDefensible();  // check defensibility. If defensible, m_d is also calculated
+  bool SetActionAndRecalcD(const State& s, Action a); // set action[s]=a, and recalculate `m_d`. If not defensible, return false.
 private:
   typedef std::array<std::array<int8_t,64>,64> d_matrix_t;
+  d_matrix_t m_d;
+  bool d_matrix_ready;
   void NextPossibleStates( State current, std::vector<State>& next_states) const;
 };
 

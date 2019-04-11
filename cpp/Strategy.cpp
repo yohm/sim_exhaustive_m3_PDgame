@@ -1,9 +1,9 @@
 #include <iostream>
 #include "Strategy.hpp"
 
-Strategy::Strategy(const std::array<Action,64>& acts): actions(acts) {}
+Strategy::Strategy(const std::array<Action,64>& acts): actions(acts), d_matrix_ready(false) {}
 
-Strategy::Strategy(const char acts[64]) {
+Strategy::Strategy(const char acts[64]) : d_matrix_ready(false) {
   for( size_t i=0; i<64; i++) {
     actions[i] = C2A(acts[i]);
   }
@@ -43,47 +43,78 @@ std::string Strategy::ToString() const {
   return std::string(c);
 }
 
-bool Strategy::IsDefensible() const {
-  // make adjacency graph
-  bool has_out_links[64];
-  for(size_t i=0; i<64; i++) {
-    has_out_links[i] = (actions[i] != U);
-  }
+inline int8_t MIN(int8_t a, int8_t b) { return (a<b)?a:b; }
 
-  d_matrix_t d;
+bool Strategy::IsDefensible() {
+  d_matrix_ready = false;
 
   // construct adjacency matrix
   const size_t N = 64;
   const int INFINITY = 32; // 32 is large enough since the path length is between -16 to 16.
   for(size_t i=0; i<N; i++) {
     for(size_t j=0; j<N; j++) {
-      d[i][j] = INFINITY;
+      m_d[i][j] = INFINITY;
     }
   }
 
   for(size_t i=0; i<N; i++) {
-    if(!has_out_links[i]) continue;
+    if(actions[i]==U) continue;
     State si(i);
     std::vector<State> sjs;
     NextPossibleStates(si, sjs);
     for( auto sj: sjs) {
       size_t j = sj.ID();
-      d[i][j] = sj.RelativePayoff();
+      m_d[i][j] = sj.RelativePayoff();
     }
-    if(d[i][i] < 0) { return false; }
+    if(m_d[i][i] < 0) { return false; }
   }
 
   for(size_t k=0; k<N; k++) {
-    if(!has_out_links[k]) continue;
+    if(actions[k]==U) continue; // path i-k-j cannot improve m_d[i][j] since k does not have an out link
     for(size_t i=0; i<N; i++) {
-      if(!has_out_links[i]) continue;
+      if(actions[i]==U) continue; // m_d[i][j] is not updated since it is always INFINITY when i does not have an out-link
       for(size_t j=0; j<N; j++) {
-        int8_t dikj = d[i][k]+d[k][j];
-        d[i][j] = (d[i][j]<dikj) ? d[i][j] : dikj;
+        m_d[i][j] = MIN(m_d[i][j], m_d[i][k]+m_d[k][j]);
       }
-      if(d[i][i] < 0) { return false; }
+      if(m_d[i][i] < 0) { return false; }
     }
   }
+  d_matrix_ready = true;
   return true;
 }
 
+// set action[s]=a, and recalculate `m_d`. If not defensible, return false.
+bool Strategy::SetActionAndRecalcD(const State &sk, Action a) {
+  assert(actions[s.ID()]==U);
+
+  assert(d_matrix_ready);
+
+  d_matrix_ready = false;
+
+  size_t k = sk.ID();
+  actions[k] = a;
+
+  // calculate m_d[k][j], by the introduction of out-links from k, m_d[k][j] may change.
+  std::vector<State> sis;
+  NextPossibleStates(sk, sis);
+  for( auto si: sis) {
+    size_t i = si.ID();
+    m_d[k][i] = MIN(m_d[k][i], si.RelativePayoff() );
+    for(size_t j=0; j<m_d[i].size(); j++) {
+      m_d[k][j] = MIN( m_d[k][j], m_d[k][i]+m_d[i][j] );
+    }
+  }
+  if(m_d[k][k] < 0) { return false; }
+
+  // recalculate m_d[i][j] since it may change by the introduction of k
+  for(size_t i=0; i<m_d.size(); i++) {
+    if(actions[i]==U) continue; // m_d[i][j] is not updated since it is always INFINITY when i does not have an out-link
+    for(size_t j=0; j<m_d[i].size(); j++) {
+      m_d[i][j] = MIN(m_d[i][j], m_d[i][k]+m_d[k][j]);
+    }
+    if(m_d[i][i] < 0) { return false; }
+  }
+
+  d_matrix_ready = true;
+  return false;
+}
