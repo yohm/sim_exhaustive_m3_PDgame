@@ -80,9 +80,8 @@ public:
   void SetAction( const State& s, Action a ) { actions[s.ID()] = a; }
   bool IsDefensible() const; // check defensibility
 private:
+  typedef std::array<std::array<int8_t,64>,64> d_matrix_t;
   void NextPossibleStates( State current, std::vector<State>& next_states) const;
-  typedef std::array<std::array<int,64>,64> int_matrix_t;
-  void ConstructAdjacencyMatrix( int_matrix_t& a ) const;
 };
 
 #endif //STRATEGY_HPP
