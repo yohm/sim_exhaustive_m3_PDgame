@@ -64,6 +64,15 @@ void test_Strategy() {
 void test_MetaStrategy() {
   Strategy s1("_______d_______c_______d_______d_______c_______d_______c_______d");
   assert( s1.IsDefensible() == true );
+  std::vector<State> ds = s1.DanglingStates();
+  assert(ds.size() == 7);
+  // ds = ["ccdddc", "cdcddc", "dcdddc", "dddddc", "cccddc", "cddddc", "dccddc", "dddddc"]
+  //   (<-["cccddd", "ccdddd", "cdcddd", "cddddd", "dccddd", "dcdddd", "ddcddd", "dddddd"])
+  //    = ["cccddc", "ccdddc", "cdcddc", "cddddc", "dccddc", "dcdddc", "dddddc"]
+  assert(ds[0] == State("cccddc"));
+  assert(ds[3] == State("cddddc"));
+  assert(ds[6] == State("dddddc"));
+
   Strategy s2("_______*_______c_______d_______d_______c_______d_______c_______d");
   assert( s2.IsDefensible() == false );
 

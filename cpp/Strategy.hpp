@@ -31,6 +31,9 @@ public:
   bool operator==(const State & rhs) const {
     return (a_3==rhs.a_3 && a_2==rhs.a_2 && a_1==rhs.a_1 && b_3==rhs.b_3 && b_2==rhs.b_2 && b_1==rhs.b_1);
   }
+  bool operator<( const State & rhs ) const{
+    return ( ID() < rhs.ID() );
+  }
 
   friend std::ostream &operator<<(std::ostream &os, const State &s) {
     os << s.a_3 << s.a_2 << s.a_1 << s.b_3 << s.b_2 << s.b_1;
@@ -80,6 +83,7 @@ public:
   void SetAction( const State& s, Action a ) { assert(actions[s.ID()]==U); actions[s.ID()] = a; }
   bool IsDefensible();  // check defensibility. If defensible, m_d is also calculated
   bool SetActionAndRecalcD(const State& s, Action a); // set action[s]=a, and recalculate `m_d`. If not defensible, return false.
+  std::vector<State> DanglingStates() const; // states that has incoming links but has no outgoing links (i.e. its action is U)
 private:
   typedef std::array<std::array<int8_t,64>,64> d_matrix_t;
   d_matrix_t m_d;

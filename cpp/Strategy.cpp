@@ -1,4 +1,5 @@
 #include <iostream>
+#include <set>
 #include "Strategy.hpp"
 
 Strategy::Strategy(const std::array<Action,64>& acts): actions(acts), d_matrix_ready(false) {}
@@ -118,4 +119,19 @@ bool Strategy::SetActionAndRecalcD(const State &sk, Action a) {
 
   d_matrix_ready = true;
   return true;
+}
+std::vector<State> Strategy::DanglingStates() const {
+  std::set<State> ans;
+  for(int i=0; i<64; i++) {
+    if(actions[i] != U) {
+      std::vector<State> sjs = NextPossibleStates(State(i));
+      for(auto sj: sjs) {
+        if( ActionAt(sj) == U ) {
+          ans.insert(sj);
+        }
+      }
+    }
+  }
+  std::vector<State> ret(ans.begin(), ans.end());
+  return std::move(ret);
 }
