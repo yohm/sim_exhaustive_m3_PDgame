@@ -100,6 +100,7 @@ bool Strategy::SetActionAndRecalcD(const State &sk, Action a) {
   for( auto si: sis) {
     size_t i = si.ID();
     m_d[k][i] = MIN(m_d[k][i], si.RelativePayoff() );
+    if(actions[i]==U) continue;  // we don't have to check since m_d[i][j]=INFINITY
     for(size_t j=0; j<m_d[i].size(); j++) {
       m_d[k][j] = MIN( m_d[k][j], m_d[k][i]+m_d[i][j] );
     }
