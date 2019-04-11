@@ -42,7 +42,13 @@ vector<Strategy> SelectDefensible(const vector<Strategy>& ins, const State& init
   vector<Strategy> found;
   for(auto in: ins) {
     if(in.IsDefensible()) {
-      Explore(in, init, b_moves, found);
+      auto inis = in.DanglingStates(); // young states tend to have more 'C' in A's state
+      if(inis.size() > 0) {
+        Explore(in, inis[0], b_moves, found);
+      }
+      else {
+        found.push_back(in); // keep the strategy as it is.
+      }
     }
   }
   return std::move(found);

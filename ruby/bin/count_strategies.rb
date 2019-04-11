@@ -22,6 +22,15 @@ if ARGV.size == 1
 
   total = histo.map {|k,v| v*2**k }.inject(:+)
   puts "total: #{f(total)}"
+elsif ARGV.size > 1
+  ARGV.each do |file|
+    total = 0
+    File.open(file).each do |l|
+      n_ = l.chomp.count('_')
+      total += 2**n_
+    end
+    puts "#{file}: #{f(total)}"
+  end
 end
 
 
