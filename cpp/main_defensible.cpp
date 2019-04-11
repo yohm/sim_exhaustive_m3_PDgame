@@ -9,11 +9,9 @@
 
 using namespace std;
 
-void Explore(Strategy s, const State& init, const vector<Action>& b_moves, vector<Strategy>& found) {
+void Explore(const Strategy& s, const State& init, const vector<Action>& b_moves, vector<Strategy>& found) {
   if( b_moves.empty() ) {
-    if( s.IsDefensible() ) {
-      found.push_back(s);
-    }
+    found.push_back(s);
     return;
   }
 
@@ -27,10 +25,12 @@ void Explore(Strategy s, const State& init, const vector<Action>& b_moves, vecto
   }
   else if(a_move == U) {
     for(int i=0; i<2; i++) {
+      Strategy _s = s;
       Action _a_move = (i==0) ? C : D;
-      s.SetAction(init, _a_move);
+      bool defensible = _s.SetActionAndRecalcD(init, _a_move);
+      if(!defensible) continue;
       State ns = init.NextState(_a_move, b_move);
-      Explore(s, ns, r_b_moves, found);
+      Explore(_s, ns, r_b_moves, found);
     }
   }
   else {
@@ -41,7 +41,9 @@ void Explore(Strategy s, const State& init, const vector<Action>& b_moves, vecto
 vector<Strategy> SelectDefensible(const vector<Strategy>& ins, const State& init, const vector<Action>& b_moves) {
   vector<Strategy> found;
   for(auto in: ins) {
-    Explore(in, init, b_moves, found);
+    if(in.IsDefensible()) {
+      Explore(in, init, b_moves, found);
+    }
   }
   return std::move(found);
 }

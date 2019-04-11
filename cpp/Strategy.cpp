@@ -85,7 +85,7 @@ bool Strategy::IsDefensible() {
 
 // set action[s]=a, and recalculate `m_d`. If not defensible, return false.
 bool Strategy::SetActionAndRecalcD(const State &sk, Action a) {
-  assert(actions[s.ID()]==U);
+  assert(actions[sk.ID()]==U);
 
   assert(d_matrix_ready);
 
@@ -116,5 +116,5 @@ bool Strategy::SetActionAndRecalcD(const State &sk, Action a) {
   }
 
   d_matrix_ready = true;
-  return false;
+  return true;
 }
