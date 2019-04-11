@@ -9,7 +9,8 @@ Strategy::Strategy(const char acts[64]) : d_matrix_ready(false) {
   }
 }
 
-void Strategy::NextPossibleStates(State current, std::vector<State> &next_states) const {
+std::vector<State> Strategy::NextPossibleStates(State current) const {
+  std::vector<State> next_states;
   Action act_a = ActionAt(current);
   if(act_a == W) {
     next_states.push_back( current.NextState(C,C) );
@@ -24,6 +25,7 @@ void Strategy::NextPossibleStates(State current, std::vector<State> &next_states
     next_states.push_back( current.NextState(act_a,C) );
     next_states.push_back( current.NextState(act_a,D) );
   }
+  return std::move(next_states);
 }
 
 std::ostream &operator<<(std::ostream &os, const Strategy &strategy) {
@@ -60,8 +62,7 @@ bool Strategy::IsDefensible() {
   for(size_t i=0; i<N; i++) {
     if(actions[i]==U) continue;
     State si(i);
-    std::vector<State> sjs;
-    NextPossibleStates(si, sjs);
+    std::vector<State> sjs = NextPossibleStates(si);
     for( auto sj: sjs) {
       size_t j = sj.ID();
       m_d[i][j] = sj.RelativePayoff();
@@ -95,8 +96,7 @@ bool Strategy::SetActionAndRecalcD(const State &sk, Action a) {
   actions[k] = a;
 
   // calculate m_d[k][j], by the introduction of out-links from k, m_d[k][j] may change.
-  std::vector<State> sis;
-  NextPossibleStates(sk, sis);
+  std::vector<State> sis = NextPossibleStates(sk);
   for( auto si: sis) {
     size_t i = si.ID();
     m_d[k][i] = MIN(m_d[k][i], si.RelativePayoff() );

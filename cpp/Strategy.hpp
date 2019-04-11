@@ -84,7 +84,7 @@ private:
   typedef std::array<std::array<int8_t,64>,64> d_matrix_t;
   d_matrix_t m_d;
   bool d_matrix_ready;
-  void NextPossibleStates( State current, std::vector<State>& next_states) const;
+  std::vector<State> NextPossibleStates(State current) const;
 };
 
 #endif //STRATEGY_HPP
