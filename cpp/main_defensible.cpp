@@ -42,6 +42,16 @@ vector<Strategy> SelectDefensible(const vector<Strategy>& ins, const State& init
   vector<Strategy> found;
   for(auto in: ins) {
     if(in.IsDefensible()) {
+      Explore(in, init, b_moves, found);
+    }
+  }
+  return std::move(found);
+}
+
+vector<Strategy> SelectDefensibleDangling(const vector<Strategy>& ins, const vector<Action>& b_moves) {
+  vector<Strategy> found;
+  for(auto in: ins) {
+    if(in.IsDefensible()) {
       auto inis = in.DanglingStates(); // young states tend to have more 'C' in A's state
       if(inis.size() > 0) {
         Explore(in, inis[0], b_moves, found);
@@ -56,7 +66,7 @@ vector<Strategy> SelectDefensible(const vector<Strategy>& ins, const State& init
 
 int main(int argc, char** argv) {
 
-  if( argc != 4 ) {
+  if( argc != 4 && argc != 3 ) {
     cerr << "Error : invalid argument" << endl;
     cerr << "  Usage : " << argv[0] << " <strategy_file> <init_state> <b_moves>" << endl;
     cerr << "   e.g. : " << argv[0] << " strategies.txt dddddd cddd" << endl;
@@ -68,16 +78,25 @@ int main(int argc, char** argv) {
   for( string s; fin >> s; ) {
     ins.push_back(Strategy(s.c_str()));
   }
-
-  State ini(argv[2]);
-  vector<Action> b_moves;
-  for(int i=0; argv[3][i] != '\0'; i++) {
-    b_moves.push_back(C2A(argv[3][i]));
-  }
-
-  auto found = SelectDefensible(ins, ini, b_moves);
-  for(auto s: found) {
-    cout << s.ToString() << endl;
+  if(argc == 4) {
+    State ini(argv[2]);
+    vector<Action> b_moves;
+    for(int i=0; argv[3][i] != '\0'; i++) {
+      b_moves.push_back(C2A(argv[3][i]));
+    }
+    auto found = SelectDefensible(ins, ini, b_moves);
+    for(auto s: found) {
+      cout << s.ToString() << endl;
+    }
+  } else if( argc == 3 ) {
+    vector<Action> b_moves;
+    for(int i=0; argv[2][i] != '\0'; i++) {
+      b_moves.push_back(C2A(argv[2][i]));
+    }
+    auto found = SelectDefensibleDangling(ins, b_moves);
+    for(auto s: found) {
+      cout << s.ToString() << endl;
+    }
   }
   return 0;
 }
