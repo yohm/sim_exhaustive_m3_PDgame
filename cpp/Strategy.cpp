@@ -45,11 +45,9 @@ std::string Strategy::ToString() const {
 
 bool Strategy::IsDefensible() const {
   // make adjacency graph
-  int idx[64];
-  int n = 0;
+  bool has_out_links[64];
   for(size_t i=0; i<64; i++) {
-    if(actions[i] == U) { idx[i] = -1; }
-    else { idx[i] = n; n++; }
+    has_out_links[i] = (actions[i] != U);
   }
 
   d_matrix_t d;
@@ -64,6 +62,7 @@ bool Strategy::IsDefensible() const {
   }
 
   for(size_t i=0; i<N; i++) {
+    if(!has_out_links[i]) continue;
     State si(i);
     std::vector<State> sjs;
     NextPossibleStates(si, sjs);
@@ -71,14 +70,12 @@ bool Strategy::IsDefensible() const {
       size_t j = sj.ID();
       d[i][j] = sj.RelativePayoff();
     }
-  }
-
-  for(size_t i=0; i<N; i++) {
     if(d[i][i] < 0) { return false; }
   }
 
   for(size_t k=0; k<N; k++) {
     for(size_t i=0; i<N; i++) {
+      if(!has_out_links[i]) continue;
       for(size_t j=0; j<N; j++) {
         int8_t dikj = d[i][k]+d[k][j];
         d[i][j] = (d[i][j]<dikj) ? d[i][j] : dikj;
