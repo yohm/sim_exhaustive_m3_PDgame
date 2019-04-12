@@ -17,9 +17,13 @@ using namespace std;
 #define DP(x) do { std::cerr << x << std::endl; } while (0)
 #endif
 
-void Explore(const Strategy& s, const State& a_state, const std::set<uint64_t>& histo, int depth, vector<Strategy>& found) {
+int64_t n_recovered = 0;
+int64_t n_pending = 0;
+
+void Explore(const Strategy& s, const State& a_state, const std::set<uint64_t>& histo, const int depth, vector<Strategy>& found) {
   if(depth == 0) {
     DP("reached maximum depth");
+    n_pending++;
     found.push_back(s);
     return;
   }
@@ -57,17 +61,23 @@ void Explore(const Strategy& s, const State& a_state, const std::set<uint64_t>& 
     Strategy _s = s;
     if(_s.ActionAt(a_state)==U) {
       bool defensible = _s.SetActionAndRecalcD(a_state, ab.first);
-      DP("not defensible: "+std::to_string(depth));
-      if(!defensible) continue;
+      if(!defensible) {
+        DP("not defensible: "+std::to_string(depth));
+        continue;
+      }
+
     }
     if(_s.ActionAt(b_state)==U) {
       bool defensible = _s.SetActionAndRecalcD(b_state, ab.second);
-      DP("not defensible: "+std::to_string(depth));
-      if(!defensible) continue;
+      if(!defensible) {
+        DP("not defensible: "+std::to_string(depth));
+        continue;
+      }
     }
     State ns = a_state.NextState(ab.first, ab.second);
     if( ns.ID() == 0 ) { // recovered cooperation
       DP("recovered cooperation: "+std::to_string(depth));
+      n_recovered++;
       found.push_back(_s);
       continue;
     }
@@ -96,10 +106,11 @@ vector<Strategy> SelectEfficientDefensible(Strategy str, int max_depth) {
 }
 
 void test() {
-  Strategy s1("ccddcccd____ccccdcdddd_d___d___d___d___c_d_c_c_d_______c_______d");
+  // Strategy s1("ccddcccd____ccccdcdddd_d___d___d___d___c_d_c_c_d_______c_______d");
   // Strategy s1("c______d______dd_______d____dddd_______d______dd_______ddddddddd");
   // Strategy s1("c______________________________________________________________d");
-  auto found = SelectEfficientDefensible(s1, 8);
+  Strategy s1("cd_____dd__d_ddd__c_d__d_c_cdddd__d_c__d_d_c_ccd_d_c_cdd_dcdcd_d");
+  auto found = SelectEfficientDefensible(s1, 1);
   for(auto s: found) {
     cout << s.ToString() << endl;
   }
@@ -108,6 +119,7 @@ void test() {
 
 int main(int argc, char** argv) {
   // test();
+  // return 0;
 
   if( argc != 3 ) {
     cerr << "Error : invalid argument" << endl;
@@ -119,7 +131,10 @@ int main(int argc, char** argv) {
   vector<Strategy> ins;
   int count = 0;
   for( string s; fin >> s; ) {
-    if(count % 1000 == 0) { std::cerr << "step: " << count << std::endl; }
+    if(count % 1000 == 0) {
+      std::cerr << "step: " << count << std::endl;
+      std::cerr << "recovered/pending :" << n_recovered << " / " << n_pending << std::endl;
+    }
     Strategy str(s.c_str());
     if(str.ActionAt("cccccc") == U) { str.SetAction("cccccc", C); }
     assert(str.ActionAt("cccccc") == C);
@@ -129,6 +144,7 @@ int main(int argc, char** argv) {
     }
     count++;
   }
+  std::cerr << "recovered/pending :" << n_recovered << " / " << n_pending << std::endl;
   return 0;
 }
 
