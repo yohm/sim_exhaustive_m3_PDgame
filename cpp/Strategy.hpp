@@ -88,6 +88,7 @@ public:
   bool IsDefensible();  // check defensibility. If defensible, m_d is also calculated
   bool SetActionAndRecalcD(const State& s, Action a); // set action[s]=a, and recalculate `m_d`. If not defensible, return false.
   std::vector<State> DanglingStates() const; // states that has incoming links but has no outgoing links (i.e. its action is U)
+  std::vector<State> NegativeDanglingStates(); // states that has incoming links but has no outgoing links (i.e. its action is U)
 private:
   typedef std::array<std::array<int8_t,64>,64> d_matrix_t;
   d_matrix_t m_d;

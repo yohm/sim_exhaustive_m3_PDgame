@@ -145,3 +145,21 @@ std::vector<State> Strategy::DanglingStates() const {
   return std::move(ret);
 }
 
+std::vector<State> Strategy::NegativeDanglingStates() {
+  if(!d_matrix_ready) {  // calculate d_matrix
+    if( !IsDefensible() ) throw "must not happen";  // strategy must be defensible
+  }
+  std::vector<State> ans;
+  for(int j=0; j<64; j++) {
+    if(actions[j] == U) {
+      for(int i=0; i<64; i++) {
+        if( m_d[i][j] < 0 ) {
+          ans.emplace_back(j);
+          break;
+        }
+      }
+    }
+  }
+  return std::move(ans);
+}
+

@@ -49,6 +49,8 @@ void test_Strategy() {
   assert( s1.ActionAt(State("cccccc")) == C );
   assert( s1.ActionAt("ddddcc") == D );  // implicit conversion
 
+  assert( s1.NegativeDanglingStates().size() == 0 ); // for fixed strategy, there is no dangling states
+
   Strategy alld("dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd");
   assert( alld.IsDefensible() == true );
   Strategy allc("cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc");
@@ -80,6 +82,19 @@ void test_MetaStrategy() {
   s1.SetAction("dddccc", W);
   assert( s1.ToString() == "_______dc______c_______d_______d_______c_______d_______c*______d" );
   assert( s1.IsDefensible() );
+
+  {
+    Strategy s3("________________________________________________________________");
+    s3.SetAction("dddddd", C);
+    auto ds = s3.DanglingStates();
+    assert( ds.size() == 2 );
+    assert( ds[0] == State("ddcddc"));
+    assert( ds[1] == State("ddcddd"));
+
+    auto nds = s3.NegativeDanglingStates();
+    assert( nds.size() == 1 );
+    assert( nds[0] == State("ddcddd"));
+  }
 }
 
 int main() {
