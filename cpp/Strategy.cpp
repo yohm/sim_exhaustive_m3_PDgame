@@ -2,6 +2,15 @@
 #include <set>
 #include "Strategy.hpp"
 
+
+State State::NextState(const Strategy & s_a, const Strategy& s_b) const {
+  Action move_a = s_a.ActionAt(*this);
+  Action move_b = s_b.ActionAt(SwapAB());
+  assert(move_a == C || move_a == D);
+  assert(move_b == C || move_b == D);
+  return NextState(move_a, move_b);
+}
+
 Strategy::Strategy(const std::array<Action,64>& acts): actions(acts), d_matrix_ready(false) {}
 
 Strategy::Strategy(const char acts[64]) : d_matrix_ready(false) {
@@ -135,3 +144,4 @@ std::vector<State> Strategy::DanglingStates() const {
   std::vector<State> ret(ans.begin(), ans.end());
   return std::move(ret);
 }
+

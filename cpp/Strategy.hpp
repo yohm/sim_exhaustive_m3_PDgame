@@ -9,6 +9,7 @@
 #ifndef STRATEGY_HPP
 #define STRATEGY_HPP
 
+class Strategy;
 
 class State {
 public:
@@ -41,8 +42,11 @@ public:
   };
 
   State NextState(Action act_a, Action act_b) const {
+    assert(act_a == C || act_a == D);
+    assert(act_b == C || act_b == D);
     return State(a_2,a_1,act_a,b_2,b_1,act_b);
   };
+  State NextState(const Strategy& s_a, const Strategy& s_b) const;
 
   int RelativePayoff() const {
     if( a_1 == C && b_1 == D ) { return -1; }

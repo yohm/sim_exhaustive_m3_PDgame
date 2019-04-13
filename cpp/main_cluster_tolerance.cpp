@@ -18,6 +18,7 @@ using namespace std;
 #endif
 
 int64_t n_recovered = 0;
+int64_t n_unjudgeable = 0;
 int64_t n_pending = 0;
 
 bool CD_clusters_reachable_by_two_bits(const Strategy& s) {
@@ -42,6 +43,8 @@ bool CD_clusters_reachable_by_two_bits(const Strategy& s) {
     Action b_move = s.ActionAt(current.SwapAB());
     current_state_id = current.NextState(a_move,b_move).ID();
   }
+
+  return false;
 
   // c-clusterから1-bitでd-clusterノードに到達できるか調べる
   // d-clusterから1-bitでc-clusterノードに到達できるか調べる
@@ -106,18 +109,20 @@ void Explore(const Strategy& s, const State& a_state, const std::set<uint64_t>& 
     { // loop is detected before recovering full-cooperation
       DP("loop is detected: "+std::to_string(depth));
       if(ns.ID() == 63) { // reached 'dddddd', meaning that d-cluster is one-bit tolerant
-        DP("d-cluster is one-bit tolerant");
+        DP("returned to dddddd. d-cluster is one-bit tolerant");
         bool b = CD_clusters_reachable_by_two_bits(_s);
         if(b) {
-          DP("c<->d transition occurs with two bit errors");
+          DP("c<->d transition occurs with two bit errors. Rejected by Efficiency condition");
         }
         else {
+          DP("cannot judge tolerance. c<->d transition occurs with higher-order errors");
+          n_unjudgeable++;
           found.push_back(_s);
         }
-
       }
       else { // didn't reach 'dddddd', meaning that d-cluster is not one-bit tolerant
-        DP("d-cluster is not one-bit tolerant")
+        DP("not returned to dddddd. d-cluster is NOT one-bit tolerant");
+        n_recovered++;
         found.push_back(_s);
       }
       continue;
@@ -129,7 +134,7 @@ void Explore(const Strategy& s, const State& a_state, const std::set<uint64_t>& 
   }
 }
 
-vector<Strategy> SelectEfficientDefensible(Strategy str, int max_depth) {
+vector<Strategy> SelectEfficientDefensibleByClusterTolerance(Strategy str, int max_depth) {
   const State init("dddddc");
   std::set<uint64_t> histo;
   histo.insert(State("dddddd").ID());
@@ -146,8 +151,9 @@ void test() {
   // Strategy s1("ccddcccd____ccccdcdddd_d___d___d___d___c_d_c_c_d_______c_______d");
   // Strategy s1("c______d______dd_______d____dddd_______d______dd_______ddddddddd");
   // Strategy s1("c______________________________________________________________d");
-  Strategy s1("cd_____dd__d_ddd__c_d__d_c_cdddd__d_c__d_d_c_ccd_d_c_cdd_dcdcd_d");
-  auto found = SelectEfficientDefensible(s1, 1);
+  // Strategy s1("cd_____dd__d_ddd__c_d__d_c_cdddd__d_c__d_d_c_ccd_d_c_cdd_dcdcd_d");
+  Strategy s1("cd__cdcdd__d___c______cd_d_____d____c__c_______d__c____cdc_cd_dd");
+  auto found = SelectEfficientDefensibleByClusterTolerance(s1, 10);
   for(auto s: found) {
     cout << s.ToString() << endl;
   }
@@ -170,18 +176,18 @@ int main(int argc, char** argv) {
   for( string s; fin >> s; ) {
     if(count % 1000 == 0) {
       std::cerr << "step: " << count << std::endl;
-      std::cerr << "recovered/pending :" << n_recovered << " / " << n_pending << std::endl;
+      std::cerr << "recovered/unjudged/pending :" << n_recovered << " / " << n_unjudgeable << " / " << n_pending << std::endl;
     }
     Strategy str(s.c_str());
     if(str.ActionAt("cccccc") == U) { str.SetAction("cccccc", C); }
     assert(str.ActionAt("cccccc") == C);
-    auto found = SelectEfficientDefensible(str, atoi(argv[2]));
+    auto found = SelectEfficientDefensibleByClusterTolerance(str, atoi(argv[2]));
     for(auto s: found) {
       cout << s.ToString() << endl;
     }
     count++;
   }
-  std::cerr << "recovered/pending :" << n_recovered << " / " << n_pending << std::endl;
+  std::cerr << "recovered/unjudged/pending :" << n_recovered << " / " << n_unjudgeable << " / " << n_pending << std::endl;
   return 0;
 }
 
