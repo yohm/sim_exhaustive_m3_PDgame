@@ -13,8 +13,9 @@ end
 if ARGV.size == 1
   histo = Hash.new(0)
   File.open(ARGV[0]).each do |l|
-    n_ = l.chomp.count('_')
-    histo[n_] += 1
+    n_1 = l.chomp.count('_')
+    n_2 = l.chomp.count('*')
+    histo[n_1+n_2] += 1
   end
   histo.sort_by {|k,v| k}.each do |k,v|
     puts "2^#{k} * #{v}"
