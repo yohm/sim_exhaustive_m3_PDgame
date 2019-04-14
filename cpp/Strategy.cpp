@@ -75,7 +75,7 @@ bool Strategy::IsDefensible() {
     std::vector<State> sjs = NextPossibleStates(si);
     for( auto sj: sjs) {
       size_t j = sj.ID();
-      m_d[i][j] = sj.RelativePayoff();
+      m_d[i][j] = si.RelativePayoff();
     }
     if(m_d[i][i] < 0) { return false; }
   }
@@ -109,7 +109,7 @@ bool Strategy::SetActionAndRecalcD(const State &sk, Action a) {
   std::vector<State> sis = NextPossibleStates(sk);
   for( auto si: sis) {
     size_t i = si.ID();
-    m_d[k][i] = MIN(m_d[k][i], si.RelativePayoff() );
+    m_d[k][i] = MIN(m_d[k][i], sk.RelativePayoff() );
     if(actions[i]==U) continue;  // we don't have to check since m_d[i][j]=INFINITY
     for(size_t j=0; j<m_d[i].size(); j++) {
       m_d[k][j] = MIN( m_d[k][j], m_d[k][i]+m_d[i][j] );
@@ -145,9 +145,9 @@ std::vector<State> Strategy::DanglingStates() const {
   return std::move(ret);
 }
 
-std::vector<State> Strategy::NegativeDanglingStates() {
+std::vector<State> Strategy::NegativeDanglingStates() const {
   if(!d_matrix_ready) {  // calculate d_matrix
-    if( !IsDefensible() ) throw "must not happen";  // strategy must be defensible
+    throw "must not happen";  // `IsDefensible` must be called beforehand
   }
   std::vector<State> ans;
   for(int j=0; j<64; j++) {
