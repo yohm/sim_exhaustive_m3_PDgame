@@ -1,5 +1,6 @@
 #include <iostream>
 #include <set>
+#include <map>
 #include "Strategy.hpp"
 
 
@@ -149,17 +150,24 @@ std::vector<State> Strategy::NegativeDanglingStates() const {
   if(!d_matrix_ready) {  // calculate d_matrix
     throw "must not happen";  // `IsDefensible` must be called beforehand
   }
-  std::vector<State> ans;
+  std::multimap<int,int> m;  // to sort_by the riskiness, min_{i} m_d[j][i], multimap is used, multimap is used
   for(int j=0; j<64; j++) {
     if(actions[j] == U) {
+      int min = 0;
       for(int i=0; i<64; i++) {
-        if( m_d[i][j] < 0 ) {
-          ans.emplace_back(j);
-          break;
-        }
+        if( m_d[i][j] < min ) { min = m_d[i][j]; }
+      }
+      if(min < 0) {
+        m.insert( std::make_pair(min,j) );
       }
     }
   }
+
+  std::vector<State> ans;
+  for( auto p : m ) {
+    ans.emplace_back( p.second );
+  }
+
   return std::move(ans);
 }
 
