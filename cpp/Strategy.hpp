@@ -32,10 +32,6 @@ public:
   bool operator==(const State & rhs) const {
     return (a_3==rhs.a_3 && a_2==rhs.a_2 && a_1==rhs.a_1 && b_3==rhs.b_3 && b_2==rhs.b_2 && b_1==rhs.b_1);
   }
-  bool operator<( const State & rhs ) const{
-    return ( ID() < rhs.ID() );
-  }
-
   friend std::ostream &operator<<(std::ostream &os, const State &s) {
     os << s.a_3 << s.a_2 << s.a_1 << s.b_3 << s.b_2 << s.b_1;
     return os;
@@ -57,6 +53,13 @@ public:
 
   State SwapAB() const { return State(b_3, b_2, b_1, a_3, a_2, a_1); } // state from B's viewpoint
 
+  std::array<State,2> NoisedStates() const {
+    Action a_1_n = (a_1==C) ? D : C;
+    Action b_1_n = (b_1==C) ? D : C;
+    std::array<State,2> ans = { State(a_3,a_2,a_1_n,b_3,b_2,b_1), State(a_3,a_2,a_1,b_3,b_2,b_1_n) };
+    return std::move(ans);
+  }
+
   uint64_t ID() const {  // ID must be 0~63 integer. AllC: 0, AllD: 63
     uint64_t id = 0;
     if( a_3 == D ) { id += 1 << 5; }
@@ -67,6 +70,10 @@ public:
     if( b_1 == D ) { id += 1 << 0; }
     return id;
   }
+  bool operator<( const State & rhs ) const{
+    return ( ID() < rhs.ID() );
+  }
+
 };
 
 
@@ -86,6 +93,7 @@ public:
   Action ActionAt( const State& s ) const { return actions[s.ID()]; }
   void SetAction( const State& s, Action a ) { assert(actions[s.ID()]==U); actions[s.ID()] = a; }
   bool IsDefensible();  // check defensibility. If defensible, m_d is also calculated
+  bool IsEfficient() const; // check efficiency.
   bool SetActionAndRecalcD(const State& s, Action a); // set action[s]=a, and recalculate `m_d`. If not defensible, return false.
   std::vector<State> DanglingStates() const; // states that has incoming links but has no outgoing links (i.e. its action is U)
   std::vector<State> NegativeDanglingStates() const; // states that has incoming links but has no outgoing links (i.e. its action is U). IsDefensible must be called beforehand

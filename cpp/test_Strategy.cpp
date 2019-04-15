@@ -23,6 +23,10 @@ void test_State() {
   assert( State("ccdcdc").RelativePayoff() == 1 );
 
   assert( State("cdcdcd").SwapAB() == State("dcdcdc") );
+
+  auto noised = State("ddccdc").NoisedStates();
+  assert( noised[0] == State("dddcdc") );
+  assert( noised[1] == State("ddccdd") );
 }
 
 void test_Strategy() {
