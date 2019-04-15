@@ -143,10 +143,26 @@ std::vector<State> Strategy::NegativeDanglingStates() const {
     throw "must not happen";  // `IsDefensible` must be called beforehand
   }
   std::multimap<int,int> m;  // to sort_by the riskiness, min_{i} m_d[j][i], multimap is used, multimap is used
+
+  std::vector<int> i_candidates;
+  i_candidates.reserve(16);  // at most 16
+  for( int i=0; i<64; i++) {
+    if( (i&9)==1 && actions[i] != U) {
+      bool no_incoming = true;
+      for( auto prev: State(i).PossiblePrevStates() ) {
+        if( ActionAt(prev) == U || ActionAt(prev) == State(i).a_1 ) no_incoming = false;
+      }
+      if( no_incoming ) {
+        std::cerr << "REJECTED BY NO INCOMING LINK CONDITION" << std::endl;
+        continue; }  // It's sure that i has no incoming link.
+      i_candidates.push_back(i);
+    }
+  }
+
   for(int j=0; j<64; j++) {
     if(actions[j] == U) {
       int min = 0;
-      for(int i=0; i<64; i++) {
+      for(int i : i_candidates) {
         if( m_d[i][j] < min ) { min = m_d[i][j]; }
       }
       if(min < 0) {

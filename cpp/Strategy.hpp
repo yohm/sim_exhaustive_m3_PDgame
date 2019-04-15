@@ -47,6 +47,16 @@ public:
     return State(a_2,a_1,act_a,b_2,b_1,act_b);
   };
 
+  std::array<State,4> PossiblePrevStates() const {
+    std::array<State,4> ans = {
+        State(C, a_3, a_2, C, b_3, b_2),
+        State(C, a_3, a_2, D, b_3, b_2),
+        State(D, a_3, a_2, C, b_3, b_2),
+        State(D, a_3, a_2, D, b_3, b_2)
+    };
+    return ans;
+  }
+
   int RelativePayoff() const {
     if( a_1 == C && b_1 == D ) { return -1; }
     else if( a_1 == D && b_1 == C ) { return  1; }
@@ -101,12 +111,12 @@ public:
   std::vector<State> DanglingStates() const; // states that has incoming links but has no outgoing links (i.e. its action is U)
   std::vector<State> NegativeDanglingStates() const; // states that has incoming links but has no outgoing links (i.e. its action is U). IsDefensible must be called beforehand
   std::array<int,64> DestsOfITG() const; // Trace the intra-transition-graph from node i. Destination is stored in i'th element. Undetermined destination is -1
+  int NextITGState(const State& s) const; // Trace the intra-transition graph by one step
 private:
   typedef std::array<std::array<int8_t,64>,64> d_matrix_t;
   d_matrix_t m_d;
   bool d_matrix_ready;
   std::vector<State> NextPossibleStates(State current) const;
-  int NextITGState(const State& s) const; // Trace the intra-transition graph by one step
 };
 
 #endif //STRATEGY_HPP
