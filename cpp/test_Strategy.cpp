@@ -56,16 +56,36 @@ void test_Strategy() {
   assert( s1.IsDefensible() );
   assert( s1.NegativeDanglingStates().size() == 0 ); // for fixed strategy, there is no dangling states
 
-  Strategy alld("dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd");
-  assert( alld.IsDefensible() == true );
-  Strategy allc("cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc");
-  assert( allc.IsDefensible() == false );
-  Strategy tft("cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd");
-  assert( tft.IsDefensible() == true );
-  Strategy wsls("cdcdcdcddcdcdcdccdcdcdcddcdcdcdccdcdcdcddcdcdcdccdcdcdcddcdcdcdc");
-  assert( wsls.IsDefensible() == false );
-  Strategy tf2t("dddcdddcdddcdddcdddcdddcdddcdddcdddcdddcdddcdddcdddcdddcdddcdddc");
-  assert( tf2t.IsDefensible() == false );
+  {
+    Strategy alld("dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd");
+    assert( alld.IsDefensible() == true );
+    auto dests = alld.DestsOfITG();
+    for(int i: dests) { assert( i == 63 ); } // all goes to dddddd
+  }
+  {
+    Strategy allc("cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc");
+    assert( allc.IsDefensible() == false );
+    auto dests = allc.DestsOfITG();
+    for(int i: dests) { assert( i == 0 ); } // all goes to cccccc
+  }
+  {
+    Strategy tft("cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd");
+    assert( tft.IsDefensible() == true );
+    auto dests = tft.DestsOfITG();
+    for(int i: dests) { assert( i == 0 || i == 63 || State("cdcdcd").ID() ); } // all goes to either cccccc, dddddd, cdcdcd
+  }
+  {
+    Strategy wsls("cdcdcdcddcdcdcdccdcdcdcddcdcdcdccdcdcdcddcdcdcdccdcdcdcddcdcdcdc");
+    assert( wsls.IsDefensible() == false );
+    auto dests = wsls.DestsOfITG();
+    for(int i: dests) { assert( i == 0 ); } // all goes to cccccc
+  }
+  {
+    Strategy tf2t("cccdcccdcccdcccdcccdcccdcccdcccdcccdcccdcccdcccdcccdcccdcccdcccd"); // tf2t
+    assert( tf2t.IsDefensible() == false );
+    auto dests = tf2t.DestsOfITG();
+    for(int i: dests) { assert( i == 0 || i == 63 ); }
+  }
 }
 
 void test_MetaStrategy() {

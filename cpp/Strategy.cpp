@@ -4,14 +4,6 @@
 #include "Strategy.hpp"
 
 
-State State::NextState(const Strategy & s_a, const Strategy& s_b) const {
-  Action move_a = s_a.ActionAt(*this);
-  Action move_b = s_b.ActionAt(SwapAB());
-  assert(move_a == C || move_a == D);
-  assert(move_b == C || move_b == D);
-  return NextState(move_a, move_b);
-}
-
 Strategy::Strategy(const std::array<Action,64>& acts): actions(acts), d_matrix_ready(false) {}
 
 Strategy::Strategy(const char acts[64]) : d_matrix_ready(false) {
@@ -169,5 +161,41 @@ std::vector<State> Strategy::NegativeDanglingStates() const {
   }
 
   return std::move(ans);
+}
+std::array<int, 64> Strategy::DestsOfITG() const {
+  std::array<int, 64> dests = {};
+  std::array<bool, 64> fixed = {false};
+
+  for(int i=0; i<64; i++) {
+    std::array<bool,64> visited = { false }; // initialize by false
+    visited[i] = true;
+    State init(i);
+    int next = NextITGState(init);
+    while(next >= 0) {
+      if(visited[next] || fixed[next]) { break; }
+      visited[next] = true;
+      next = NextITGState(State(next));
+    }
+    int d = next;
+    if(next >= 0) {
+      d = fixed[next] ? dests[next] : next;
+    }
+    for(uint64_t j=0; j<64; j++) {
+      if(visited[j]) {
+        dests[j] = d;
+        fixed[j] = true;
+      }
+    }
+  }
+  return dests;
+}
+
+int Strategy::NextITGState(const State &s) const {
+  Action move_a = ActionAt(s);
+  Action move_b = ActionAt(s.SwapAB());
+  if( (move_a == C || move_a == D) && (move_b == C || move_b == D) ){
+    return s.NextState(move_a, move_b).ID();
+  }
+  return -1;
 }
 
