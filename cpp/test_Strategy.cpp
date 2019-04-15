@@ -109,6 +109,9 @@ void test_MetaStrategy() {
   {
     Strategy s2("_______*_______c_______d_______d_______c_______d_______c_______d");
     assert( s2.IsDefensible() == false );
+    auto dests = s2.DestsOfITG();
+    for(int i=0; i<63; i++) { assert( dests[i] == -1 ); }  // dests are undetermined
+    assert( dests[63] == 63 );  // only dests[63] is determined
   }
 
   {
