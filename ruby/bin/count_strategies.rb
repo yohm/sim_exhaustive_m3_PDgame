@@ -30,7 +30,7 @@ elsif ARGV.size > 1
       n_ = l.chomp.count('_')
       total += 2**n_
     end
-    puts "#{file}: #{f(total)}"
+    puts "#{file}:\t #{f(total)}"
   end
 end
 
