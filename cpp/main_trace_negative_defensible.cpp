@@ -34,6 +34,12 @@ std::vector<State> UndeterminedNegativeNode(const Strategy& s) {
   return std::move(ret);
 }
 
+Strategy ReplaceUwithW(const Strategy& s) {
+  Strategy _s = s;
+  for(int i=0; i<64; i++) { if( _s.actions[i] == U ) { _s.actions[i] = W; } }
+  return std::move(_s);
+}
+
 int64_t n_determined = 0;
 int64_t n_pending = 0;
 int64_t n_rejected = 0;
@@ -48,17 +54,39 @@ void ExploreNegativeDangling(const Strategy& s, const int depth, vector<Strategy
 
   vector<State> negs = s.NegativeDanglingStates();
   vector<State> undetermined = UndeterminedNegativeNode(s);
+  /*
+  for(auto s: negs) {
+    std::cerr << s << std::endl;
+  }
+  std::cerr << std::endl;
+  for(auto s: undetermined) {
+    std::cerr << s << std::endl;
+  }
+   */
   if(negs.size() > 0 || undetermined.size() > 0) {
     if(negs.size() > 0) { DP("negative dangling node is found: " << negs[0]); }
     else { DP("negative undtermined node is found: " << undetermined[0]); }
 
+    // if(negs.size() + undetermined.size() < 16)  // heuristic
+    { // check defensibility of wildcard
+      Strategy _s = ReplaceUwithW(s);
+      if(_s.IsDefensible()) {
+        DP("WILDCARD worked! at depth " << depth << " : " << negs.size()+undetermined.size());
+        found.push_back(_s);
+        n_determined++;
+        return;
+      }
+    }
+
     const State target = (negs.size()>0) ? negs[0] : undetermined[0];
+    /*
     if( negs.size() >= depth ) {
       DP("too many negative dangling states. Impossible to judge : " << negs.size() << " " << depth );
       n_pending++;
       found.push_back(s);
       return;
     }
+     */
     for(int i=0; i<2; i++) {
       Strategy _s = s;
       Action _a = (i==0 ? C : D);
@@ -72,9 +100,8 @@ void ExploreNegativeDangling(const Strategy& s, const int depth, vector<Strategy
     }
   }
   else { // no negative undetermined node && no negative dangling node. It must be defensible.
-    DP("No negative dangling node and undtermined node. must be defensible");
-    Strategy _s = s;
-    for(int i=0; i<64; i++) { if( _s.actions[i] == U ) { _s.actions[i] = W; } }
+    DP("No negative dangling node and undetermined node. must be defensible");
+    Strategy _s = ReplaceUwithW(s);
     if( ! _s.IsDefensible() ) { throw "must not happen"; }
     found.push_back(_s);
     n_determined++;
@@ -97,8 +124,9 @@ void test() {
   // Strategy s1("cd_____dd__d_ddd__c_d__d_c_cdddd__d_c__d_d_c_ccd_d_c_cdd_dcdcd_d");
   // Strategy s1("cdddcccdc_ccdc_c_c_dc__d_c_____dc_c____c_______d___d___c_______d");
   // Strategy s1("cdddcccdc_ccdcdc_cddcddddc__ddddcdcd_cdcdcdddcdd_cdddd_cdcddddcd");
-  Strategy s1("cd_____dc_cd_ddd_cc_d__d___cdddd__d_c__d_d___c_d______dd_d_d_d_d");
-  auto found = TraceNegativeDefensible(s1, 25);
+  // Strategy s1("cd_____dc_cd_ddd_cc_d__d___cdddd__d_c__d_d___c_d______dd_d_d_d_d");
+  Strategy s1("cdddcccdc_cd_cdc_c_dcdcd____ddddc_c_c__c__d___dd_______c______dd");
+  auto found = TraceNegativeDefensible(s1, 14);
   for(auto s: found) {
     cout << s.ToString() << endl;
   }
@@ -121,7 +149,7 @@ int main(int argc, char** argv) {
   vector<Strategy> ins;
   int count = 0;
   for( string s; fin >> s; ) {
-    if(count % 100 == 0) {
+    if(count % 1000 == 0) {
       std::cerr << "step: " << count << std::endl;
       std::cerr << "determined/pending/rejected :" << n_determined << " / " << n_pending << " / " << n_rejected << std::endl;
     }
