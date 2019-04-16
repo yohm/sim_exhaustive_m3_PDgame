@@ -27,8 +27,9 @@ elsif ARGV.size > 1
   ARGV.each do |file|
     total = 0
     File.open(file).each do |l|
-      n_ = l.chomp.count('_')
-      total += 2**n_
+      n_1 = l.chomp.count('_')
+      n_2 = l.chomp.count('*')
+      total += 2**(n_1+n_2)
     end
     puts "#{file}:\t #{f(total)}"
   end
