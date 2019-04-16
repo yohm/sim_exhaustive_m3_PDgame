@@ -116,7 +116,7 @@ public:
   }
 
   Action ActionAt( const State& s ) const { return actions[s.ID()]; }
-  void SetAction( const State& s, Action a ) { assert(actions[s.ID()]==U); actions[s.ID()] = a; }
+  void SetAction( const State& s, Action a ) { assert(actions[s.ID()]==U||actions[s.ID()]==W); actions[s.ID()] = a; }
   int NumFixed() const { int c=0; for(auto a: actions) { if(a==C||a==D) c++;} return c; }
   int NumU() const { int c=0; for(auto a: actions) { if(a==U) c++;} return c; }
   bool IsDefensible();  // check defensibility. If defensible, m_d is also calculated

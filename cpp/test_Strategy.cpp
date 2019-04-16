@@ -66,6 +66,7 @@ void test_Strategy() {
   {
     Strategy alld("dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd");
     assert( alld.IsDefensible() == true );
+    assert( alld.IsEfficient() == false );
     auto dests = alld.DestsOfITG();
     for(int i: dests) { assert( i == 63 ); } // all goes to dddddd
 
@@ -76,6 +77,7 @@ void test_Strategy() {
   {
     Strategy allc("cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc");
     assert( allc.IsDefensible() == false );
+    assert( allc.IsEfficient() == true );
     auto dests = allc.DestsOfITG();
     for(int i: dests) { assert( i == 0 ); } // all goes to cccccc
 
@@ -86,6 +88,7 @@ void test_Strategy() {
   {
     Strategy tft("cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd");
     assert( tft.IsDefensible() == true );
+    assert( tft.IsEfficient() == false );
     auto dests = tft.DestsOfITG();
     for(int i: dests) { assert( i == 0 || i == 63 || State("cdcdcd").ID() ); } // all goes to either cccccc, dddddd, cdcdcd
 
@@ -98,6 +101,7 @@ void test_Strategy() {
   {
     Strategy wsls("cdcdcdcddcdcdcdccdcdcdcddcdcdcdccdcdcdcddcdcdcdccdcdcdcddcdcdcdc");
     assert( wsls.IsDefensible() == false );
+    assert( wsls.IsEfficient() == true );
     auto dests = wsls.DestsOfITG();
     for(int i: dests) { assert( i == 0 ); } // all goes to cccccc
 
@@ -108,6 +112,7 @@ void test_Strategy() {
   {
     Strategy tf2t("cccdcccdcccdcccdcccdcccdcccdcccdcccdcccdcccdcccdcccdcccdcccdcccd"); // tf2t
     assert( tf2t.IsDefensible() == false );
+    assert( tf2t.IsEfficient() == true );
     auto dests = tf2t.DestsOfITG();
     for(int i: dests) { assert( i == 0 || i == 63 ); }
 
