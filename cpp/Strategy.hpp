@@ -8,6 +8,7 @@
 #include <sstream>
 #include <cstdint>
 #include <ostream>
+#include <Eigen/Dense>
 #include "Action.hpp"
 
 #ifndef STRATEGY_HPP
@@ -72,6 +73,17 @@ public:
     std::array<State,2> ans = { State(a_3,a_2,a_1_n,b_3,b_2,b_1), State(a_3,a_2,a_1,b_3,b_2,b_1_n) };
     return std::move(ans);
   }
+  int NumDiffInT1(const State& other) const {
+    if(a_3 != other.a_3 || a_2 != other.a_2 || b_3 != other.b_3 || b_2 != other.b_2 ) {
+      return -1;
+    }
+    else {
+      int cnt = 0;
+      if(a_1 != other.a_1) cnt++;
+      if(b_1 != other.b_1) cnt++;
+      return cnt;
+    }
+  }
 
   uint64_t ID() const {  // ID must be 0~63 integer. AllC: 0, AllD: 63
     uint64_t id = 0;
@@ -108,7 +120,8 @@ public:
   int NumFixed() const { int c=0; for(auto a: actions) { if(a==C||a==D) c++;} return c; }
   int NumU() const { int c=0; for(auto a: actions) { if(a==U) c++;} return c; }
   bool IsDefensible();  // check defensibility. If defensible, m_d is also calculated
-  bool IsEfficient() const; // check efficiency.
+  std::array<double,64> StationaryState(double e=0.001) const;
+  bool IsEfficient(double e=0.001, double th=0.99) const { return (StationaryState(e)[0]>th); } // check efficiency.
   bool SetActionAndRecalcD(const State& s, Action a); // set action[s]=a, and recalculate `m_d`. If not defensible, return false.
   std::vector<State> DanglingStates() const; // states that has incoming links but has no outgoing links (i.e. its action is U)
   std::vector<State> NegativeDanglingStates() const; // states that has incoming links but has no outgoing links (i.e. its action is U). IsDefensible must be called beforehand

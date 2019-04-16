@@ -55,10 +55,10 @@ bool Strategy::IsDefensible() {
 
   // construct adjacency matrix
   const size_t N = 64;
-  const int INFINITY = 32; // 32 is large enough since the path length is between -16 to 16.
+  const int INF = 32; // 32 is large enough since the path length is between -16 to 16.
   for(size_t i=0; i<N; i++) {
     for(size_t j=0; j<N; j++) {
-      m_d[i][j] = INFINITY;
+      m_d[i][j] = INF;
     }
   }
 
@@ -213,5 +213,47 @@ int Strategy::NextITGState(const State &s) const {
     return s.NextState(move_a, move_b).ID();
   }
   return -1;
+}
+
+std::array<double, 64> Strategy::StationaryState(double e) const {
+  assert( NumFixed() == 64 );
+  Eigen::Matrix<double,65,64> A;
+
+  for(int i=0; i<64; i++) {
+    const State si(i);
+    for(int j=0; j<64; j++) {
+      // calculate transition probability from j to i
+      const State sj(j);
+      State next = NextITGState(sj);
+      int d = next.NumDiffInT1(si);
+      if( d < 0 ) {
+        A(i,j) = 0.0;
+      }
+      else if( d == 0 ) {
+        A(i,j) = (1.0-e)*(1.0-e);
+      }
+      else if( d == 1 ) {
+        A(i,j) = (1.0-e)*e;
+      }
+      else if( d == 2 ) {
+        A(i,j) = e*e;
+      }
+      else {
+        assert(false);
+      }
+    }
+    A(i,i) = A(i,i) - 1.0;  // subtract unit matrix
+  }
+  for(int i=0; i<64; i++) { A(64,i) = 1.0; }  // normalization condition
+
+  Eigen::VectorXd b(65);
+  for(int i=0; i<64; i++) { b(i) = 0.0;}
+  b(64) = 1.0;
+
+  Eigen::VectorXd x = A.colPivHouseholderQr().solve(b);
+
+  std::array<double,64> ans;
+  for(int i=0; i<64; i++) { ans[i] = x(i); }
+  return ans;
 }
 
