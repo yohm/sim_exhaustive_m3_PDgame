@@ -27,6 +27,12 @@ void test_State() {
   auto noised = State("ddccdc").NoisedStates();
   assert( noised[0] == State("dddcdc") );
   assert( noised[1] == State("ddccdd") );
+
+  auto prev = State("ddccdc").PossiblePrevStates();
+  assert( prev[0] == State("cddccd") );
+  assert( prev[1] == State("cdddcd") );
+  assert( prev[2] == State("dddccd") );
+  assert( prev[3] == State("ddddcd") );
 }
 
 void test_Strategy() {
@@ -49,6 +55,7 @@ void test_Strategy() {
   std::string bits("ccccddddccccddddccccddddccccddddccccddddccccddddccccddddccccdddd");
   assert( s1.ToString() == bits );
   assert( s1 == Strategy(bits.c_str()) );
+  assert( s1.NumFixed() == 64 );
 
   assert( s1.ActionAt(State("cccccc")) == C );
   assert( s1.ActionAt("ddddcc") == D );  // implicit conversion
@@ -92,6 +99,7 @@ void test_MetaStrategy() {
   {
     Strategy s1("_______d_______c_______d_______d_______c_______d_______c_______d");
     assert( s1.IsDefensible() == true );
+    assert( s1.NumFixed() == 8 );
     std::vector<State> ds = s1.DanglingStates();
     assert(ds.size() == 7);
     // ds = ["ccdddc", "cdcddc", "dcdddc", "dddddc", "cccddc", "cddddc", "dccddc", "dddddc"]
