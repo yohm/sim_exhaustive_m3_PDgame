@@ -153,7 +153,7 @@ std::vector<State> Strategy::NegativeDanglingStates() const {
         if( ActionAt(prev) == U || ActionAt(prev) == State(i).a_1 ) no_incoming = false;
       }
       if( no_incoming ) {
-        std::cerr << "REJECTED BY NO INCOMING LINK CONDITION" << std::endl;
+        // std::cerr << "REJECTED BY NO INCOMING LINK CONDITION" << std::endl;
         continue; }  // It's sure that i has no incoming link.
       i_candidates.push_back(i);
     }
