@@ -43,10 +43,12 @@ Strategy ReplaceUwithW(const Strategy& s) {
 int64_t n_determined = 0;
 int64_t n_pending = 0;
 int64_t n_rejected = 0;
+int n_target_fixed = 64;
 
 void ExploreNegativeDangling(const Strategy& s, const int depth, vector<Strategy>& found) {
-  if(depth == 0) {
-    DP("reached maximum depth : " << s.NegativeDanglingStates().size());
+  if(depth == 0 || s.NumFixed() >= n_target_fixed) {
+    if(depth==0) { DP("reached maximum depth : " << s.NegativeDanglingStates().size()); }
+    else { DP("reached targeted number of fixed actions"); }
     n_pending++;
     found.push_back(s);
     return;
@@ -65,7 +67,7 @@ void ExploreNegativeDangling(const Strategy& s, const int depth, vector<Strategy
    */
   if(negs.size() > 0 || undetermined.size() > 0) {
     if(negs.size() > 0) { DP("negative dangling node is found: " << negs[0]); }
-    else { DP("negative undtermined node is found: " << undetermined[0]); }
+    else { DP("negative undetermined node is found: " << undetermined[0]); }
 
     // if(negs.size() + undetermined.size() < 16)  // heuristic
     { // check defensibility of wildcard
@@ -113,7 +115,12 @@ vector<Strategy> TraceNegativeDefensible(Strategy str, int max_depth) {
   if( ! str.IsDefensible() ) { // must be called since d_matrix must be prepared
     throw "must not happen";
   }
-  ExploreNegativeDangling(str, max_depth, found);
+  if(str.NumU() == 0) {
+    found.push_back(str);
+  }
+  else {
+    ExploreNegativeDangling(str, max_depth, found);
+  }
   return std::move(found);
 }
 
@@ -126,7 +133,8 @@ void test() {
   // Strategy s1("cdddcccdc_ccdcdc_cddcddddc__ddddcdcd_cdcdcdddcdd_cdddd_cdcddddcd");
   // Strategy s1("cd_____dc_cd_ddd_cc_d__d___cdddd__d_c__d_d___c_d______dd_d_d_d_d");
   Strategy s1("cdddcccdc_cd_cdc_c_dcdcd____ddddc_c_c__c__d___dd_______c______dd");
-  auto found = TraceNegativeDefensible(s1, 14);
+  // Strategy s1("cd**cdcdd*cd**cd****cdcc*c****cdcd**cdcc**cd***c***ccd*d******cd");
+  auto found = TraceNegativeDefensible(s1, 30);
   for(auto s: found) {
     cout << s.ToString() << endl;
   }
@@ -139,10 +147,14 @@ int main(int argc, char** argv) {
   return 0;
 #endif
 
-  if( argc != 3 ) {
+  if( argc != 3 && argc != 4 ) {
     cerr << "Error : invalid argument" << endl;
-    cerr << "  Usage : " << argv[0] << " <strategy_file> <max_depth>" << endl;
+    cerr << "  Usage : " << argv[0] << " <strategy_file> <max_depth> [target num fixed actions]" << endl;
     return 1;
+  }
+
+  if( argc == 4 ) {
+    n_target_fixed = atoi(argv[3]);
   }
 
   ifstream fin(argv[1]);
