@@ -120,8 +120,8 @@ public:
   int NumFixed() const { int c=0; for(auto a: actions) { if(a==C||a==D) c++;} return c; }
   int NumU() const { int c=0; for(auto a: actions) { if(a==U) c++;} return c; }
   bool IsDefensible();  // check defensibility. If defensible, m_d is also calculated
-  std::array<double,64> StationaryState(double e=0.001) const;
-  bool IsEfficient(double e=0.001, double th=0.99) const { return (StationaryState(e)[0]>th); } // check efficiency.
+  std::array<double,64> StationaryState(double e=0.0001) const;
+  bool IsEfficient(double e=0.0001, double th=0.95) const { return (StationaryState(e)[0]>th); } // check efficiency.
   bool SetActionAndRecalcD(const State& s, Action a); // set action[s]=a, and recalculate `m_d`. If not defensible, return false.
   std::vector<State> DanglingStates() const; // states that has incoming links but has no outgoing links (i.e. its action is U)
   std::vector<State> NegativeDanglingStates() const; // states that has incoming links but has no outgoing links (i.e. its action is U). IsDefensible must be called beforehand

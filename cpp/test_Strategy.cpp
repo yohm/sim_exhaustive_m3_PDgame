@@ -171,12 +171,33 @@ void test_MetaStrategy() {
   }
 }
 
+void test_EfficiencyDefensible() {
+  // Strategy s1("cdddcccdcccdccdccccdddddccccccddccddcdccdccddcddddcdccccccccccdd");
+  // Strategy s1("cdddcccdcdcdccdccccdddddccddccddcdddcddcdccddcddddcddddcddddccdd");
+  // Strategy s1("cdddcccdc*cdccdccccdddddcc**ccddc*ddcd*cdccddcddddcd***c****ccdd");
+  // cdddcccdcdcdccdccccdddddcdcdccddd*ddcd*cdccddcddddcd***ccddddcdd
+  // Strategy s1("cdddcccdcdcdccdccccdddddcdcdccdddcddcdccdccddcddddcdcccccddddcdd");
+  // Strategy s1("cdddcccdcdcdccdccccdddddcdcdccddddddcddcdccddcddddcddddccddddcdd");
+  // cdddcccdcdcdccdcdccdddddcdcdccddd*ddcd*cdccddcddddddc**ccccddcdd
+  // Strategy s1("cdddcccdcdcdccdcdccdddddcdcdccdddcddcdccdccddcddddddcccccccddcdd"); // efficient and defensible
+  // Strategy s1("cdddcccdcdcdccdcdccdddddcdcdccddddddcddcdccddcddddddcddccccddcdd");
+  // Strategy s1("cd*ddd*dcdcd**cd*c*dcd*d**ccdcddddcdcd*d**ddddcd**dd**cd**dcdddd");
+  Strategy s1("cdddddddcdcdddcddcddcdddddccdcddddcdcdddddddddcdddddddcddddcdddd");  // efficient and defensible
+  // Strategy s1("cdddddddcdcdddcddcddcdddddccdcddddcdcdddddddddcdddddddcddddddddd");
+  // Strategy s1("cdcdddcdcdcdcccdcccdcdcdccccdcddddcdcdcdccddddcdccddcccdccdddddd");
+  assert( s1.IsEfficient() );
+  assert( s1.IsDefensible() );
+  // auto stat = s1.StationaryState(0.0001);
+  // for(int i=0; i<64; i++) { assert(stat[i] < 0.01); }
+}
+
 int main() {
   std::cout << "Testing Strategy class" << std::endl;
 
   test_State();
   test_Strategy();
   test_MetaStrategy();
+  test_EfficiencyDefensible();
   return 0;
 }
 
