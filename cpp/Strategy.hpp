@@ -8,6 +8,7 @@
 #include <sstream>
 #include <cstdint>
 #include <ostream>
+#include <algorithm>
 #include <Eigen/Dense>
 #include "Action.hpp"
 
@@ -120,13 +121,14 @@ public:
   int NumFixed() const { int c=0; for(auto a: actions) { if(a==C||a==D) c++;} return c; }
   int NumU() const { int c=0; for(auto a: actions) { if(a==U) c++;} return c; }
   bool IsDefensible();  // check defensibility. If defensible, m_d is also calculated
-  std::array<double,64> StationaryState(double e=0.0001) const;
-  bool IsEfficient(double e=0.0001, double th=0.95) const { return (StationaryState(e)[0]>th); } // check efficiency.
+  std::array<double,64> StationaryState(double e=0.0001) const; // all actions must be fixed to calculated stationary state
+  bool IsEfficient(double e=0.0001, double th=0.95) const { return (StationaryState(e)[0]>th); } // check efficiency. all actions must be fixed
   bool SetActionAndRecalcD(const State& s, Action a); // set action[s]=a, and recalculate `m_d`. If not defensible, return false.
   std::vector<State> DanglingStates() const; // states that has incoming links but has no outgoing links (i.e. its action is U)
   std::vector<State> NegativeDanglingStates() const; // states that has incoming links but has no outgoing links (i.e. its action is U). IsDefensible must be called beforehand
   std::array<int,64> DestsOfITG() const; // Trace the intra-transition-graph from node i. Destination is stored in i'th element. Undetermined destination is -1
   int NextITGState(const State& s) const; // Trace the intra-transition graph by one step
+  bool CannotBeEfficient() const; // check efficiency condition by investigating two-bit flip from cccccc.
 private:
   typedef std::array<std::array<int8_t,64>,64> d_matrix_t;
   d_matrix_t m_d;
