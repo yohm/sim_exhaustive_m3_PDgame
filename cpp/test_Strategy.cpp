@@ -171,6 +171,33 @@ void test_MetaStrategy() {
   }
 }
 
+void test_TFTATFT() {
+  // [TODO] test TFT-ATFT strategy
+  // 0  *cc*cc : c , 16 *dc*cc : c
+  // 1  *cc*cd : d , 17 *dc*cd : d
+  // 2  *cc*dc : c , 18 *dc*dc : c
+  // 3  *cc*dd : d , 19 *dc*dd : c
+  // 8  *cd*cc : d , 24 *dd*cc : d
+  // 9  *cd*cd : c , 25 *dd*cd : c
+  // 10 *cd*dc : c , 26 *dd*dc : c
+  // 11 *cd*dd : d , 27 *dd*dd : d
+  std::map<int,Action> m = {
+      {0, C}, {1, D}, {2, C}, {3, D},
+      {8, D}, {9, C}, {10, C}, {11, D},
+      {16, C}, {17, D}, {18, C}, {19, C},
+      {24, D}, {25, C}, {26, C}, {27, D}
+  };
+  Strategy tft_atft("________________________________________________________________");
+  int mask = 27; // 011011
+  for(int i=0; i<64; i++) {
+    int masked = i & mask;
+    tft_atft.SetAction(i, m.at(masked) );
+  }
+
+  assert( tft_atft.IsDefensible() );
+  assert( tft_atft.IsEfficient() );
+}
+
 void test_EfficiencyDefensible() {
   // Strategy s1("cdddcccdcccdccdccccdddddccccccddccddcdccdccddcddddcdccccccccccdd");
   // Strategy s1("cdddcccdcdcdccdccccdddddccddccddcdddcddcdccddcddddcddddcddddccdd");
@@ -198,6 +225,7 @@ int main() {
   test_Strategy();
   test_MetaStrategy();
   test_EfficiencyDefensible();
+  test_TFTATFT();
   return 0;
 }
 
