@@ -93,7 +93,6 @@ void Explore(const Strategy& s, const State& a_state, const std::set<uint64_t>& 
     }
     std::set<uint64_t > n_histo = histo;
     n_histo.insert(ns.ID());
-    n_histo.insert(ns.SwapAB().ID());
     Explore(_s, ns, n_histo, depth-1, found);
   }
 }
