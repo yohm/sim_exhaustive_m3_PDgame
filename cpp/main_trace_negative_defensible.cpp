@@ -147,34 +147,60 @@ int main(int argc, char** argv) {
   return 0;
 #endif
 
-  if( argc != 3 && argc != 4 ) {
+  MPI_Init(&argc, &argv);
+
+  if( argc != 4 && argc != 5 ) {
     cerr << "Error : invalid argument" << endl;
-    cerr << "  Usage : " << argv[0] << " <strategy_file> <max_depth> [target num fixed actions]" << endl;
+    cerr << "  Usage : " << argv[0] << " <strategy_file> <out_file> <max_depth> [target num fixed actions]" << endl;
     return 1;
   }
 
-  if( argc == 4 ) {
-    n_target_fixed = atoi(argv[3]);
+  if( argc == 5 ) {
+    n_target_fixed = atoi(argv[4]);
   }
 
+  int my_rank = 0;
+  MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+  int num_procs = 0;
+  MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
+
   ifstream fin(argv[1]);
-  vector<Strategy> ins;
+  std::string out_format = argv[2];
+  char outfile[256];
+  sprintf(outfile, (out_format+".%d").c_str(), my_rank);
+  std::ofstream fout(outfile);
+
   int count = 0;
   for( string s; fin >> s; ) {
     if(count % 1000 == 0) {
-      std::cerr << "step: " << count << std::endl;
-      std::cerr << "determined/pending/rejected :" << n_determined << " / " << n_pending << " / " << n_rejected << std::endl;
+      std::cerr << my_rank << " : step: " << count << std::endl;
+      std::cerr << my_rank << " : determined/pending/rejected : " << n_determined << " / " << n_pending << " / " << n_rejected << std::endl;
     }
-    Strategy str(s.c_str());
-    if(str.ActionAt("cccccc") == U) { str.SetAction("cccccc", C); }
-    assert(str.ActionAt("cccccc") == C);
-    auto found = TraceNegativeDefensible(str, atoi(argv[2]));
-    for(auto s: found) {
-      cout << s.ToString() << endl;
+    if( count % num_procs == my_rank ) {
+      Strategy str(s.c_str());
+      if(str.ActionAt("cccccc") == U) { str.SetAction("cccccc", C); }
+      assert(str.ActionAt("cccccc") == C);
+      auto found = TraceNegativeDefensible(str, atoi(argv[3]));
+      for(auto s: found) {
+        fout << s.ToString() << endl;
+      }
     }
     count++;
   }
-  std::cerr << "determined/pending/rejected :" << n_determined << " / " << n_pending << " / " << n_rejected << std::endl;
+  std::cerr << my_rank << " : determined/pending/rejected : " << n_determined << " / " << n_pending << " / " << n_rejected << std::endl;
+
+  int sum_n_determined = 0;
+  int sum_n_pending = 0;
+  int sum_n_rejected = 0;
+  MPI_Reduce(&n_determined, &sum_n_determined, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&n_pending, &sum_n_pending, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&n_rejected, &sum_n_rejected, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+  if( my_rank == 0 ) {
+    std::cerr << "[sum] : determined/pending/rejected : " << sum_n_determined << " / " << sum_n_pending << " / " << sum_n_rejected << std::endl;
+  }
+
+  MPI_Finalize();
+
   return 0;
 }
 
