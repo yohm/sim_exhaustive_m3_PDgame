@@ -117,6 +117,12 @@ void test() {
   cout << found.size() << endl;
 }
 
+Strategy ReplaceWwithU(const Strategy& s) {
+  Strategy _s = s;
+  for(int i=0; i<64; i++) { if( _s.actions[i] == W ) { _s.actions[i] = U; } }
+  return std::move(_s);
+}
+
 int main(int argc, char** argv) {
   // test();
   // return 0;
@@ -135,8 +141,9 @@ int main(int argc, char** argv) {
       std::cerr << "step: " << count << std::endl;
       std::cerr << "recovered/pending :" << n_recovered << " / " << n_pending << std::endl;
     }
-    Strategy str(s.c_str());
-    if(str.ActionAt("cccccc") == U) { str.SetAction("cccccc", C); }
+    Strategy _str(s.c_str());
+    Strategy str = ReplaceWwithU(_str);
+
     assert(str.ActionAt("cccccc") == C);
     auto found = SelectEfficientDefensible(str, atoi(argv[2]));
     for(auto s: found) {
