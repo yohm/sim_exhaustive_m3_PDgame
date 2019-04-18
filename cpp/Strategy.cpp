@@ -273,10 +273,15 @@ bool Strategy::CannotBeEfficient() const {
     return std::move(histo);
   };
 
-  auto CannotReturnTo0By1BitError = [this, &dests, &TraceITG](const State& s) {
+  std::map<int,bool> memo;
+  auto CannotReturnTo0By1BitError = [this, &dests, &TraceITG, &memo](const State& s) {
+    if( memo.find(s.ID()) != memo.end() ) {
+      return memo.at(s.ID());
+    }
     // true : It is sure that it cannot reach state0 by 1-bit error
     std::set<int> set0 = TraceITG(s);  // nodes accessible by 0-bit error
     if( set0.find(-1) != set0.end() ) {
+      memo[s.ID()] = false;
       return false;  // unfixed node exists.
     }
     std::set<int> set1;
@@ -291,13 +296,16 @@ bool Strategy::CannotBeEfficient() const {
     }
 
     if( set1_dests.find(-1) != set1_dests.end() ) {
+      memo[s.ID()] = false;
       return false;  // unfixed node exists
     }
     if( set1_dests.find(0) == set1_dests.end() ) {
       // no path returning to 0
       // It is sure that the state cannot return to "cccccc" by 1-bit error
+      memo[s.ID()] = true;
       return true;
     }
+    memo[s.ID()] = false;
     return false;
   };
 
