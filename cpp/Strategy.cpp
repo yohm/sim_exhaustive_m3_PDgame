@@ -301,27 +301,6 @@ bool Strategy::CannotBeEfficient() const {
     return false;
   };
 
-  auto OneBitTolerantDetermined = [this, &dests, &TraceITG](const State& s) {
-    std::set<int> cycle = TraceITG(s);  // nodes accessible by 0-bit error
-    if( cycle.find(-1) != cycle.end() ) {
-      return false;  // undetermined node is included
-    }
-
-    std::set<int> n1s;
-    for(int n0: cycle ) {
-      for(State s1 : State(n0).NoisedStates() ) {
-        n1s.insert(s1.ID());
-      }
-    }
-
-    for(int n1: n1s) {
-      if(n1 < 0 || cycle.find(dests[n1]) == cycle.end() ) {
-        return false;
-      } // return false if it does not return to cycle
-    }
-    return true;
-  };
-
   std::set<int> c1s = {0}; // "cccccc" is included
   { // populate c1s
     auto c1_a = TraceITG( State("ccdccc") );
@@ -338,9 +317,6 @@ bool Strategy::CannotBeEfficient() const {
       if( CannotReturnTo0By1BitError(State(d)) ) {
         return true;
       }
-      // if( OneBitTolerantDetermined(State(d)) ) {
-      //   return false;
-      // }
     }
   }
   return false; // cannot judge whether it is efficient or not
