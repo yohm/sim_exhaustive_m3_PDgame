@@ -19,6 +19,8 @@ using namespace std;
 
 int64_t n_recovered = 0;
 int64_t n_pending = 0;
+int64_t n_rejected_by_loop = 0;
+int64_t n_indefensible = 0;
 
 void Explore(const Strategy& s, const State& a_state, const std::set<uint64_t>& histo, const int depth, vector<Strategy>& found) {
   if(depth == 0) {
@@ -63,6 +65,7 @@ void Explore(const Strategy& s, const State& a_state, const std::set<uint64_t>& 
       bool defensible = _s.SetActionAndRecalcD(a_state, ab.first);
       if(!defensible) {
         DP("not defensible: "+std::to_string(depth));
+        n_indefensible++;
         continue;
       }
 
@@ -71,6 +74,7 @@ void Explore(const Strategy& s, const State& a_state, const std::set<uint64_t>& 
       bool defensible = _s.SetActionAndRecalcD(b_state, ab.second);
       if(!defensible) {
         DP("not defensible: "+std::to_string(depth));
+        n_indefensible++;
         continue;
       }
     }
@@ -84,6 +88,7 @@ void Explore(const Strategy& s, const State& a_state, const std::set<uint64_t>& 
     else if( histo.find(ns.ID()) != histo.end() || histo.find(ns.SwapAB().ID()) != histo.end() )
     { // loop is detected before recovering full-cooperation
       DP("loop is detected: "+std::to_string(depth));
+      n_rejected_by_loop++;
       continue;
     }
     std::set<uint64_t > n_histo = histo;
@@ -139,7 +144,7 @@ int main(int argc, char** argv) {
   for( string s; fin >> s; ) {
     if(count % 1000 == 0) {
       std::cerr << "step: " << count << std::endl;
-      std::cerr << "recovered/pending :" << n_recovered << " / " << n_pending << std::endl;
+      std::cerr << "recovered/pending/indefensible/rejected :" << n_recovered << " / " << n_pending << " / " << n_indefensible << " / " << n_rejected_by_loop << std::endl;
     }
     Strategy _str(s.c_str());
     Strategy str = ReplaceWwithU(_str);
@@ -151,7 +156,7 @@ int main(int argc, char** argv) {
     }
     count++;
   }
-  std::cerr << "recovered/pending :" << n_recovered << " / " << n_pending << std::endl;
+  std::cerr << "recovered/pending/indefensible/rejected :" << n_recovered << " / " << n_pending << " / " << n_indefensible << " / " << n_rejected_by_loop << std::endl;
   return 0;
 }
 
