@@ -25,3 +25,5 @@ target_link_libraries(main_reject_cannot_be_efficient ${MPI_LIBRARIES})
 
 add_executable(main_efficiency main_efficiency.cpp ${SOURCE_FILES})
 target_link_libraries(main_efficiency ${MPI_LIBRARIES})
+
+add_executable(main_print_ITG main_print_ITG.cpp ${SOURCE_FILES})
