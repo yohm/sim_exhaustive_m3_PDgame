@@ -116,6 +116,7 @@ vector<Strategy> TraceNegativeDefensible(Strategy str, int max_depth) {
     throw "must not happen";
   }
   if(str.NumU() == 0) {
+    n_determined++;
     found.push_back(str);
   }
   else {
@@ -172,7 +173,7 @@ int main(int argc, char** argv) {
 
   int count = 0;
   for( string s; fin >> s; ) {
-    if(count % 1000 == 0) {
+    if(count % 10000 == 0) {
       std::cerr << my_rank << " : step: " << count << std::endl;
       std::cerr << my_rank << " : determined/pending/rejected : " << n_determined << " / " << n_pending << " / " << n_rejected << std::endl;
     }
