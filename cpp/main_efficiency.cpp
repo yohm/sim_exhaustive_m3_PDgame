@@ -20,41 +20,49 @@ using namespace std;
 int n_efficient = 0;
 int n_inefficient = 0;
 
-void ExploreEfficiency(const Strategy& s, vector<Strategy>& found) {
+struct Counts {
+  int64_t n_efficient;
+  int64_t n_inefficient;
+  Counts() {
+    n_efficient = 0;
+    n_inefficient = 0;
+  }
+};
+
+void ExploreEfficiency(const Strategy& s, Counts& counter) {
+  assert( s.NumU() == 0 );
   if( s.NumFixed() == 64 ) {
-    if( s.IsEfficient() ) { found.push_back(s); n_efficient++; }
-    else { n_inefficient++; }
+    if( s.IsEfficient() ) { counter.n_efficient++;}
+    else { counter.n_inefficient++; }
     return;
   }
   else {
-    for(int i=0; i<64; i++) {
-      if(s.ActionAt(i) == W || s.ActionAt(i) == U) {
-        for(int j=0; j<2; j++) {
-          Strategy _s = s;
-          _s.SetAction(i, ((j==0)?C:D) );
-          ExploreEfficiency(_s, found);
-        }
-        return;
-      }
+    int idx = 0;
+    for(; idx<64; idx++) {
+      if(s.ActionAt(idx) == W || s.ActionAt(idx) == U) { break; }
+    }
+    for(int j=0; j<2; j++) {
+      Strategy _s = s;
+      _s.SetAction(idx, ((j==0)?C:D) );
+      ExploreEfficiency(_s, counter);
     }
   }
 }
 
-vector<Strategy> CheckEfficiency(const Strategy& str) {
-  vector<Strategy> found;
+Counts CheckEfficiency(const Strategy& str) {
   assert( str.NumU() == 0 );
-  ExploreEfficiency(str, found);
-  return std::move(found);
+  Counts counter;
+  ExploreEfficiency(str, counter);
+  return std::move(counter);
 }
 
 void test() {
-  Strategy s1("cdddcccdc*cdccdccccdddddcc**ccddc*ddcd*cdccddcddddcd***c****ccdd");
-  // Strategy s1("cd*cdd*dcdcd**cd*c*dcd*d**ccdcddddcdcd*d**ddddcd**dd**cd**dcdddd");
-  auto found = CheckEfficiency(s1);
-  for(auto s: found) {
-    cout << s.ToString() << endl;
-  }
-  cout << "efficient/inefficient : " << n_efficient << " / " << n_inefficient << endl;
+  // Strategy s1("cdddcccdc*cdccdccccdddddcc**ccddc*ddcd*cdccddcddddcd***c****ccdd");
+  Strategy s1("ccdd*c*dc*ccddcdcd*cddccdcdd**cd*d*dccddddcd******ccdd******cccd");  // partly efficient
+  // Strategy s1("cd*dcd*dd*dd**dcddcd*ddd*ddddcdd*d*dcdcddddcccdd**dd***ccc*cdcdd");
+  // Strategy s1("cd*d*d*dd*ddccdcddcdddcd*ddddcdd****cdddcddd**cd**cd***cdc*cdcdd"); // all efficient
+  auto counter = CheckEfficiency(s1);
+  cout << "efficient/inefficient : " << counter.n_efficient << " / " << counter.n_inefficient << endl;
 }
 
 int main(int argc, char** argv) {

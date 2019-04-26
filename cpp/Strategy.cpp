@@ -254,6 +254,12 @@ std::array<double, 64> Strategy::StationaryState(double e) const {
 
   std::array<double,64> ans = {0};
   for(int i=0; i<64; i++) { ans[i] = x(i); }
+  /*
+  std::cerr << "ans[0] , ans[63] : " << ans[0] << ' ' << ans[63] << std::endl;
+  if(ans[0] > 0.95) {
+    assert(true);
+  }
+   */
   return ans;
 }
 bool Strategy::CannotBeEfficient() const {
