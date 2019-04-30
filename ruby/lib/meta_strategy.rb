@@ -38,6 +38,40 @@ class MetaStrategy < Strategy
     g
   end
 
+  def next_states_with_self(current)
+    act_a = action(current)
+    if act_a == :_ or act_a == :*
+      acts_a = [:c,:d]
+    else
+      acts_a = [act_a]
+    end
+    act_b = action(current.swap)
+    if act_b == :_ or act_b == :*
+      acts_b = [:c,:d]
+    else
+      acts_b = [act_b]
+    end
+    ans = []
+    acts_a.each do |a|
+      acts_b.each do |b|
+        ans << current.next_state(a,b)
+      end
+    end
+    ans
+  end
+
+  def transition_graph_with_self
+    g = DirectedGraph.new(64)
+    64.times do |i|
+      s = State.make_from_id(i)
+      ns = next_states_with_self(s)
+      ns.each do |n|
+        g.add_link( i, n.to_i )
+      end
+    end
+    g
+  end
+
   def defensible?
     g = weighted_transition_graph
     !(g.has_negative_cycle?)
@@ -189,6 +223,11 @@ if __FILE__ == $0 and ARGV.size != 1
 end
 
 if __FILE__ == $0 and ARGV.size == 1
-  pp MetaStrategy.make_from_str(ARGV[0])
+  s = MetaStrategy.make_from_str(ARGV[0])
+  g = s.transition_graph_with_self
+  g.to_dot($stdout)
+  $stderr.puts g.terminanl_components.inspect
+  # pp g
+
 end
 

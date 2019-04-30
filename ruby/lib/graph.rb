@@ -19,6 +19,14 @@ class DirectedGraph
     f.strongly_connected_components
   end
 
+  def terminanl_components
+    s = sccs
+    has_self_loops = s.select {|scc| scc.size == 1}.flatten.select do |n|
+      @links[n].include?(n)
+    end
+    s.select {|scc| scc.size > 1} + has_self_loops.map {|n| [n]}
+  end
+
   def transient_nodes
     isolated_nodes = sccs.select {|scc| scc.size == 1 }.flatten
     has_selfloop = isolated_nodes.select do |n|
