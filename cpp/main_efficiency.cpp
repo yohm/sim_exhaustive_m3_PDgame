@@ -17,9 +17,6 @@ using namespace std;
 #define DP(x) do { std::cerr << x << std::endl; } while (0)
 #endif
 
-int n_efficient = 0;
-int n_inefficient = 0;
-
 struct Counts {
   int64_t n_efficient;
   int64_t n_inefficient;
@@ -71,35 +68,7 @@ int main(int argc, char** argv) {
   return 0;
 #else
 
-  if( argc != 3 && argc != 4 ) {
-    cerr << "Error : invalid argument" << endl;
-    cerr << "  Usage : " << argv[0] << " <strategy_file> <max_depth> [target num fixed actions]" << endl;
-    return 1;
-  }
-
-  if( argc == 4 ) {
-    n_target_fixed = atoi(argv[3]);
-  }
-
-  ifstream fin(argv[1]);
-  vector<Strategy> ins;
-  int count = 0;
-  for( string s; fin >> s; ) {
-    if(count % 1000 == 0) {
-      std::cerr << "step: " << count << std::endl;
-      std::cerr << "determined/pending/rejected :" << n_determined << " / " << n_pending << " / " << n_rejected << std::endl;
-    }
-    Strategy str(s.c_str());
-    if(str.ActionAt("cccccc") == U) { str.SetAction("cccccc", C); }
-    assert(str.ActionAt("cccccc") == C);
-    auto found = TraceNegativeDefensible(str, atoi(argv[2]));
-    for(auto s: found) {
-      cout << s.ToString() << endl;
-    }
-    count++;
-  }
-  std::cerr << "determined/pending/rejected :" << n_determined << " / " << n_pending << " / " << n_rejected << std::endl;
-  return 0;
+  // not implemented yet
 #endif
 }
 
