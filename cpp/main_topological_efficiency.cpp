@@ -46,6 +46,30 @@ void AssignActions(const Strategy& s, std::set<long> to_be_fixed, std::vector<St
   AssignActions(_s2, to_be_fixed, ans);
 }
 
+std::vector<Strategy> FixL0(const Strategy& str) {
+  DirectedGraph g = str.ITG();
+  components_t comps = g.NonTransitionComponents();
+
+  // fix l0
+  std::set<long> to_be_fixed;
+  for(const auto& comp: comps) {
+    for(long n: comp) {
+      State sa(n);
+      State sb = sa.SwapAB();
+      Action act_a = str.ActionAt(sa);
+      Action act_b = str.ActionAt(sb);
+      if( act_a == U || act_a == W ) { to_be_fixed.insert(sa.ID()); }
+      if( act_b == U || act_b == W ) { to_be_fixed.insert(sb.ID()); }
+    }
+  }
+
+  assert(to_be_fixed.size() < 16);
+  std::vector<Strategy> ans;
+  AssignActions(str, to_be_fixed, ans);
+  return std::move(ans);
+}
+
+
 bool SurelyReach0(const DirectedGraph& g, long ini) {
   long current = ini;
   std::set<long> histo;
@@ -216,33 +240,19 @@ bool IsSurelyInefficientByC2(const Strategy& str) {
   return false;
 }
 
+uint64_t n_rejected = 0;
+
+
 void CheckTopologicalEfficiency(const Strategy& str, std::vector<Strategy>& efficients, std::vector<Strategy>& unjudgeables) {
-  DirectedGraph g = str.ITG();
-  components_t comps = g.NonTransitionComponents();
-
-  // fix l0
-  std::set<long> to_be_fixed;
-  for(const auto& comp: comps) {
-    for(long n: comp) {
-      State sa(n);
-      State sb = sa.SwapAB();
-      Action act_a = str.ActionAt(sa);
-      Action act_b = str.ActionAt(sb);
-      if( act_a == U || act_a == W ) { to_be_fixed.insert(sa.ID()); }
-      if( act_b == U || act_b == W ) { to_be_fixed.insert(sb.ID()); }
-    }
-  }
-
-  assert(to_be_fixed.size() < 16);
-  std::vector<Strategy> assigned;
-  AssignActions(str, to_be_fixed, assigned);
+  std::vector<Strategy> assigned = FixL0(str);
 
   for(const Strategy& s: assigned) {
     if( IsSurelyEfficient(s) ) {
       efficients.push_back(s);
     }
     else if( IsSurelyInefficientByC2(s) ) {
-      std::cerr << "rejected by c2" << std::endl;
+      n_rejected += (1UL << (64-s.NumFixed()));
+      // std::cerr << "rejected by c2" << std::endl;
     }
     else {
       std::vector<Strategy> v_s2 = FixL1States(s);
@@ -252,8 +262,8 @@ void CheckTopologicalEfficiency(const Strategy& str, std::vector<Strategy>& effi
         }
         else {
           if( IsSurelyInefficientByC2(s2) ) {
-            std::cerr << "rejected by c2" << std::endl;
-            // rejected
+            n_rejected += (1UL << (64-s.NumFixed()));
+            // std::cerr << "rejected by c2" << std::endl;
           }
           else {
             unjudgeables.push_back(s2);
@@ -340,10 +350,12 @@ int main(int argc, char** argv) {
   for( string s; fin >> s; count++) {
     if(count % 1000 == 0) {
       std::cerr << "step: " << count << std::endl;
-      std::cerr << "n_efficient/n_unjudgeable : ";
+      std::cerr << "n_efficient/n_unjudgeable/n_rejected : ";
       RecursiveCommas(std::cerr, n_efficient);
       std::cerr << " / ";
       RecursiveCommas(std::cerr, n_unjudgeable);
+      std::cerr << " / ";
+      RecursiveCommas(std::cerr, n_rejected);
       std::cerr << std::endl;
     }
     Strategy _str(s.c_str());
@@ -359,10 +371,12 @@ int main(int argc, char** argv) {
       n_unjudgeable += (1 << (64-s.NumFixed()));
     }
   }
-  std::cerr << "n_efficient/n_unjudgeable : ";
+  std::cerr << "n_efficient/n_unjudgeable/n_rejected : ";
   RecursiveCommas(std::cerr, n_efficient);
   std::cerr << " / ";
   RecursiveCommas(std::cerr, n_unjudgeable);
+  std::cerr << " / ";
+  RecursiveCommas(std::cerr, n_rejected);
   std::cerr << std::endl;
   return 0;
 #endif
