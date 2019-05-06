@@ -68,6 +68,8 @@ bool IsSurelyEfficient(const Strategy& str) {
       neighbors.push_back(n^1UL);  // 1-bit neighbors
       neighbors.push_back(n^8UL);
     }
+    std::sort( neighbors.begin(), neighbors.end() );
+    neighbors.erase( std::unique(neighbors.begin(), neighbors.end()), neighbors.end() );
     bool return_to_0 = false;
     for(long neigh: neighbors) {
       if( SurelyReach0(g, neigh) ) {
@@ -82,9 +84,79 @@ bool IsSurelyEfficient(const Strategy& str) {
   return true;
 }
 
+// TraceITG until a cycle
+// If the path hits an unfixed node, it returns -(unfixed states).
+long TraceITG(const DirectedGraph& g, long ini) {
+  long current = ini;
+  std::set<long> histo;
+  while( histo.find(current) == histo.end() ) {
+    histo.insert(current);
+    if( g.m_links[current].size() != 1 ) { // cannot uniquely determine the destination
+      return -current;
+    }
+    current = g.m_links[current][0];
+  }
+  return current;
+}
+
+std::vector<Strategy> FixL1States(const Strategy& str) {
+  std::vector<long> unfixed;
+
+  DirectedGraph g = str.ITG();
+  components_t comps = g.NonTransitionComponents();
+  for(const auto& comp: comps) {
+    if( comp.size() == 1 && comp[0] == 0 ) { continue; }  // skip 'cccccc' component
+    std::vector<long> neighbors;
+    for(unsigned long n: comp) {
+      neighbors.push_back(n^1UL);  // 1-bit neighbors
+      neighbors.push_back(n^8UL);
+    }
+    std::sort( neighbors.begin(), neighbors.end() );
+    neighbors.erase( std::unique(neighbors.begin(), neighbors.end()), neighbors.end() );
+
+    for(long neigh: neighbors) {
+      long d = TraceITG(g, neigh);
+      if(d < 0) { unfixed.push_back(-d); }
+    }
+  }
+  std::sort( unfixed.begin(), unfixed.end() );
+  unfixed.erase( std::unique(unfixed.begin(), unfixed.end()), unfixed.end() );
+
+  std::vector<Strategy> ans;
+  std::function<void(const Strategy&,const std::vector<long>&)> dfs = [&ans,&dfs](const Strategy& s, const std::vector<long>& a) {
+    if(a.empty()) {
+      ans.push_back(s);
+      return;
+    }
+    long last = a[a.size()-1];
+    if(s.ActionAt(last) == U || s.ActionAt(last) == W) {
+      for(int i=0; i<2; i++) {
+        Strategy _s = s;
+        std::vector<long> _a = a;
+        _a.pop_back();
+        _s.SetAction(State(last), (i==0?C:D));
+        const DirectedGraph _g = _s.ITG();
+        long _d = TraceITG(_g, last);
+        if( _d < 0 ) { _a.push_back(-_d); }
+        dfs(_s, _a);
+      }
+    }
+    else {
+      std::vector<long> _a = a;
+      _a.pop_back();
+      dfs(s, _a);
+    }
+  };
+
+  dfs(str, unfixed);
+  return ans;
+}
+
 void CheckTopologicalEfficiency(const Strategy& str, std::vector<Strategy>& efficients, std::vector<Strategy>& unjudgeables) {
   DirectedGraph g = str.ITG();
   components_t comps = g.NonTransitionComponents();
+
+  // fix l0
   std::set<long> to_be_fixed;
   for(const auto& comp: comps) {
     for(long n: comp) {
@@ -106,7 +178,15 @@ void CheckTopologicalEfficiency(const Strategy& str, std::vector<Strategy>& effi
       efficients.push_back(s);
     }
     else {
-      unjudgeables.push_back(s);
+      std::vector<Strategy> v_s2 = FixL1States(s);
+      for(const Strategy& s2: v_s2) {
+        if( IsSurelyEfficient(s2) ) {
+          efficients.push_back(s2);
+        }
+        else {
+          unjudgeables.push_back(s2);
+        }
+      }
     }
   }
 }
