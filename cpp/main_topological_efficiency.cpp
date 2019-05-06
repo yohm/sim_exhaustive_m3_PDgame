@@ -7,6 +7,7 @@
 #include <utility>
 #include <deque>
 #include <iomanip>
+#include <algorithm>
 #include "mpi.h"
 #include "Strategy.hpp"
 
@@ -86,17 +87,18 @@ bool IsSurelyEfficient(const Strategy& str) {
 
 // TraceITG until a cycle
 // If the path hits an unfixed node, it returns -(unfixed states).
-long TraceITG(const DirectedGraph& g, long ini) {
+std::vector<long> TraceITG(const DirectedGraph& g, long ini) {
   long current = ini;
-  std::set<long> histo;
-  while( histo.find(current) == histo.end() ) {
-    histo.insert(current);
+  std::vector<long> histo;
+  while( std::find(histo.begin(), histo.end(), current) == histo.end() ) {
+    histo.push_back(current);
     if( g.m_links[current].size() != 1 ) { // cannot uniquely determine the destination
-      return -current;
+      histo.push_back(-current);
+      break;
     }
     current = g.m_links[current][0];
   }
-  return current;
+  return std::move(histo);
 }
 
 std::vector<Strategy> FixL1States(const Strategy& str) {
@@ -115,7 +117,8 @@ std::vector<Strategy> FixL1States(const Strategy& str) {
     neighbors.erase( std::unique(neighbors.begin(), neighbors.end()), neighbors.end() );
 
     for(long neigh: neighbors) {
-      long d = TraceITG(g, neigh);
+      std::vector<long> _t = TraceITG(g, neigh);
+      long d = _t[_t.size()-1];
       if(d < 0) { unfixed.push_back(-d); }
     }
   }
@@ -136,7 +139,8 @@ std::vector<Strategy> FixL1States(const Strategy& str) {
         _a.pop_back();
         _s.SetAction(State(last), (i==0?C:D));
         const DirectedGraph _g = _s.ITG();
-        long _d = TraceITG(_g, last);
+        std::vector<long> _t = TraceITG(_g, last);
+        long _d = _t[_t.size()-1];
         if( _d < 0 ) { _a.push_back(-_d); }
         dfs(_s, _a);
       }
@@ -150,6 +154,66 @@ std::vector<Strategy> FixL1States(const Strategy& str) {
 
   dfs(str, unfixed);
   return ans;
+}
+
+bool IsSurelyInefficientByC2(const Strategy& str) {
+  const DirectedGraph g = str.ITG();
+  components_t comps = g.NonTransitionComponents();
+
+  std::vector<long> c0 = {0};
+  std::vector<long> c1;
+  for(long n: c0) {
+    for(int i=0; i<2; i++) {
+      long _ini = n^((i==0)?1UL:8UL);
+      std::vector<long> h = TraceITG(g, _ini);
+      c1.insert( c1.end(), h.begin(), h.end() );
+    }
+  }
+  std::sort( c1.begin(), c1.end() );
+  c1.erase( std::unique(c1.begin(), c1.end()), c1.end() );  // == c1.uniq!
+
+  std::vector<long> c2;
+  for(long n: c1) {
+    if(n < 0) continue;
+    for(int i=0; i<2; i++) {
+      long _ini = n^((i==0)?1UL:8UL);
+      std::vector<long> h = TraceITG(g, _ini);
+      c2.insert( c2.end(), h.begin(), h.end() );
+    }
+  }
+  std::sort( c2.begin(), c2.end() );
+  c2.erase( std::unique(c2.begin(), c2.end()), c2.end() );  // == c2.uniq!
+
+  for(const auto& comp: comps) {
+    bool included_in_c2 = false;
+    for(long n: comp) {
+      if( std::find(c2.begin(),c2.end(), n) != c2.end() ) {
+        included_in_c2 = true;
+        break;
+      }
+    }
+    if( included_in_c2 ) {
+      // trace l1. If none of l1 reaches 0, the strategy is surely inefficient.
+      std::vector<long> neighbors;
+      for(unsigned long n: comp) {
+        neighbors.push_back(n^1UL);  // 1-bit neighbors
+        neighbors.push_back(n^8UL);
+      }
+      std::sort( neighbors.begin(), neighbors.end() );
+      neighbors.erase( std::unique(neighbors.begin(), neighbors.end()), neighbors.end() );
+      bool return_to_0 = false;
+      for(long neigh: neighbors) {
+        if( SurelyReach0(g, neigh) ) {
+          return_to_0 = true;
+          break;
+        }
+      }
+      if( !return_to_0 ) {
+        return true;  // surely inefficient
+      }
+    }
+  }
+  return false;
 }
 
 void CheckTopologicalEfficiency(const Strategy& str, std::vector<Strategy>& efficients, std::vector<Strategy>& unjudgeables) {
@@ -177,6 +241,9 @@ void CheckTopologicalEfficiency(const Strategy& str, std::vector<Strategy>& effi
     if( IsSurelyEfficient(s) ) {
       efficients.push_back(s);
     }
+    else if( IsSurelyInefficientByC2(s) ) {
+      std::cerr << "rejected by c2" << std::endl;
+    }
     else {
       std::vector<Strategy> v_s2 = FixL1States(s);
       for(const Strategy& s2: v_s2) {
@@ -184,7 +251,13 @@ void CheckTopologicalEfficiency(const Strategy& str, std::vector<Strategy>& effi
           efficients.push_back(s2);
         }
         else {
-          unjudgeables.push_back(s2);
+          if( IsSurelyInefficientByC2(s2) ) {
+            std::cerr << "rejected by c2" << std::endl;
+            // rejected
+          }
+          else {
+            unjudgeables.push_back(s2);
+          }
         }
       }
     }
