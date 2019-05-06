@@ -28,6 +28,33 @@ def return_to_0_from_a_neighbor(g, tc)
   reach_0
 end
 
+def trace(g, ini)
+  histo = []
+  n = ini
+  until histo.include?(n)
+    histo.push(n)
+    break if g.links[n].size != 1
+    n = g.links[n][0]
+  end
+  histo
+end
+
+
+def c2_states(g)
+  c0 = [0]
+  c1 = c0.map {|s| [s^1,s^8] }.flatten.uniq
+  c1 = c1.map do |n|
+    trace(g, n)
+  end.flatten.uniq
+  pp c1
+  c2 = c1.map {|s| [s^1,s^8] }.flatten.uniq
+  c2 = c2.map do |n|
+    trace(g, n)
+  end.flatten.uniq
+  c2
+end
+
+
 counts = {not_fixed: 0, is_efficient: 0, cannot_judge: 0}
 
 File.open(ARGV[0]).each_with_index do |l,i|
@@ -55,8 +82,9 @@ File.open(ARGV[0]).each_with_index do |l,i|
       $stdout.puts "  cannot judge efficiency"
       counts[:cannot_judge] += 1
       $stdout.puts tcs.inspect, tcs.map {|tc| return_to_0_from_a_neighbor(g, tc) }.inspect
+      $stdout.puts c2_states(g).sort.inspect
       #$stdout.puts g.inspect
-      g.to_dot($stdout)
+      # g.to_dot($stdout)
       break
     end
   else
