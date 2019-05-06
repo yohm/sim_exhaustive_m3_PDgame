@@ -243,7 +243,7 @@ bool IsSurelyInefficientByC2(const Strategy& str) {
 uint64_t n_rejected = 0;
 
 
-void CheckTopologicalEfficiency(const Strategy& str, std::vector<Strategy>& efficients, std::vector<Strategy>& unjudgeables) {
+void CheckTopologicalEfficiency(const Strategy& str, std::vector<Strategy>& efficients, std::vector<Strategy>& unjudgeables, std::vector<Strategy>& inefficients) {
   std::vector<Strategy> assigned = FixL0(str);
 
   for(const Strategy& s: assigned) {
@@ -251,6 +251,7 @@ void CheckTopologicalEfficiency(const Strategy& str, std::vector<Strategy>& effi
       efficients.push_back(s);
     }
     else if( IsSurelyInefficientByC2(s) ) {
+      inefficients.push_back(s);
       n_rejected += (1UL << (64-s.NumFixed()));
       // std::cerr << "rejected by c2" << std::endl;
     }
@@ -262,7 +263,8 @@ void CheckTopologicalEfficiency(const Strategy& str, std::vector<Strategy>& effi
         }
         else {
           if( IsSurelyInefficientByC2(s2) ) {
-            n_rejected += (1UL << (64-s.NumFixed()));
+            inefficients.push_back(s2);
+            n_rejected += (1UL << (64-s2.NumFixed()));
             // std::cerr << "rejected by c2" << std::endl;
           }
           else {
@@ -277,37 +279,46 @@ void CheckTopologicalEfficiency(const Strategy& str, std::vector<Strategy>& effi
 void test() {
   {
     Strategy s("cd*d*dddd*dddcdcddcd*cdd*d**dcdd*d*ccddddcddccdd**dd***cdc*cdcdd"); // is efficient
-    std::vector<Strategy> efficients, unjudgeables;
-    CheckTopologicalEfficiency(s, efficients, unjudgeables);
+    std::vector<Strategy> efficients, unjudgeables, inefficients;
+    CheckTopologicalEfficiency(s, efficients, unjudgeables, inefficients);
     for(auto s: efficients) {
       cout << "E: " << s.ToString() << endl;
     }
     for(auto s: unjudgeables) {
       cout << "U: " << s.ToString() << endl;
+    }
+    for(auto s: inefficients) {
+      cout << "I: " << s.ToString() << endl;
     }
   }
 
   {
     Strategy s("cddd*c*dd*ddcddc*d*d*dcd*dcddcdd*dddcddd**dd**dd*ccd***cdc*cdcdd"); // 3/4 efficient, 1/4 unjudgeable
-    std::vector<Strategy> efficients, unjudgeables;
-    CheckTopologicalEfficiency(s, efficients, unjudgeables);
+    std::vector<Strategy> efficients, unjudgeables, inefficients;
+    CheckTopologicalEfficiency(s, efficients, unjudgeables, inefficients);
     for(auto s: efficients) {
       cout << "E: " << s.ToString() << endl;
     }
     for(auto s: unjudgeables) {
       cout << "U: " << s.ToString() << endl;
+    }
+    for(auto s: inefficients) {
+      cout << "I: " << s.ToString() << endl;
     }
   }
 
   {
     Strategy s("ccdd**ddc*ccdccdc*ddddccdc****cd*d**ccdcdccddccd**cddd**d*****cd"); // unjudgeable
-    std::vector<Strategy> efficients, unjudgeables;
-    CheckTopologicalEfficiency(s, efficients, unjudgeables);
+    std::vector<Strategy> efficients, unjudgeables, inefficients;
+    CheckTopologicalEfficiency(s, efficients, unjudgeables, inefficients);
     for(auto s: efficients) {
       cout << "E: " << s.ToString() << endl;
     }
     for(auto s: unjudgeables) {
       cout << "U: " << s.ToString() << endl;
+    }
+    for(auto s: inefficients) {
+      cout << "I: " << s.ToString() << endl;
     }
   }
 }
@@ -360,8 +371,8 @@ int main(int argc, char** argv) {
     }
     Strategy _str(s.c_str());
 
-    std::vector<Strategy> efficients, unjudgeables;
-    CheckTopologicalEfficiency(_str, efficients, unjudgeables);
+    std::vector<Strategy> efficients, unjudgeables, inefficients;
+    CheckTopologicalEfficiency(_str, efficients, unjudgeables, inefficients);
     for(auto s: efficients) {
       cout << "E: " << s.ToString() << endl;
       n_efficient += (1 << (64-s.NumFixed()));
