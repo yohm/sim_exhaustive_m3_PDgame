@@ -69,46 +69,6 @@ std::vector<Strategy> FixL0(const Strategy& str) {
   return std::move(ans);
 }
 
-
-bool SurelyReach0(const DirectedGraph& g, long ini) {
-  long current = ini;
-  std::set<long> histo;
-  while( histo.find(current) == histo.end() ) {
-    histo.insert(current);
-    if( g.m_links[current].size() != 1 ) { // cannot uniquely determine the destination
-      return false;
-    }
-    current = g.m_links[current][0];
-  }
-  return (current == 0);
-}
-
-bool IsSurelyEfficient(const Strategy& str) {
-  DirectedGraph g = str.ITG();
-  components_t comps = g.NonTransitionComponents();
-  for(const auto& comp: comps) {
-    if( comp.size() == 1 && comp[0] == 0 ) { continue; }  // skip 'cccccc' component
-    std::vector<long> neighbors;
-    for(unsigned long n: comp) {
-      neighbors.push_back(n^1UL);  // 1-bit neighbors
-      neighbors.push_back(n^8UL);
-    }
-    std::sort( neighbors.begin(), neighbors.end() );
-    neighbors.erase( std::unique(neighbors.begin(), neighbors.end()), neighbors.end() );
-    bool return_to_0 = false;
-    for(long neigh: neighbors) {
-      if( SurelyReach0(g, neigh) ) {
-        return_to_0 = true;
-        break;
-      }
-    }
-    if( !return_to_0 ) {
-      return false;
-    }
-  }
-  return true;
-}
-
 // TraceITG until a cycle
 // If the path hits an unfixed node, it returns -(unfixed states).
 std::vector<long> TraceITG(const DirectedGraph& g, long ini) {
@@ -125,27 +85,114 @@ std::vector<long> TraceITG(const DirectedGraph& g, long ini) {
   return std::move(histo);
 }
 
-std::vector<Strategy> FixL1States(const Strategy& str) {
-  std::vector<long> unfixed;
 
-  DirectedGraph g = str.ITG();
-  components_t comps = g.NonTransitionComponents();
-  for(const auto& comp: comps) {
-    if( comp.size() == 1 && comp[0] == 0 ) { continue; }  // skip 'cccccc' component
-    std::vector<long> neighbors;
-    for(unsigned long n: comp) {
-      neighbors.push_back(n^1UL);  // 1-bit neighbors
-      neighbors.push_back(n^8UL);
-    }
-    std::sort( neighbors.begin(), neighbors.end() );
-    neighbors.erase( std::unique(neighbors.begin(), neighbors.end()), neighbors.end() );
+uint64_t n_rejected = 0;
 
-    for(long neigh: neighbors) {
-      std::vector<long> _t = TraceITG(g, neigh);
-      long d = _t[_t.size()-1];
-      if(d < 0) { unfixed.push_back(-d); }
+// Lc : 0, Ld : 1, Lu : 2
+int JudgeLType(const DirectedGraph& g, const std::vector<long>& comp) {
+  std::vector<long> neighbors;
+  for(long n: comp) {
+    neighbors.push_back(n^1UL);  // 1-bit neighbors
+    neighbors.push_back(n^8UL);
+  }
+  std::sort( neighbors.begin(), neighbors.end() );
+  neighbors.erase( std::unique(neighbors.begin(), neighbors.end()), neighbors.end() );
+
+  bool has_unfixed = false;
+  for(long neigh: neighbors) {
+    std::vector<long> path = TraceITG(g, neigh);
+    long l = path[path.size()-1];
+    if( l == 0 ) { return 0; }  // Lc
+    else if( l < 0 ) {
+      has_unfixed = true;
     }
   }
+
+  return (has_unfixed ? 2 : 1);
+}
+
+// get c2.
+// node with undetermined actions are included as numbers with negative signs
+std::vector<long> GetC2(const DirectedGraph& g) {
+  std::vector<long> c0 = {0};
+  std::vector<long> c1;
+  for(long n: c0) {
+    for(int i=0; i<2; i++) {
+      long _ini = (unsigned long)n^((i==0)?1UL:8UL);
+      std::vector<long> h = TraceITG(g, _ini);
+      assert( h[h.size()-1] == 0 );  // it should return to 0
+      c1.insert( c1.end(), h.begin(), h.end() );
+    }
+  }
+  std::sort( c1.begin(), c1.end() );
+  c1.erase( std::unique(c1.begin(), c1.end()), c1.end() );  // == c1.uniq!
+
+  std::vector<long> c2;
+  for(long n: c1) {
+    assert(n >= 0);  // there should be no unfixed bit
+    for(int i=0; i<2; i++) {
+      long _ini = (unsigned long)n^((i==0)?1UL:8UL);
+      std::vector<long> h = TraceITG(g, _ini);
+      c2.insert( c2.end(), h.begin(), h.end() );
+    }
+  }
+  std::sort( c2.begin(), c2.end() );
+  c2.erase( std::unique(c2.begin(), c2.end()), c2.end() );  // == c2.uniq!
+
+  return std::move(c2);
+}
+
+void GetLcLdLu(const DirectedGraph& g, components_t& Lc, components_t& Ld, components_t& Lu) {
+  components_t comps = g.NonTransitionComponents();
+  for(const auto& comp: comps) {
+    if( comp.size() == 1 && comp[0] == 0 ) { continue; }  // eliminate 'cccccc' component
+    int t = JudgeLType(g, comp);
+    if( t == 0 ) {
+      Lc.push_back(comp);
+    }
+    else if( t == 1 ) {
+      Ld.push_back(comp);
+    }
+    else if( t == 2 ) {
+      Lu.push_back(comp);
+    }
+    else {
+      throw "must not happen";
+    }
+  }
+}
+
+bool HasCommon(const std::vector<long>& s1, std::vector<long>& s2) {
+  for(long n: s1) {
+    auto found = std::find(s2.begin(), s2.end(), n);
+    if( found != s2.end() ) {
+      return true;
+    }
+  }
+  return false;
+}
+
+std::vector<Strategy> FixL1States(const Strategy& str, const DirectedGraph& g, const std::vector<long>& l0) {
+  std::vector<long> l1;
+  for(unsigned long n: l0) {
+    l1.push_back(n^1UL);  // 1-bit neighbors
+    l1.push_back(n^8UL);
+  }
+  std::sort( l1.begin(), l1.end() );
+  l1.erase( std::unique(l1.begin(), l1.end()), l1.end() );
+
+  std::vector<long> unfixed;
+  for(long n: l1) {
+    std::vector<long> _t = TraceITG(g, n);
+    long d = _t[_t.size()-1];
+    if(d < 0) {
+      State sa(-d);
+      State sb = sa.SwapAB();
+      if( str.ActionAt(sa) == U || str.ActionAt(sa) == W ) { unfixed.push_back(sa.ID()); }
+      if( str.ActionAt(sb) == U || str.ActionAt(sb) == W ) { unfixed.push_back(sb.ID()); }
+    }
+  }
+
   std::sort( unfixed.begin(), unfixed.end() );
   unfixed.erase( std::unique(unfixed.begin(), unfixed.end()), unfixed.end() );
 
@@ -165,7 +212,12 @@ std::vector<Strategy> FixL1States(const Strategy& str) {
         const DirectedGraph _g = _s.ITG();
         std::vector<long> _t = TraceITG(_g, last);
         long _d = _t[_t.size()-1];
-        if( _d < 0 ) { _a.push_back(-_d); }
+        if( _d < 0 ) {
+          State sa(-_d);
+          State sb = sa.SwapAB();
+          if( s.ActionAt(sa) == U || s.ActionAt(sa) == W ) { _a.push_back(sa.ID()); }
+          if( s.ActionAt(sb) == U || s.ActionAt(sb) == W ) { _a.push_back(sb.ID()); }
+        }
         dfs(_s, _a);
       }
     }
@@ -180,99 +232,49 @@ std::vector<Strategy> FixL1States(const Strategy& str) {
   return ans;
 }
 
-bool IsSurelyInefficientByC2(const Strategy& str) {
-  const DirectedGraph g = str.ITG();
-  components_t comps = g.NonTransitionComponents();
 
-  std::vector<long> c0 = {0};
-  std::vector<long> c1;
-  for(long n: c0) {
-    for(int i=0; i<2; i++) {
-      long _ini = n^((i==0)?1UL:8UL);
-      std::vector<long> h = TraceITG(g, _ini);
-      c1.insert( c1.end(), h.begin(), h.end() );
+void JudgeEfficiencyDFS(const Strategy& s, std::vector<Strategy>& efficients, std::vector<Strategy>& unjudgeables, std::vector<Strategy>& inefficients) {
+  const DirectedGraph g = s.ITG();
+  components_t Lc, Ld, Lu;
+  GetLcLdLu(g, Lc, Ld, Lu);
+
+  // All L belongs to Lc
+  if( Ld.empty() && Lu.empty() ) {
+    efficients.push_back(s);
+    return;
+  }
+
+  // Judge inefficiency
+  if( !Ld.empty() ) {
+    std::vector<long> c2 = GetC2(g);
+    auto found = std::find_if(Ld.begin(), Ld.end(), [&c2](const std::vector<long>& ld) { return HasCommon(ld, c2); } );
+    if( found != Ld.end() ) {
+      inefficients.push_back(s);
+      return;
+    }
+    else {
+      DP("Cannot judge by LD");
     }
   }
-  std::sort( c1.begin(), c1.end() );
-  c1.erase( std::unique(c1.begin(), c1.end()), c1.end() );  // == c1.uniq!
 
-  std::vector<long> c2;
-  for(long n: c1) {
-    if(n < 0) continue;
-    for(int i=0; i<2; i++) {
-      long _ini = n^((i==0)?1UL:8UL);
-      std::vector<long> h = TraceITG(g, _ini);
-      c2.insert( c2.end(), h.begin(), h.end() );
+  if( Lu.empty() ) {
+    // cannot judge efficiency
+    unjudgeables.push_back(s);
+    return;
+  }
+  else {
+    std::vector<Strategy> v_s2 = FixL1States(s, g, Lu[0]);
+    for(const Strategy& s2: v_s2) {
+      JudgeEfficiencyDFS(s2, efficients, unjudgeables, inefficients);
     }
   }
-  std::sort( c2.begin(), c2.end() );
-  c2.erase( std::unique(c2.begin(), c2.end()), c2.end() );  // == c2.uniq!
-
-  for(const auto& comp: comps) {
-    bool included_in_c2 = false;
-    for(long n: comp) {
-      if( std::find(c2.begin(),c2.end(), n) != c2.end() ) {
-        included_in_c2 = true;
-        break;
-      }
-    }
-    if( included_in_c2 ) {
-      // trace l1. If none of l1 reaches 0, the strategy is surely inefficient.
-      std::vector<long> neighbors;
-      for(unsigned long n: comp) {
-        neighbors.push_back(n^1UL);  // 1-bit neighbors
-        neighbors.push_back(n^8UL);
-      }
-      std::sort( neighbors.begin(), neighbors.end() );
-      neighbors.erase( std::unique(neighbors.begin(), neighbors.end()), neighbors.end() );
-      bool return_to_0 = false;
-      for(long neigh: neighbors) {
-        if( SurelyReach0(g, neigh) ) {
-          return_to_0 = true;
-          break;
-        }
-      }
-      if( !return_to_0 ) {
-        return true;  // surely inefficient
-      }
-    }
-  }
-  return false;
 }
-
-uint64_t n_rejected = 0;
-
 
 void CheckTopologicalEfficiency(const Strategy& str, std::vector<Strategy>& efficients, std::vector<Strategy>& unjudgeables, std::vector<Strategy>& inefficients) {
   std::vector<Strategy> assigned = FixL0(str);
 
   for(const Strategy& s: assigned) {
-    if( IsSurelyEfficient(s) ) {
-      efficients.push_back(s);
-    }
-    else if( IsSurelyInefficientByC2(s) ) {
-      inefficients.push_back(s);
-      n_rejected += (1UL << (64-s.NumFixed()));
-      // std::cerr << "rejected by c2" << std::endl;
-    }
-    else {
-      std::vector<Strategy> v_s2 = FixL1States(s);
-      for(const Strategy& s2: v_s2) {
-        if( IsSurelyEfficient(s2) ) {
-          efficients.push_back(s2);
-        }
-        else {
-          if( IsSurelyInefficientByC2(s2) ) {
-            inefficients.push_back(s2);
-            n_rejected += (1UL << (64-s2.NumFixed()));
-            // std::cerr << "rejected by c2" << std::endl;
-          }
-          else {
-            unjudgeables.push_back(s2);
-          }
-        }
-      }
-    }
+    JudgeEfficiencyDFS(s, efficients, unjudgeables, inefficients);
   }
 }
 
