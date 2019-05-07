@@ -213,8 +213,8 @@ std::vector<Strategy> FixL1States(const Strategy& str, const DirectedGraph& g, c
         if( _d < 0 ) {
           State sa(-_d);
           State sb = sa.SwapAB();
-          if( s.ActionAt(sa) == U || s.ActionAt(sa) == W ) { _a.push_back(sa.ID()); }
-          if( s.ActionAt(sb) == U || s.ActionAt(sb) == W ) { _a.push_back(sb.ID()); }
+          if( _s.ActionAt(sa) == U || _s.ActionAt(sa) == W ) { _a.push_back(sa.ID()); }
+          if( _s.ActionAt(sb) == U || _s.ActionAt(sb) == W ) { _a.push_back(sb.ID()); }
         }
         dfs(_s, _a);
       }
@@ -230,6 +230,100 @@ std::vector<Strategy> FixL1States(const Strategy& str, const DirectedGraph& g, c
   return ans;
 }
 
+std::vector<long> GetD2(const DirectedGraph& g, const std::vector<long>& d0) {
+  // std::vector<long> d0 = {63};
+  std::vector<long> d1;
+  for(long n: d0) {
+    assert(n >= 0);
+    for(int i=0; i<2; i++) {
+      long _ini = (unsigned long)n^((i==0)?1UL:8UL);
+      std::vector<long> h = TraceITG(g, _ini);
+      d1.insert( d1.end(), h.begin(), h.end() );
+    }
+  }
+  std::sort( d1.begin(), d1.end() );
+  d1.erase( std::unique(d1.begin(), d1.end()), d1.end() );  // == d1.uniq!
+
+  std::vector<long> d2;
+  for(long n: d1) {
+    if( n < 0 ) { continue; }
+    for(int i=0; i<2; i++) {
+      long _ini = (unsigned long)n^((i==0)?1UL:8UL);
+      std::vector<long> h = TraceITG(g, _ini);
+      d2.insert( d2.end(), h.begin(), h.end() );
+    }
+  }
+  std::sort( d2.begin(), d2.end() );
+  d2.erase( std::unique(d2.begin(), d2.end()), d2.end() );  // == d2.uniq!
+
+  return std::move(d2);
+}
+
+bool C2notD_AND_D2has0(const DirectedGraph& g, const std::vector<long>& d0) {
+  std::vector<long> c2 = GetC2(g);
+  assert( std::find_if(c2.begin(), c2.end(), [](long x) { return x<0;}) == c2.end() ); // assert no negative element in c2
+  if( !HasCommon(d0,c2) ) {
+    // since d0 is not included in c2, at least three-bit errors are needed for the transition (0 -> d0).
+    std::vector<long> d2 = GetD2(g, d0);
+    if( std::find(d2.begin(), d2.end(), 0) != d2.end() ) {
+      // since 0 is included in d2, at most two-bit errors are needed for the transition from (d0 -> 0).
+      return true;
+    }
+  }
+
+  return false;
+}
+
+std::vector<Strategy> FixC2States(const Strategy& s, const DirectedGraph& g) {
+  std::vector<long> c2 = GetC2(g);
+
+  std::vector<long> unfixed;
+  for(long n: c2) {
+    if( n < 0 ) {
+      State sa(-n);
+      State sb = sa.SwapAB();
+      if( s.ActionAt(sa) == U || s.ActionAt(sa) == W ) { unfixed.push_back(sa.ID()); }
+      if( s.ActionAt(sb) == U || s.ActionAt(sb) == W ) { unfixed.push_back(sb.ID()); }
+    }
+  }
+  std::sort( unfixed.begin(), unfixed.end() );
+  unfixed.erase( std::unique(unfixed.begin(), unfixed.end()), unfixed.end() );
+
+  std::vector<Strategy> ans;
+  std::function<void(const Strategy&,const std::vector<long>&)> dfs = [&ans,&dfs](const Strategy& s, const std::vector<long>& a) {
+    if(a.empty()) {
+      ans.push_back(s);
+      return;
+    }
+    long last = a[a.size()-1];
+    if(s.ActionAt(last) == U || s.ActionAt(last) == W) {
+      for(int i=0; i<2; i++) {
+        Strategy _s = s;
+        std::vector<long> _a = a;
+        _a.pop_back();
+        _s.SetAction(State(last), (i==0?C:D));
+        const DirectedGraph _g = _s.ITG();
+        std::vector<long> _t = TraceITG(_g, last);
+        long _d = _t[_t.size()-1];
+        if( _d < 0 ) {
+          State sa(-_d);
+          State sb = sa.SwapAB();
+          if( _s.ActionAt(sa) == U || _s.ActionAt(sa) == W ) { _a.push_back(sa.ID()); }
+          if( _s.ActionAt(sb) == U || _s.ActionAt(sb) == W ) { _a.push_back(sb.ID()); }
+        }
+        dfs(_s, _a);
+      }
+    }
+    else {
+      std::vector<long> _a = a;
+      _a.pop_back();
+      dfs(s, _a);
+    }
+  };
+
+  dfs(s, unfixed);
+  return ans;
+}
 
 void JudgeEfficiencyDFS(const Strategy& s, std::vector<Strategy>& efficients, std::vector<Strategy>& unjudgeables, std::vector<Strategy>& inefficients) {
   const DirectedGraph g = s.ITG();
@@ -256,9 +350,24 @@ void JudgeEfficiencyDFS(const Strategy& s, std::vector<Strategy>& efficients, st
   }
 
   if( Lu.empty() ) {
-    // cannot judge efficiency
-    unjudgeables.push_back(s);
-    return;
+    // Since it is undecidable, FixC2 to narrow down the strategy
+    std::vector<Strategy> v_s2 = FixC2States(s, g);
+    DP("Fixed C2 nodes");
+    for(const Strategy& s2: v_s2) {
+      const DirectedGraph g2 = s2.ITG();
+      std::vector<long> c2 = GetC2( g2 );
+      auto found = std::find_if(Ld.begin(), Ld.end(), [&c2](const std::vector<long>& ld) { return HasCommon(ld, c2); } );
+      if( found != Ld.end() ) {
+        inefficients.push_back(s2);
+      }
+      else if( Ld.size() == 1 && C2notD_AND_D2has0(g2, Ld[0]) ) {
+        DP("Judge by C3 and D2");
+        efficients.push_back(s2);
+      }
+      else {
+        unjudgeables.push_back(s2);
+      }
+    }
   }
   else {
     std::vector<Strategy> v_s2 = FixL1States(s, g, Lu[0]);
