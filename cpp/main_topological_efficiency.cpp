@@ -445,6 +445,21 @@ void test() {
       cout << "I: " << s.ToString() << endl;
     }
   }
+
+  {
+    Strategy s("ccddddddccdcddddcccc*cccccdddddddddcccdd*ccccd*d*dcc***ddcdddddd");
+    std::vector<Strategy> efficients, unjudgeables, inefficients;
+    CheckTopologicalEfficiency(s, efficients, unjudgeables, inefficients);
+    for(auto s: efficients) {
+      cout << "E: " << s.ToString() << endl;
+    }
+    for(auto s: unjudgeables) {
+      cout << "U: " << s.ToString() << endl;
+    }
+    for(auto s: inefficients) {
+      cout << "I: " << s.ToString() << endl;
+    }
+  }
 }
 
 template<class T>
