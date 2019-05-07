@@ -86,8 +86,6 @@ std::vector<long> TraceITG(const DirectedGraph& g, long ini) {
 }
 
 
-uint64_t n_rejected = 0;
-
 // Lc : 0, Ld : 1, Lu : 2
 int JudgeLType(const DirectedGraph& g, const std::vector<long>& comp) {
   std::vector<long> neighbors;
@@ -323,6 +321,21 @@ void test() {
       cout << "I: " << s.ToString() << endl;
     }
   }
+
+  {
+    Strategy s("ccdd*dddc*dcddddccc**cccccdddddd*ddcccdd**c**c****cc***cdcdddddd");
+    std::vector<Strategy> efficients, unjudgeables, inefficients;
+    CheckTopologicalEfficiency(s, efficients, unjudgeables, inefficients);
+    for(auto s: efficients) {
+      cout << "E: " << s.ToString() << endl;
+    }
+    for(auto s: unjudgeables) {
+      cout << "U: " << s.ToString() << endl;
+    }
+    for(auto s: inefficients) {
+      cout << "I: " << s.ToString() << endl;
+    }
+  }
 }
 
 template<class T>
@@ -356,11 +369,13 @@ int main(int argc, char** argv) {
 
   uint64_t n_efficient = 0;
   uint64_t n_unjudgeable = 0;
+  uint64_t n_rejected = 0;
+
 
   ifstream fin(argv[1]);
   vector<Strategy> ins;
   int count = 0;
-  for( string s; fin >> s; count++) {
+  for( string line; fin >> line; count++) {
     if(count % 1000 == 0) {
       std::cerr << "step: " << count << std::endl;
       std::cerr << "n_efficient/n_unjudgeable/n_rejected : ";
@@ -371,17 +386,20 @@ int main(int argc, char** argv) {
       RecursiveCommas(std::cerr, n_rejected);
       std::cerr << std::endl;
     }
-    Strategy _str(s.c_str());
+    Strategy _str(line.c_str());
 
     std::vector<Strategy> efficients, unjudgeables, inefficients;
     CheckTopologicalEfficiency(_str, efficients, unjudgeables, inefficients);
     for(auto s: efficients) {
       cout << "E: " << s.ToString() << endl;
-      n_efficient += (1 << (64-s.NumFixed()));
+      n_efficient += (1UL << (64-s.NumFixed()));
     }
     for(auto s: unjudgeables) {
       cout << "U: " << s.ToString() << endl;
-      n_unjudgeable += (1 << (64-s.NumFixed()));
+      n_unjudgeable += (1UL << (64-s.NumFixed()));
+    }
+    for(auto s: inefficients) {
+      n_rejected += (1UL << (64-s.NumFixed()));
     }
   }
   std::cerr << "n_efficient/n_unjudgeable/n_rejected : ";
