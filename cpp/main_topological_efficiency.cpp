@@ -29,7 +29,11 @@ using namespace std;
 #define DP(x) do { std::cerr << x << std::endl; } while (0)
 #endif
 
-void AssignActions(const Strategy& s, std::set<long> to_be_fixed, std::vector<Strategy>& ans) {
+uint64_t Num(const Strategy& s) {
+  return (1ULL << (64 - s.NumFixed()));
+}
+
+void AssignActions(const Strategy& s, std::set<long> to_be_fixed, std::vector<Strategy>& ans, uint64_t& n_indefensible) {
   if( to_be_fixed.empty() ) {
     ans.push_back(s);
     return;
@@ -38,15 +42,18 @@ void AssignActions(const Strategy& s, std::set<long> to_be_fixed, std::vector<St
   auto it = to_be_fixed.begin();
   long n = *it;
   to_be_fixed.erase(it);
-  Strategy _s1 = s;
-  _s1.SetAction(State(n), C);
-  AssignActions(_s1, to_be_fixed, ans);
-  Strategy _s2 = s;
-  _s2.SetAction(State(n), D);
-  AssignActions(_s2, to_be_fixed, ans);
+  for(int i=0; i<2; i++) {
+    Strategy _s = s;
+    bool d = _s.SetActionAndRecalcD(State(n), (i==0?C:D));
+    if(!d) {
+      n_indefensible += Num(_s);
+      continue;
+    }
+    AssignActions(_s, to_be_fixed, ans, n_indefensible);
+  }
 }
 
-std::vector<Strategy> FixL0(const Strategy& str) {
+std::vector<Strategy> FixL0(const Strategy& str, uint64_t& n_indefensible) {
   DirectedGraph g = str.ITG();
   components_t comps = g.NonTransitionComponents();
 
@@ -63,9 +70,8 @@ std::vector<Strategy> FixL0(const Strategy& str) {
     }
   }
 
-  assert(to_be_fixed.size() < 16);
   std::vector<Strategy> ans;
-  AssignActions(str, to_be_fixed, ans);
+  AssignActions(str, to_be_fixed, ans, n_indefensible);
   return std::move(ans);
 }
 
@@ -170,7 +176,7 @@ bool HasCommon(const std::vector<long>& s1, std::vector<long>& s2) {
   return false;
 }
 
-std::vector<Strategy> FixL1States(const Strategy& str, const DirectedGraph& g, const std::vector<long>& l0) {
+std::vector<Strategy> FixL1States(const Strategy& str, const DirectedGraph& g, const std::vector<long>& l0, uint64_t& n_indefensible) {
   std::vector<long> l1;
   for(unsigned long n: l0) {
     l1.push_back(n^1UL);  // 1-bit neighbors
@@ -195,7 +201,7 @@ std::vector<Strategy> FixL1States(const Strategy& str, const DirectedGraph& g, c
   unfixed.erase( std::unique(unfixed.begin(), unfixed.end()), unfixed.end() );
 
   std::vector<Strategy> ans;
-  std::function<void(const Strategy&,const std::vector<long>&)> dfs = [&ans,&dfs](const Strategy& s, const std::vector<long>& a) {
+  std::function<void(const Strategy&,const std::vector<long>&)> dfs = [&ans,&dfs,&n_indefensible](const Strategy& s, const std::vector<long>& a) {
     if(a.empty()) {
       ans.push_back(s);
       return;
@@ -206,7 +212,11 @@ std::vector<Strategy> FixL1States(const Strategy& str, const DirectedGraph& g, c
         Strategy _s = s;
         std::vector<long> _a = a;
         _a.pop_back();
-        _s.SetAction(State(last), (i==0?C:D));
+        bool d = _s.SetActionAndRecalcD(State(last), (i==0?C:D));
+        if(!d) {
+          n_indefensible += Num(_s);
+          continue;
+        }
         const DirectedGraph _g = _s.ITG();
         std::vector<long> _t = TraceITG(_g, last);
         long _d = _t[_t.size()-1];
@@ -274,7 +284,7 @@ bool C2notD_AND_D2has0(const DirectedGraph& g, const std::vector<long>& d0) {
   return false;
 }
 
-std::vector<Strategy> FixC2States(const Strategy& s, const DirectedGraph& g) {
+std::vector<Strategy> FixC2States(const Strategy& s, const DirectedGraph& g, uint64_t& n_indefensible) {
   std::vector<long> c2 = GetC2(g);
 
   std::vector<long> unfixed;
@@ -290,7 +300,7 @@ std::vector<Strategy> FixC2States(const Strategy& s, const DirectedGraph& g) {
   unfixed.erase( std::unique(unfixed.begin(), unfixed.end()), unfixed.end() );
 
   std::vector<Strategy> ans;
-  std::function<void(const Strategy&,const std::vector<long>&)> dfs = [&ans,&dfs](const Strategy& s, const std::vector<long>& a) {
+  std::function<void(const Strategy&,const std::vector<long>&)> dfs = [&ans,&dfs,&n_indefensible](const Strategy& s, const std::vector<long>& a) {
     if(a.empty()) {
       ans.push_back(s);
       return;
@@ -301,7 +311,11 @@ std::vector<Strategy> FixC2States(const Strategy& s, const DirectedGraph& g) {
         Strategy _s = s;
         std::vector<long> _a = a;
         _a.pop_back();
-        _s.SetAction(State(last), (i==0?C:D));
+        bool d = _s.SetActionAndRecalcD(State(last), (i==0?C:D));
+        if(!d) {
+          n_indefensible += Num(_s);
+          continue;
+        }
         const DirectedGraph _g = _s.ITG();
         std::vector<long> _t = TraceITG(_g, last);
         long _d = _t[_t.size()-1];
@@ -325,7 +339,7 @@ std::vector<Strategy> FixC2States(const Strategy& s, const DirectedGraph& g) {
   return ans;
 }
 
-void JudgeEfficiencyDFS(const Strategy& s, std::vector<Strategy>& efficients, std::vector<Strategy>& unjudgeables, std::vector<Strategy>& inefficients) {
+void JudgeEfficiencyDFS(const Strategy& s, std::vector<Strategy>& efficients, std::vector<Strategy>& unjudgeables, std::vector<Strategy>& inefficients, uint64_t& n_indefensible) {
   const DirectedGraph g = s.ITG();
   components_t Lc, Ld, Lu;
   GetLcLdLu(g, Lc, Ld, Lu);
@@ -351,7 +365,7 @@ void JudgeEfficiencyDFS(const Strategy& s, std::vector<Strategy>& efficients, st
 
   if( Lu.empty() ) {
     // Since it is undecidable, FixC2 to narrow down the strategy
-    std::vector<Strategy> v_s2 = FixC2States(s, g);
+    std::vector<Strategy> v_s2 = FixC2States(s, g, n_indefensible);
     DP("Fixed C2 nodes");
     for(const Strategy& s2: v_s2) {
       const DirectedGraph g2 = s2.ITG();
@@ -370,19 +384,25 @@ void JudgeEfficiencyDFS(const Strategy& s, std::vector<Strategy>& efficients, st
     }
   }
   else {
-    std::vector<Strategy> v_s2 = FixL1States(s, g, Lu[0]);
+    std::vector<Strategy> v_s2 = FixL1States(s, g, Lu[0], n_indefensible);
     for(const Strategy& s2: v_s2) {
-      JudgeEfficiencyDFS(s2, efficients, unjudgeables, inefficients);
+      JudgeEfficiencyDFS(s2, efficients, unjudgeables, inefficients, n_indefensible);
     }
   }
 }
 
-void CheckTopologicalEfficiency(const Strategy& str, std::vector<Strategy>& efficients, std::vector<Strategy>& unjudgeables, std::vector<Strategy>& inefficients) {
-  std::vector<Strategy> assigned = FixL0(str);
+void CheckTopologicalEfficiency(Strategy& str, std::vector<Strategy>& efficients, std::vector<Strategy>& unjudgeables, std::vector<Strategy>& inefficients) {
+  uint64_t n_indefensibles = 0;
+  if( !str.IsDefensible() ) {
+    n_indefensibles += Num(str);
+    return;
+  }
+  std::vector<Strategy> assigned = FixL0(str, n_indefensibles);
 
   for(const Strategy& s: assigned) {
-    JudgeEfficiencyDFS(s, efficients, unjudgeables, inefficients);
+    JudgeEfficiencyDFS(s, efficients, unjudgeables, inefficients, n_indefensibles);
   }
+  // std::cerr << "indefensibles: " << n_indefensibles << std::endl;
 }
 
 void test() {
