@@ -33,6 +33,17 @@ uint64_t Num(const Strategy& s) {
   return (1ULL << (64 - s.NumFixed()));
 }
 
+// Fix action of s at State n, and return the defensibility
+bool FixAction(Strategy& s, long n, Action a) {
+  if(s.NumU() > 0) {
+    return s.SetActionAndRecalcD(State(n), a);
+  }
+  else {
+    s.SetAction(State(n), a);
+    return true;
+  }
+}
+
 void AssignActions(const Strategy& s, std::set<long> to_be_fixed, std::vector<Strategy>& ans, uint64_t& n_indefensible) {
   if( to_be_fixed.empty() ) {
     ans.push_back(s);
@@ -44,7 +55,7 @@ void AssignActions(const Strategy& s, std::set<long> to_be_fixed, std::vector<St
   to_be_fixed.erase(it);
   for(int i=0; i<2; i++) {
     Strategy _s = s;
-    bool d = _s.SetActionAndRecalcD(State(n), (i==0?C:D));
+    bool d = FixAction(_s, n, (i==0?C:D));
     if(!d) {
       n_indefensible += Num(_s);
       continue;
@@ -212,7 +223,7 @@ std::vector<Strategy> FixL1States(const Strategy& str, const DirectedGraph& g, c
         Strategy _s = s;
         std::vector<long> _a = a;
         _a.pop_back();
-        bool d = _s.SetActionAndRecalcD(State(last), (i==0?C:D));
+        bool d = FixAction(_s, last, (i==0?C:D));
         if(!d) {
           n_indefensible += Num(_s);
           continue;
@@ -311,7 +322,7 @@ std::vector<Strategy> FixC2States(const Strategy& s, const DirectedGraph& g, uin
         Strategy _s = s;
         std::vector<long> _a = a;
         _a.pop_back();
-        bool d = _s.SetActionAndRecalcD(State(last), (i==0?C:D));
+        bool d = FixAction(_s, last, (i==0?C:D));
         if(!d) {
           n_indefensible += Num(_s);
           continue;
@@ -339,164 +350,6 @@ std::vector<Strategy> FixC2States(const Strategy& s, const DirectedGraph& g, uin
   return ans;
 }
 
-void JudgeEfficiencyDFS(const Strategy& s, std::vector<Strategy>& efficients, std::vector<Strategy>& unjudgeables, std::vector<Strategy>& inefficients, uint64_t& n_indefensible) {
-  const DirectedGraph g = s.ITG();
-  components_t Lc, Ld, Lu;
-  GetLcLdLu(g, Lc, Ld, Lu);
-
-  // All L belongs to Lc
-  if( Ld.empty() && Lu.empty() ) {
-    efficients.push_back(s);
-    return;
-  }
-
-  // Judge inefficiency
-  if( !Ld.empty() ) {
-    std::vector<long> c2 = GetC2(g);
-    auto found = std::find_if(Ld.begin(), Ld.end(), [&c2](const std::vector<long>& ld) { return HasCommon(ld, c2); } );
-    if( found != Ld.end() ) {
-      inefficients.push_back(s);
-      return;
-    }
-    else {
-      DP("Cannot judge by LD");
-    }
-  }
-
-  if( Lu.empty() ) {
-    // Since it is undecidable, FixC2 to narrow down the strategy
-    std::vector<Strategy> v_s2 = FixC2States(s, g, n_indefensible);
-    DP("Fixed C2 nodes");
-    for(const Strategy& s2: v_s2) {
-      const DirectedGraph g2 = s2.ITG();
-      std::vector<long> c2 = GetC2( g2 );
-      auto found = std::find_if(Ld.begin(), Ld.end(), [&c2](const std::vector<long>& ld) { return HasCommon(ld, c2); } );
-      if( found != Ld.end() ) {
-        inefficients.push_back(s2);
-      }
-      else if( Ld.size() == 1 && C2notD_AND_D2has0(g2, Ld[0]) ) {
-        DP("Judge by C3 and D2");
-        efficients.push_back(s2);
-      }
-      else {
-        unjudgeables.push_back(s2);
-      }
-    }
-  }
-  else {
-    std::vector<Strategy> v_s2 = FixL1States(s, g, Lu[0], n_indefensible);
-    for(const Strategy& s2: v_s2) {
-      JudgeEfficiencyDFS(s2, efficients, unjudgeables, inefficients, n_indefensible);
-    }
-  }
-}
-
-void CheckTopologicalEfficiency(Strategy& str, std::vector<Strategy>& efficients, std::vector<Strategy>& unjudgeables, std::vector<Strategy>& inefficients) {
-  uint64_t n_indefensibles = 0;
-  if( !str.IsDefensible() ) {
-    n_indefensibles += Num(str);
-    return;
-  }
-  std::vector<Strategy> assigned = FixL0(str, n_indefensibles);
-
-  for(const Strategy& s: assigned) {
-    JudgeEfficiencyDFS(s, efficients, unjudgeables, inefficients, n_indefensibles);
-  }
-  // std::cerr << "indefensibles: " << n_indefensibles << std::endl;
-}
-
-void test() {
-  {
-    Strategy s("cd*d*dddd*dddcdcddcd*cdd*d**dcdd*d*ccddddcddccdd**dd***cdc*cdcdd"); // is efficient
-    std::vector<Strategy> efficients, unjudgeables, inefficients;
-    CheckTopologicalEfficiency(s, efficients, unjudgeables, inefficients);
-    for(auto s: efficients) {
-      cout << "E: " << s.ToString() << endl;
-    }
-    for(auto s: unjudgeables) {
-      cout << "U: " << s.ToString() << endl;
-    }
-    for(auto s: inefficients) {
-      cout << "I: " << s.ToString() << endl;
-    }
-  }
-
-  {
-    Strategy s("cddd*c*dd*ddcddc*d*d*dcd*dcddcdd*dddcddd**dd**dd*ccd***cdc*cdcdd"); // 3/4 efficient, 1/4 unjudgeable
-    std::vector<Strategy> efficients, unjudgeables, inefficients;
-    CheckTopologicalEfficiency(s, efficients, unjudgeables, inefficients);
-    for(auto s: efficients) {
-      cout << "E: " << s.ToString() << endl;
-    }
-    for(auto s: unjudgeables) {
-      cout << "U: " << s.ToString() << endl;
-    }
-    for(auto s: inefficients) {
-      cout << "I: " << s.ToString() << endl;
-    }
-  }
-
-  {
-    Strategy s("ccdd**ddc*ccdccdc*ddddccdc****cd*d**ccdcdccddccd**cddd**d*****cd"); // unjudgeable
-    std::vector<Strategy> efficients, unjudgeables, inefficients;
-    CheckTopologicalEfficiency(s, efficients, unjudgeables, inefficients);
-    for(auto s: efficients) {
-      cout << "E: " << s.ToString() << endl;
-    }
-    for(auto s: unjudgeables) {
-      cout << "U: " << s.ToString() << endl;
-    }
-    for(auto s: inefficients) {
-      cout << "I: " << s.ToString() << endl;
-    }
-  }
-
-  {
-    Strategy s("ccdd*dddc*dcddddccc**cccccdddddd*ddcccdd**c**c****cc***cdcdddddd");
-    std::vector<Strategy> efficients, unjudgeables, inefficients;
-    CheckTopologicalEfficiency(s, efficients, unjudgeables, inefficients);
-    for(auto s: efficients) {
-      cout << "E: " << s.ToString() << endl;
-    }
-    for(auto s: unjudgeables) {
-      cout << "U: " << s.ToString() << endl;
-    }
-    for(auto s: inefficients) {
-      cout << "I: " << s.ToString() << endl;
-    }
-  }
-
-  {
-    Strategy s("ccddddddccdcddddcccc*cccccdddddddddcccdd*ccccd*d*dcc***ddcdddddd");
-    std::vector<Strategy> efficients, unjudgeables, inefficients;
-    CheckTopologicalEfficiency(s, efficients, unjudgeables, inefficients);
-    for(auto s: efficients) {
-      cout << "E: " << s.ToString() << endl;
-    }
-    for(auto s: unjudgeables) {
-      cout << "U: " << s.ToString() << endl;
-    }
-    for(auto s: inefficients) {
-      cout << "I: " << s.ToString() << endl;
-    }
-  }
-
-  {
-    Strategy s("ccddcccdc_dcdccdc_ddddcccc____cd_d__ccdcdccddccd__cddd________cd");
-    std::vector<Strategy> efficients, unjudgeables, inefficients;
-    CheckTopologicalEfficiency(s, efficients, unjudgeables, inefficients);
-    for(auto s: efficients) {
-      cout << "E: " << s.ToString() << endl;
-    }
-    for(auto s: unjudgeables) {
-      cout << "U: " << s.ToString() << endl;
-    }
-    for(auto s: inefficients) {
-      cout << "I: " << s.ToString() << endl;
-    }
-  }
-}
-
 template<class T>
 void RecursiveCommas(std::ostream& os, T n)
 {
@@ -512,6 +365,155 @@ void RecursiveCommas(std::ostream& os, T n)
   else
     os << rest; //first chunk of the number
 }
+
+std::string ToC(uint64_t n) {
+  std::ostringstream oss;
+  RecursiveCommas(oss, n);
+  return oss.str();
+}
+
+class Filtered {
+public:
+  std::vector<Strategy> efficient;
+  std::vector<Strategy> pending;
+  uint64_t n_rejected;
+  Filtered() : n_rejected(0) {};
+  uint64_t NumEfficient() const {
+    uint64_t n = 0;
+    for(const Strategy& s: efficient) { n += Num(s); }
+    return n;
+  }
+  uint64_t NumPending() const {
+    uint64_t n = 0;
+    for(const Strategy& s: pending) { n += Num(s); }
+    return n;
+  }
+  void PrintStrategies(std::ostream &os) const {
+    for(const Strategy& s: efficient) {
+      os << "E: " << s.ToString() << std::endl;
+    }
+    for(const Strategy& s: pending) {
+      os << "P: " << s.ToString() << std::endl;
+    }
+    os << "# E/P/R : " << ToC(NumEfficient()) << " / " << ToC(NumPending()) << " / " << ToC(n_rejected) << std::endl;
+  }
+};
+
+void JudgeEfficiencyDFS(const Strategy& s, Filtered & f) {
+  const DirectedGraph g = s.ITG();
+  components_t Lc, Ld, Lu;
+  GetLcLdLu(g, Lc, Ld, Lu);
+
+  // All L belongs to Lc
+  if( Ld.empty() && Lu.empty() ) {
+    f.efficient.push_back(s);
+    return;
+  }
+
+  // Judge inefficiency
+  if( !Ld.empty() ) {
+    std::vector<long> c2 = GetC2(g);
+    auto found = std::find_if(Ld.begin(), Ld.end(), [&c2](const std::vector<long>& ld) { return HasCommon(ld, c2); } );
+    if( found != Ld.end() ) {
+      f.n_rejected += Num(s);
+      return;
+    }
+    else {
+      DP("Cannot judge by LD");
+    }
+  }
+
+  if( Lu.empty() ) {
+    // Since it is undecidable, FixC2 to narrow down the strategy
+    std::vector<Strategy> v_s2 = FixC2States(s, g, f.n_rejected);
+    DP("Fixed C2 nodes");
+    for(const Strategy& s2: v_s2) {
+      const DirectedGraph g2 = s2.ITG();
+      std::vector<long> c2 = GetC2( g2 );
+      auto found = std::find_if(Ld.begin(), Ld.end(), [&c2](const std::vector<long>& ld) { return HasCommon(ld, c2); } );
+      if( found != Ld.end() ) {
+        f.n_rejected += Num(s2);
+      }
+      else if( Ld.size() == 1 && C2notD_AND_D2has0(g2, Ld[0]) ) {
+        DP("Judge by C3 and D2");
+        f.efficient.push_back(s2);
+      }
+      else {
+        f.pending.push_back(s2);
+      }
+    }
+  }
+  else {
+    std::vector<Strategy> v_s2 = FixL1States(s, g, Lu[0], f.n_rejected);
+    for(const Strategy& s2: v_s2) {
+      JudgeEfficiencyDFS(s2, f);
+    }
+  }
+}
+
+void CheckTopologicalEfficiency(Strategy& str, Filtered& f) {
+  if( !str.IsDefensible() ) {
+    f.n_rejected += Num(str);
+    return;
+  }
+  std::vector<Strategy> assigned = FixL0(str, f.n_rejected);
+
+  for(const Strategy& s: assigned) {
+    JudgeEfficiencyDFS(s, f);
+  }
+}
+
+void test() {
+  {
+    Strategy s("cd*d*dddd*dddcdcddcd*cdd*d**dcdd*d*ccddddcddccdd**dd***cdc*cdcdd"); // is efficient
+    Filtered f;
+    CheckTopologicalEfficiency(s, f);
+    assert( Num(s) == f.n_rejected + f.NumEfficient() + f.NumPending() );
+    f.PrintStrategies(std::cout);
+  }
+
+  {
+    Strategy s("cddd*c*dd*ddcddc*d*d*dcd*dcddcdd*dddcddd**dd**dd*ccd***cdc*cdcdd"); // 3/4 efficient, 1/4 unjudgeable
+    Filtered f;
+    CheckTopologicalEfficiency(s, f);
+    assert( Num(s) == f.n_rejected + f.NumEfficient() + f.NumPending() );
+    f.PrintStrategies(std::cout);
+  }
+
+  {
+    Strategy s("ccdd**ddc*ccdccdc*ddddccdc****cd*d**ccdcdccddccd**cddd**d*****cd"); // unjudgeable
+    Filtered f;
+    CheckTopologicalEfficiency(s, f);
+    assert( Num(s) == f.n_rejected + f.NumEfficient() + f.NumPending() );
+    f.PrintStrategies(std::cout);
+  }
+
+  {
+    Strategy s("ccdd*dddc*dcddddccc**cccccdddddd*ddcccdd**c**c****cc***cdcdddddd");
+    Filtered f;
+    CheckTopologicalEfficiency(s, f);
+    assert( Num(s) == f.n_rejected + f.NumEfficient() + f.NumPending() );
+    f.PrintStrategies(std::cout);
+  }
+
+  {
+    Strategy s("ccddddddccdcddddcccc*cccccdddddddddcccdd*ccccd*d*dcc***ddcdddddd");
+    Filtered f;
+    CheckTopologicalEfficiency(s, f);
+    assert( Num(s) == f.n_rejected + f.NumEfficient() + f.NumPending() );
+    f.PrintStrategies(std::cout);
+  }
+
+  {
+    Strategy s("ccddcccdc_dcdccdc_ddddcccc____cd_d__ccdcdccddccd__cddd________cd");
+    Filtered f;
+    CheckTopologicalEfficiency(s, f);
+    assert( Num(s) == f.n_rejected + f.NumEfficient() + f.NumPending() );
+    f.PrintStrategies(std::cout);
+  }
+}
+
+
 
 
 int main(int argc, char** argv) {
@@ -561,27 +563,12 @@ int main(int argc, char** argv) {
     if( count % num_procs == my_rank ) {
     Strategy _str(line.c_str());
 
-    uint64_t n_e = 0;
-    uint64_t n_u = 0;
-    uint64_t n_r = 0;
-
-    std::vector<Strategy> efficients, unjudgeables, inefficients;
-    CheckTopologicalEfficiency(_str, efficients, unjudgeables, inefficients);
-    for(auto s: efficients) {
-      // fout << "E: " << s.ToString() << endl;
-      n_e += (1UL << (64-s.NumFixed()));
-    }
-    for(auto s: unjudgeables) {
-      // fout << "U: " << s.ToString() << endl;
-      n_u += (1UL << (64-s.NumFixed()));
-    }
-    for(auto s: inefficients) {
-      n_r += (1UL << (64-s.NumFixed()));
-    }
-    fout << line << ' ' << n_e << ' ' << n_u << ' ' << n_r << std::endl;
-    n_efficient += n_e;
-    n_unjudgeable += n_u;
-    n_rejected += n_r;
+    Filtered f;
+    CheckTopologicalEfficiency(_str, f);
+    fout << line << ' ' << f.NumEfficient() << ' ' << f.NumPending() << ' ' << f.n_rejected << std::endl;
+    n_efficient += f.NumEfficient();
+    n_unjudgeable += f.NumPending();
+    n_rejected += f.n_rejected;
     }
   }
 
