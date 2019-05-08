@@ -460,6 +460,21 @@ void test() {
       cout << "I: " << s.ToString() << endl;
     }
   }
+
+  {
+    Strategy s("ccddcccdc_dcdccdc_ddddcccc____cd_d__ccdcdccddccd__cddd________cd");
+    std::vector<Strategy> efficients, unjudgeables, inefficients;
+    CheckTopologicalEfficiency(s, efficients, unjudgeables, inefficients);
+    for(auto s: efficients) {
+      cout << "E: " << s.ToString() << endl;
+    }
+    for(auto s: unjudgeables) {
+      cout << "U: " << s.ToString() << endl;
+    }
+    for(auto s: inefficients) {
+      cout << "I: " << s.ToString() << endl;
+    }
+  }
 }
 
 template<class T>
@@ -485,24 +500,36 @@ int main(int argc, char** argv) {
   return 0;
 #else
 
-  if( argc != 2 ) {
+  MPI_Init(&argc, &argv);
+
+  if( argc != 3 ) {
     cerr << "Error : invalid argument" << endl;
-    cerr << "  Usage : " << argv[0] << " <strategy_file>" << endl;
+    cerr << "  Usage : " << argv[0] << " <strategy_file> <out file>" << endl;
     return 1;
   }
+
+  int my_rank = 0;
+  MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+  int num_procs = 0;
+  MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
+
+
+  ifstream fin(argv[1]);
+
+  std::string out_format = argv[2];
+  char outfile[256];
+  sprintf(outfile, (out_format+".%d").c_str(), my_rank);
+  std::ofstream fout(outfile);
 
   uint64_t n_efficient = 0;
   uint64_t n_unjudgeable = 0;
   uint64_t n_rejected = 0;
 
-
-  ifstream fin(argv[1]);
   vector<Strategy> ins;
   int count = 0;
   for( string line; fin >> line; count++) {
     if(count % 1000 == 0) {
-      std::cerr << "step: " << count << std::endl;
-      std::cerr << "n_efficient/n_unjudgeable/n_rejected : ";
+      std::cerr << "step: " << count << " @ " << my_rank << std::endl;
       RecursiveCommas(std::cerr, n_efficient);
       std::cerr << " / ";
       RecursiveCommas(std::cerr, n_unjudgeable);
@@ -510,29 +537,53 @@ int main(int argc, char** argv) {
       RecursiveCommas(std::cerr, n_rejected);
       std::cerr << std::endl;
     }
+
+    if( count % num_procs == my_rank ) {
     Strategy _str(line.c_str());
+
+    uint64_t n_e = 0;
+    uint64_t n_u = 0;
+    uint64_t n_r = 0;
 
     std::vector<Strategy> efficients, unjudgeables, inefficients;
     CheckTopologicalEfficiency(_str, efficients, unjudgeables, inefficients);
     for(auto s: efficients) {
-      cout << "E: " << s.ToString() << endl;
-      n_efficient += (1UL << (64-s.NumFixed()));
+      // fout << "E: " << s.ToString() << endl;
+      n_e += (1UL << (64-s.NumFixed()));
     }
     for(auto s: unjudgeables) {
-      cout << "U: " << s.ToString() << endl;
-      n_unjudgeable += (1UL << (64-s.NumFixed()));
+      // fout << "U: " << s.ToString() << endl;
+      n_u += (1UL << (64-s.NumFixed()));
     }
     for(auto s: inefficients) {
-      n_rejected += (1UL << (64-s.NumFixed()));
+      n_r += (1UL << (64-s.NumFixed()));
+    }
+    fout << line << ' ' << n_e << ' ' << n_u << ' ' << n_r << std::endl;
+    n_efficient += n_e;
+    n_unjudgeable += n_u;
+    n_rejected += n_r;
     }
   }
-  std::cerr << "n_efficient/n_unjudgeable/n_rejected : ";
-  RecursiveCommas(std::cerr, n_efficient);
-  std::cerr << " / ";
-  RecursiveCommas(std::cerr, n_unjudgeable);
-  std::cerr << " / ";
-  RecursiveCommas(std::cerr, n_rejected);
-  std::cerr << std::endl;
+
+  uint64_t sum_n_efficient = 0;
+  uint64_t sum_n_unjudgeable = 0;
+  uint64_t sum_n_rejected = 0;
+  MPI_Reduce(&n_efficient, &sum_n_efficient, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&n_unjudgeable, &sum_n_unjudgeable, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&n_rejected, &sum_n_rejected, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+
+  if(my_rank == 0) {
+    std::cerr << "n_efficient/n_unjudgeable/n_rejected : ";
+    RecursiveCommas(std::cerr, sum_n_efficient);
+    std::cerr << " / ";
+    RecursiveCommas(std::cerr, sum_n_unjudgeable);
+    std::cerr << " / ";
+    RecursiveCommas(std::cerr, sum_n_rejected);
+    std::cerr << std::endl;
+  }
+
+  MPI_Finalize();
+
   return 0;
 #endif
 }
