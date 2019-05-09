@@ -12,9 +12,6 @@ include_directories(SYSTEM ${MPI_INCLUDE_PATH} /usr/local/include/eigen3)
 add_executable(test_Strategy test_Strategy.cpp ${SOURCE_FILES})
 add_executable(test_DirectedGraph test_DirectedGraph.cpp ${SOURCE_FILES})
 
-add_executable(main_defensible main_defensible.cpp ${SOURCE_FILES})
-target_link_libraries(main_defensible ${MPI_LIBRARIES})
-
 add_executable(main_efficient_defensible main_efficient_defensible.cpp ${SOURCE_FILES})
 target_link_libraries(main_efficient_defensible ${MPI_LIBRARIES})
 
