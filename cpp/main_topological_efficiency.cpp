@@ -434,12 +434,19 @@ void JudgeEfficiencyDFS(const Strategy& s, Filtered & f) {
       if( found != Ld.end() ) {
         f.n_rejected += Num(s2);
       }
-      else if( Ld.size() == 1 && C2notD_AND_D2has0(g2, Ld[0]) ) {
-        DP("Judge by C3 and D2");
-        f.efficient.push_back(s2);
-      }
       else {
-        f.pending.push_back(s2);
+        assert(Ld.size() > 0);
+        bool ok = true;
+        for(const std::vector<long>& l: Ld) { // All Ld are efficient by two-bit-error judgement
+          if( !C2notD_AND_D2has0(g2, l) ) { ok = false; break; }
+        }
+        if(ok) {
+          DP("Judge by C3 and D2");
+          f.efficient.push_back(s2);
+        }
+        else {
+          f.pending.push_back(s2);
+        }
       }
     }
   }
@@ -511,6 +518,24 @@ void test() {
     assert( Num(s) == f.n_rejected + f.NumEfficient() + f.NumPending() );
     f.PrintStrategies(std::cout);
   }
+
+  {
+    // judged by two-bit error tolerance of d0 and c0
+    Strategy s("ccddcd_dcdccddcdccddddcddccdcdcdcdd_ccc_dccddcddd_cddd_cddcd__cd");
+    Filtered f;
+    CheckTopologicalEfficiency(s, f);
+    assert( Num(s) == f.n_rejected + f.NumEfficient() + f.NumPending() );
+    f.PrintStrategies(std::cout);
+  }
+
+  {
+    // pending
+    Strategy s("ccddcd_dccccddcdccccddcddccc_dcdddc_ccc_ddcdddcdd_cddddddccdcddd");
+    Filtered f;
+    CheckTopologicalEfficiency(s, f);
+    assert( Num(s) == f.n_rejected + f.NumEfficient() + f.NumPending() );
+    f.PrintStrategies(std::cout);
+  }
 }
 
 
@@ -542,6 +567,9 @@ int main(int argc, char** argv) {
   char outfile[256];
   sprintf(outfile, (out_format+".%d").c_str(), my_rank);
   std::ofstream fout(outfile);
+  char outfile2[256];
+  sprintf(outfile2, (out_format+".pending.%d").c_str(), my_rank);
+  std::ofstream fout2(outfile2);
 
   uint64_t n_efficient = 0;
   uint64_t n_unjudgeable = 0;
@@ -561,16 +589,22 @@ int main(int argc, char** argv) {
     }
 
     if( count % num_procs == my_rank ) {
-    Strategy _str(line.c_str());
+      Strategy _str(line.c_str());
 
-    Filtered f;
-    CheckTopologicalEfficiency(_str, f);
-    fout << line << ' ' << f.NumEfficient() << ' ' << f.NumPending() << ' ' << f.n_rejected << std::endl;
-    n_efficient += f.NumEfficient();
-    n_unjudgeable += f.NumPending();
-    n_rejected += f.n_rejected;
+      Filtered f;
+      CheckTopologicalEfficiency(_str, f);
+      fout << line << ' ' << f.NumEfficient() << ' ' << f.NumPending() << ' ' << f.n_rejected << std::endl;
+      n_efficient += f.NumEfficient();
+      n_unjudgeable += f.NumPending();
+      n_rejected += f.n_rejected;
+
+      for(const Strategy& s: f.pending) {
+        fout2 << s.ToString() << std::endl;
+      }
     }
   }
+  fout.close();
+  fout2.close();
 
   uint64_t sum_n_efficient = 0;
   uint64_t sum_n_unjudgeable = 0;
