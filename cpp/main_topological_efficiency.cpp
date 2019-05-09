@@ -8,6 +8,7 @@
 #include <deque>
 #include <iomanip>
 #include <algorithm>
+#include <chrono>
 #include "mpi.h"
 #include "Strategy.hpp"
 #include "TopologicalEfficiency.hpp"
@@ -136,9 +137,15 @@ int main(int argc, char** argv) {
     }
 
     if( count % num_procs == my_rank ) {
+      auto start = std::chrono::system_clock::now();
+
       Strategy _str(line.c_str());
 
       TopologicalEfficiencyResult_t res = CheckTopologicalEfficiency(_str);
+
+      auto m1 = std::chrono::system_clock::now();
+      double e1 = std::chrono::duration_cast<std::chrono::milliseconds>(m1-start).count();
+      if(e1 > 3000.0) { std::cerr << "e1 > 3sec : " << line << std::endl; }
 
       uint64_t n_passed_d = 0;
       uint64_t n_pending_d = 0;
@@ -151,12 +158,19 @@ int main(int argc, char** argv) {
           n_rejected_d += res_d.n_rejected;
         }
 
+        auto m2 = std::chrono::system_clock::now();
+        double e2 = std::chrono::duration_cast<std::chrono::milliseconds>(m2-m1).count();
+        if(e2 > 3000.0) { std::cerr << "e2 > 3sec : " << line << std::endl; }
+
         for(const Strategy& s: res.pending) {
           TraceNegativeDefensibleResult_t res_d = TraceNegativeDefensible(s, 64, 64);
           n_pending_d += res_d.NumDefensible();
           n_rejected_d += res_d.n_rejected;
           v_pending.insert( v_pending.begin(), res_d.passed.begin(), res_d.passed.end() );
         }
+        auto m3 = std::chrono::system_clock::now();
+        double e3 = std::chrono::duration_cast<std::chrono::milliseconds>(m3-m2).count();
+        if(e3 > 3000.0) { std::cerr << "e3 > 3sec : " << line << std::endl; }
       }
       fout << line << ' ' << n_passed_d << ' ' << n_pending_d << ' ' << n_rejected_d << std::endl;
       n_efficient += n_passed_d;
