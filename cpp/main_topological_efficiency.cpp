@@ -11,6 +11,7 @@
 #include "mpi.h"
 #include "Strategy.hpp"
 #include "TopologicalEfficiency.hpp"
+#include "TraceNegativeDefensible.hpp"
 
 using namespace std;
 
@@ -138,12 +139,31 @@ int main(int argc, char** argv) {
       Strategy _str(line.c_str());
 
       TopologicalEfficiencyResult_t res = CheckTopologicalEfficiency(_str);
-      fout << line << ' ' << res.NumEfficient() << ' ' << res.NumPending() << ' ' << res.n_rejected << std::endl;
-      n_efficient += res.NumEfficient();
-      n_unjudgeable += res.NumPending();
-      n_rejected += res.n_rejected;
 
-      for(const Strategy& s: res.pending) {
+      uint64_t n_passed_d = 0;
+      uint64_t n_pending_d = 0;
+      uint64_t n_rejected_d = res.n_rejected;
+      std::vector<Strategy> v_pending;
+      { // check defensibility
+        for(const Strategy& s: res.efficient) {
+          TraceNegativeDefensibleResult_t res_d = TraceNegativeDefensible(s, 64, 64);
+          n_passed_d += res_d.NumDefensible();
+          n_rejected_d += res_d.n_rejected;
+        }
+
+        for(const Strategy& s: res.pending) {
+          TraceNegativeDefensibleResult_t res_d = TraceNegativeDefensible(s, 64, 64);
+          n_pending_d += res_d.NumDefensible();
+          n_rejected_d += res_d.n_rejected;
+          v_pending.insert( v_pending.begin(), res_d.passed.begin(), res_d.passed.end() );
+        }
+      }
+      fout << line << ' ' << n_passed_d << ' ' << n_pending_d << ' ' << n_rejected_d << std::endl;
+      n_efficient += n_passed_d;
+      n_unjudgeable += n_pending_d;
+      n_rejected += n_rejected_d;
+
+      for(const Strategy& s: v_pending) {
         fout2 << s.ToString() << std::endl;
       }
     }
