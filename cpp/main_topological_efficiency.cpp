@@ -112,10 +112,10 @@ int main(int argc, char** argv) {
 
   std::string out_format = argv[2];
   char outfile[256];
-  sprintf(outfile, (out_format+".%d").c_str(), my_rank);
+  sprintf(outfile, (out_format+".%04d").c_str(), my_rank);
   std::ofstream fout(outfile);
   char outfile2[256];
-  sprintf(outfile2, (out_format+".pending.%d").c_str(), my_rank);
+  sprintf(outfile2, (out_format+".pending.%04d").c_str(), my_rank);
   std::ofstream fout2(outfile2);
 
   uint64_t n_efficient = 0;
