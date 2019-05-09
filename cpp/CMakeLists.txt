@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 11)
 
 #set(CMAKE_VERBOSE_MAKEFILE 1)
 
-set(SOURCE_FILES Action.cpp Action.hpp Strategy.cpp Strategy.hpp DirectedGraph.hpp DirectedGraph.cpp)
+set(SOURCE_FILES Action.cpp Action.hpp Strategy.cpp Strategy.hpp DirectedGraph.hpp DirectedGraph.cpp TraceNegativeDefensible.hpp TraceNegativeDefensible.cpp)
 find_package(MPI)
 include_directories(SYSTEM ${MPI_INCLUDE_PATH} /usr/local/include/eigen3)
 

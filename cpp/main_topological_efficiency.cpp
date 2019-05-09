@@ -350,27 +350,7 @@ std::vector<Strategy> FixC2States(const Strategy& s, const DirectedGraph& g, uin
   return ans;
 }
 
-template<class T>
-void RecursiveCommas(std::ostream& os, T n)
-{
-  T rest = n % 1000; //"last 3 digits"
-  n /= 1000;         //"begining"
 
-  if (n > 0) {
-    RecursiveCommas(os, n); //printing "begining"
-
-    //and last chunk
-    os << ',' << std::setfill('0') << std::setw(3) << rest;
-  }
-  else
-    os << rest; //first chunk of the number
-}
-
-std::string ToC(uint64_t n) {
-  std::ostringstream oss;
-  RecursiveCommas(oss, n);
-  return oss.str();
-}
 
 class Filtered {
 public:

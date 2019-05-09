@@ -121,6 +121,7 @@ public:
   void SetAction( const State& s, Action a ) { assert(actions[s.ID()]==U||actions[s.ID()]==W); actions[s.ID()] = a; }
   int NumFixed() const { int c=0; for(auto a: actions) { if(a==C||a==D) c++;} return c; }
   int NumU() const { int c=0; for(auto a: actions) { if(a==U) c++;} return c; }
+  uint64_t Size() const { return (1ULL << (64 - NumFixed())); }
   bool IsDefensible();  // check defensibility. If defensible, m_d is also calculated
   std::array<double,64> StationaryState(double e=0.0001) const; // all actions must be fixed to calculated stationary state
   bool IsEfficient(double e=0.0001, double th=0.95) const { return (StationaryState(e)[0]>th); } // check efficiency. all actions must be fixed
