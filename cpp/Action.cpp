@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cassert>
 #include "Action.hpp"
 
 char A2C( Action act ) {
