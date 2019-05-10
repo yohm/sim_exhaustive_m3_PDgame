@@ -55,12 +55,14 @@ namespace {
 
       // if(negs.size() + undetermined.size() < 16)  // heuristic
       { // check defensibility of wildcard
+        /*
         Strategy _s = ReplaceUwithW(s);
         if(_s.IsDefensible()) {
           DP("WILDCARD worked! at depth " << depth << " : " << negs.size()+undetermined.size());
           res.passed.push_back(_s);
           return;
         }
+        */
       }
 
       const State target = (negs.size()>0) ? negs[0] : undetermined[0];
@@ -88,7 +90,7 @@ namespace {
     else { // no negative undetermined node && no negative dangling node. It must be defensible.
       DP("No negative dangling node and undetermined node. must be defensible");
       Strategy _s = ReplaceUwithW(s);
-      if( ! _s.IsDefensible() ) { throw "must not happen"; }
+      assert( _s.IsDefensible() );
       res.passed.push_back(_s);
     }
   }
