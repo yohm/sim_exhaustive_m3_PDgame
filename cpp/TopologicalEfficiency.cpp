@@ -52,6 +52,7 @@ namespace {
         if( act_b == U || act_b == W ) { to_be_fixed.insert(sb.ID()); }
       }
     }
+    std::cerr << "to_be_fixed in FixL0: " << to_be_fixed.size() << std::endl;
 
     std::vector<Strategy> ans;
     AssignActions(str, to_be_fixed, ans, n_indefensible);
