@@ -145,6 +145,7 @@ int main(int argc, char** argv) {
     }
 
     if( count % num_procs == my_rank ) {
+      std::cerr << "checking: " << line << std::endl;
       auto start = std::chrono::system_clock::now();
 
       Strategy _str(line.c_str());

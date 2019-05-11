@@ -1,7 +1,7 @@
 #!/bin/sh
 #============ pjsub Options ============
 #PJM --rsc-list "node=540"
-#PJM --rsc-list "elapse=00:30:00"
+#PJM --rsc-list "elapse=00:15:00"
 #PJM --rsc-list "rscgrp=large"
 #PJM --mpi "proc=4320"
 #PJM --stg-transfiles all
