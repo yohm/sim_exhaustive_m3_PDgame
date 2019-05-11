@@ -55,7 +55,7 @@ namespace {
     }
     // std::cerr << "to_be_fixed in FixL0: " << to_be_fixed.size() << std::endl;
 
-    if( to_be_fixed.size() > 8 ) {
+    if( str.NumU() > 0 && to_be_fixed.size() > 8 ) {
       Strategy s = str;
       TraceNegativeDefensibleResult_t res = TraceNegativeDefensible(s, 4, 64);
       n_indefensible += res.n_rejected;

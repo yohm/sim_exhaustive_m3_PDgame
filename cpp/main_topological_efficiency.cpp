@@ -86,6 +86,14 @@ void test() {
   }
 
   {
+    // recursive failure strategy
+    Strategy s("ccddcdcdd*dcccdddcdd**ddd***cdddccdd***ccc**ccddc**c*****ccdcddd");
+    TopologicalEfficiencyResult_t res = CheckTopologicalEfficiency(s);
+    assert( s.Size() == res.n_rejected + res.NumEfficient() + res.NumPending() );
+    res.PrintStrategies(std::cout);
+  }
+
+  {
     // slow strategy
     Strategy s("cd__cd__c_cc__dc_c__cdddccccddddcdcd______dcdddd__dd__dd__ccccdd");
     TopologicalEfficiencyResult_t res = CheckTopologicalEfficiency(s);
