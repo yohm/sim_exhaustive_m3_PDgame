@@ -154,6 +154,7 @@ int main(int argc, char** argv) {
       auto m1 = std::chrono::system_clock::now();
       double e1 = std::chrono::duration_cast<std::chrono::milliseconds>(m1-start).count();
       if(e1 > 3000.0) { std::cerr << "e1 > 3sec : " << line << std::endl; }
+      if(e1 > 3000.0) { std::cerr << "  " << res.efficient.size() << " : " << res.pending.size() << std::endl; }
 
       uint64_t n_passed_d = 0;
       uint64_t n_pending_d = 0;

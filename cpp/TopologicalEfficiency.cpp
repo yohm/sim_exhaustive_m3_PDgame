@@ -1,5 +1,6 @@
 #include "TopologicalEfficiency.hpp"
 #include "Strategy.hpp"
+#include "TraceNegativeDefensible.hpp"
 
 namespace {
 
@@ -52,11 +53,24 @@ namespace {
         if( act_b == U || act_b == W ) { to_be_fixed.insert(sb.ID()); }
       }
     }
-    std::cerr << "to_be_fixed in FixL0: " << to_be_fixed.size() << std::endl;
+    // std::cerr << "to_be_fixed in FixL0: " << to_be_fixed.size() << std::endl;
 
-    std::vector<Strategy> ans;
-    AssignActions(str, to_be_fixed, ans, n_indefensible);
-    return std::move(ans);
+    if( to_be_fixed.size() > 8 ) {
+      Strategy s = str;
+      TraceNegativeDefensibleResult_t res = TraceNegativeDefensible(s, 4, 64);
+      n_indefensible += res.n_rejected;
+      std::vector<Strategy> ans;
+      for(const Strategy& x: res.passed) {
+        std::vector<Strategy> _v = FixL0(x, n_indefensible);
+        ans.insert(ans.end(), _v.begin(), _v.end());
+      }
+      return std::move(ans);
+    }
+    else {
+      std::vector<Strategy> ans;
+      AssignActions(str, to_be_fixed, ans, n_indefensible);
+      return std::move(ans);
+    }
   }
 
   // TraceITG until a cycle
