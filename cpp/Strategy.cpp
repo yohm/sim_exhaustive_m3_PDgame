@@ -51,10 +51,16 @@ std::string Strategy::ToString() const {
 inline int8_t MIN(int8_t a, int8_t b) { return (a<b)?a:b; }
 
 bool Strategy::IsDefensible() {
-  d_matrix_ready = false;
+  const size_t N = 64;
+
+  if( d_matrix_ready ) {
+    for(size_t i=0; i<N; i++) {
+      if(m_d[i][i] < 0) { return false; }
+    }
+    return true;
+  }
 
   // construct adjacency matrix
-  const size_t N = 64;
   const int INF = 32; // 32 is large enough since the path length is between -16 to 16.
   for(size_t i=0; i<N; i++) {
     for(size_t j=0; j<N; j++) {

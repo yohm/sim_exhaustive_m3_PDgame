@@ -118,7 +118,7 @@ public:
   }
 
   Action ActionAt( const State& s ) const { return actions[s.ID()]; }
-  void SetAction( const State& s, Action a ) { assert(actions[s.ID()]==U||actions[s.ID()]==W); actions[s.ID()] = a; }
+  void SetAction( const State& s, Action a ) { assert(actions[s.ID()]==U||actions[s.ID()]==W); actions[s.ID()] = a; d_matrix_ready = false; }
   int NumFixed() const { int c=0; for(auto a: actions) { if(a==C||a==D) c++;} return c; }
   int NumU() const { int c=0; for(auto a: actions) { if(a==U) c++;} return c; }
   uint64_t Size() const { return (1ULL << (64 - NumFixed())); }
