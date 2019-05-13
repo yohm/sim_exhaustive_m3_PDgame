@@ -103,8 +103,6 @@ void test() {
 }
 
 
-
-
 int main(int argc, char** argv) {
 #ifndef NDEBUG
   test();
@@ -168,7 +166,7 @@ int main(int argc, char** argv) {
       uint64_t n_passed_d = 0;
       uint64_t n_pending_d = 0;
       uint64_t n_rejected_d = res.n_rejected;
-      std::vector<Strategy> v_pending;
+      std::vector<std::string> v_pending;
       { // check defensibility
         for(const Strategy& s: res.efficient) {
           TraceNegativeDefensibleResult_t res_d = TraceNegativeDefensible(s, 64, 64);
@@ -184,7 +182,7 @@ int main(int argc, char** argv) {
           TraceNegativeDefensibleResult_t res_d = TraceNegativeDefensible(s, 64, 64);
           n_pending_d += res_d.NumDefensible();
           n_rejected_d += res_d.n_rejected;
-          v_pending.insert( v_pending.begin(), res_d.passed.begin(), res_d.passed.end() );
+          for(const Strategy& s: res_d.passed) { v_pending.push_back( s.ToString() ); }
         }
         auto m3 = std::chrono::system_clock::now();
         double e3 = std::chrono::duration_cast<std::chrono::milliseconds>(m3-m2).count();
@@ -195,8 +193,8 @@ int main(int argc, char** argv) {
       n_unjudgeable += n_pending_d;
       n_rejected += n_rejected_d;
 
-      for(const Strategy& s: v_pending) {
-        fout2 << s.ToString() << std::endl;
+      for(const std::string& s: v_pending) {
+        fout2 << s << std::endl;
       }
     }
   }
