@@ -111,9 +111,9 @@ int main(int argc, char** argv) {
 
   MPI_Init(&argc, &argv);
 
-  if( argc != 3 ) {
+  if( argc != 5 ) {
     cerr << "Error : invalid argument" << endl;
-    cerr << "  Usage : " << argv[0] << " <strategy_file> <out file>" << endl;
+    cerr << "  Usage : " << argv[0] << " <in_format> <num_files> <out_format> <pending_out_format>" << endl;
     return 1;
   }
 
@@ -122,15 +122,19 @@ int main(int argc, char** argv) {
   int num_procs = 0;
   MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
 
+  const int N_FILES = std::atoi(argv[2]);
+  if(N_FILES <= 0) { throw "invalid input"; }
+  const int PROCS_PER_FILE = num_procs / N_FILES;
+  char infile[256];
+  sprintf(infile, argv[1], my_rank % N_FILES);
+  std::cerr << "reading " << infile << " @ rank " << my_rank << std::endl;
+  ifstream fin(infile);
 
-  ifstream fin(argv[1]);
-
-  std::string out_format = argv[2];
   char outfile[256];
-  sprintf(outfile, (out_format+".%04d").c_str(), my_rank);
+  sprintf(outfile, argv[3], my_rank);
   std::ofstream fout(outfile);
   char outfile2[256];
-  sprintf(outfile2, (out_format+".pending.%04d").c_str(), my_rank);
+  sprintf(outfile2, argv[4], my_rank);
   std::ofstream fout2(outfile2);
 
   uint64_t n_efficient = 0;
@@ -150,8 +154,9 @@ int main(int argc, char** argv) {
       std::cerr << std::endl;
     }
 
-    if( count % num_procs == my_rank ) {
-      std::cerr << "checking: " << line << std::endl;
+
+    if( count % PROCS_PER_FILE == my_rank/N_FILES ) {
+      // std::cerr << "checking: " << line << std::endl;
       auto start = std::chrono::system_clock::now();
 
       Strategy _str(line.c_str());
@@ -182,7 +187,7 @@ int main(int argc, char** argv) {
           TraceNegativeDefensibleResult_t res_d = TraceNegativeDefensible(s, 64, 64);
           n_pending_d += res_d.NumDefensible();
           n_rejected_d += res_d.n_rejected;
-          for(const Strategy& s: res_d.passed) { v_pending.push_back( s.ToString() ); }
+          for(const Strategy& _s: res_d.passed) { v_pending.push_back( _s.ToString() ); }
         }
         auto m3 = std::chrono::system_clock::now();
         double e3 = std::chrono::duration_cast<std::chrono::milliseconds>(m3-m2).count();
