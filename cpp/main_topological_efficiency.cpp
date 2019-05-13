@@ -26,80 +26,25 @@ using namespace std;
 //   - すべてのcycleに対して「cycleの1-bit neighborのどれかから、State(0)に必ず到達するようなパスが存在する」が成り立つならば、efficiencyが確定する
 // - cycleの中に未確定ビットが含まれている場合、それらのビットを確定して、再帰的に判定する。
 
+void test_strategy(const std::string& str) {
+  Strategy s(str.c_str()); // is efficient
+  TopologicalEfficiencyResult_t res = CheckTopologicalEfficiency(s);
+  assert( s.Size() == res.n_rejected + res.NumEfficient() + res.NumPending() );
+  res.PrintStrategies(std::cout);
+}
+
 void test() {
-  {
-    Strategy s("cd*d*dddd*dddcdcddcd*cdd*d**dcdd*d*ccddddcddccdd**dd***cdc*cdcdd"); // is efficient
-    TopologicalEfficiencyResult_t res = CheckTopologicalEfficiency(s);
-    assert( s.Size() == res.n_rejected + res.NumEfficient() + res.NumPending() );
-    res.PrintStrategies(std::cout);
-  }
-
-  {
-    Strategy s("cddd*c*dd*ddcddc*d*d*dcd*dcddcdd*dddcddd**dd**dd*ccd***cdc*cdcdd"); // 3/4 efficient, 1/4 unjudgeable
-    TopologicalEfficiencyResult_t res = CheckTopologicalEfficiency(s);
-    assert( s.Size() == res.n_rejected + res.NumEfficient() + res.NumPending() );
-    res.PrintStrategies(std::cout);
-  }
-
-  {
-    Strategy s("ccdd**ddc*ccdccdc*ddddccdc****cd*d**ccdcdccddccd**cddd**d*****cd"); // unjudgeable
-    TopologicalEfficiencyResult_t res = CheckTopologicalEfficiency(s);
-    assert( s.Size() == res.n_rejected + res.NumEfficient() + res.NumPending() );
-    res.PrintStrategies(std::cout);
-  }
-
-  {
-    Strategy s("ccdd*dddc*dcddddccc**cccccdddddd*ddcccdd**c**c****cc***cdcdddddd");
-    TopologicalEfficiencyResult_t res = CheckTopologicalEfficiency(s);
-    assert( s.Size() == res.n_rejected + res.NumEfficient() + res.NumPending() );
-    res.PrintStrategies(std::cout);
-  }
-
-  {
-    Strategy s("ccddddddccdcddddcccc*cccccdddddddddcccdd*ccccd*d*dcc***ddcdddddd");
-    TopologicalEfficiencyResult_t res = CheckTopologicalEfficiency(s);
-    assert( s.Size() == res.n_rejected + res.NumEfficient() + res.NumPending() );
-    res.PrintStrategies(std::cout);
-  }
-
-  {
-    Strategy s("ccddcccdc_dcdccdc_ddddcccc____cd_d__ccdcdccddccd__cddd________cd");
-    TopologicalEfficiencyResult_t res = CheckTopologicalEfficiency(s);
-    assert( s.Size() == res.n_rejected + res.NumEfficient() + res.NumPending() );
-    res.PrintStrategies(std::cout);
-  }
-
-  {
-    // judged by two-bit error tolerance of d0 and c0
-    Strategy s("ccddcd_dcdccddcdccddddcddccdcdcdcdd_ccc_dccddcddd_cddd_cddcd__cd");
-    TopologicalEfficiencyResult_t res = CheckTopologicalEfficiency(s);
-    assert( s.Size() == res.n_rejected + res.NumEfficient() + res.NumPending() );
-    res.PrintStrategies(std::cout);
-  }
-
-  {
-    // pending
-    Strategy s("ccddcd_dccccddcdccccddcddccc_dcdddc_ccc_ddcdddcdd_cddddddccdcddd");
-    TopologicalEfficiencyResult_t res = CheckTopologicalEfficiency(s);
-    assert( s.Size() == res.n_rejected + res.NumEfficient() + res.NumPending() );
-    res.PrintStrategies(std::cout);
-  }
-
-  {
-    // recursive failure strategy
-    Strategy s("ccddcdcdd*dcccdddcdd**ddd***cdddccdd***ccc**ccddc**c*****ccdcddd");
-    TopologicalEfficiencyResult_t res = CheckTopologicalEfficiency(s);
-    assert( s.Size() == res.n_rejected + res.NumEfficient() + res.NumPending() );
-    res.PrintStrategies(std::cout);
-  }
-
-  {
-    // slow strategy
-    Strategy s("cd__cd__c_cc__dc_c__cdddccccddddcdcd______dcdddd__dd__dd__ccccdd");
-    TopologicalEfficiencyResult_t res = CheckTopologicalEfficiency(s);
-    assert( s.Size() == res.n_rejected + res.NumEfficient() + res.NumPending() );
-    res.PrintStrategies(std::cout);
-  }
+  test_strategy("cd*d*dddd*dddcdcddcd*cdd*d**dcdd*d*ccddddcddccdd**dd***cdc*cdcdd"); // is efficient
+  test_strategy("cddd*c*dd*ddcddc*d*d*dcd*dcddcdd*dddcddd**dd**dd*ccd***cdc*cdcdd"); // 3/4 efficient, 1/4 unjudgeable
+  test_strategy("ccdd**ddc*ccdccdc*ddddccdc****cd*d**ccdcdccddccd**cddd**d*****cd"); // unjudgeable
+  // judged by two-bit error tolerance of d0 and c0
+  test_strategy("ccddcd_dcdccddcdccddddcddccdcdcdcdd_ccc_dccddcddd_cddd_cddcd__cd");
+  // pending
+  test_strategy("ccddcd_dccccddcdccccddcddccc_dcdddc_ccc_ddcdddcdd_cddddddccdcddd");
+  // recursive failure strategy
+  test_strategy("ccddcdcdd*dcccdddcdd**ddd***cdddccdd***ccc**ccddc**c*****ccdcddd");
+  // slow strategy
+  test_strategy("cd__cd__c_cc__dc_c__cdddccccddddcdcd______dcdddd__dd__dd__ccccdd");
 }
 
 
