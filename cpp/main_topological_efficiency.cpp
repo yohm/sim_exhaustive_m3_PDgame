@@ -126,7 +126,7 @@ int main(int argc, char** argv) {
   if(N_FILES <= 0) { throw "invalid input"; }
   const int PROCS_PER_FILE = num_procs / N_FILES;
   char infile[256];
-  sprintf(infile, argv[1], my_rank % N_FILES);
+  sprintf(infile, argv[1], my_rank / PROCS_PER_FILE);
   std::cerr << "reading " << infile << " @ rank " << my_rank << std::endl;
   ifstream fin(infile);
 
@@ -155,7 +155,7 @@ int main(int argc, char** argv) {
     }
 
 
-    if( count % PROCS_PER_FILE == my_rank/N_FILES ) {
+    if( count % PROCS_PER_FILE == my_rank%PROCS_PER_FILE ) {
       // std::cerr << "checking: " << line << std::endl;
       auto start = std::chrono::system_clock::now();
 
