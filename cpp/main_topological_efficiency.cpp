@@ -29,7 +29,7 @@ using namespace std;
 void test_strategy(const std::string& str) {
   Strategy s(str.c_str()); // is efficient
   TopologicalEfficiencyResult_t res = CheckTopologicalEfficiency(s);
-  assert( s.Size() == res.n_rejected + res.NumEfficient() + res.NumPending() );
+  assert( s.Size() == res.n_efficient_and_defensible + res.n_rejected + res.NumEfficient() + res.NumPending() );
   res.PrintStrategies(std::cout);
 }
 
@@ -121,7 +121,9 @@ int main(int argc, char** argv) {
       uint64_t n_pending_d = 0;
       uint64_t n_rejected_d = res.n_rejected;
       std::vector<std::string> v_pending;
-      { // check defensibility
+      {
+        n_passed_d += res.n_efficient_and_defensible;
+        // check defensibility
         for(const Strategy& s: res.efficient) {
           TraceNegativeDefensibleResult_t res_d = TraceNegativeDefensible(s, 64, 64);
           n_passed_d += res_d.NumDefensible();

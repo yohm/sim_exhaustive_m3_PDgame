@@ -346,7 +346,8 @@ namespace {
 
     // All L belongs to Lc
     if( Ld.empty() && Lu.empty() ) {
-      f.efficient.push_back(s);
+      if(s.NumU() > 0) { f.efficient.push_back(s); }
+      else { f.n_efficient_and_defensible += s.Size(); }
       return;
     }
 
@@ -382,7 +383,8 @@ namespace {
           }
           if(ok) {
             DP("Judge by C3 and D2");
-            f.efficient.push_back(s2);
+            if(s2.NumU() > 0) { f.efficient.push_back(s2); }
+            else { f.n_efficient_and_defensible += s2.Size(); }
           }
           else {
             f.pending.push_back(s2);

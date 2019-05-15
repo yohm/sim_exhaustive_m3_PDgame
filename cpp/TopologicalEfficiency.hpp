@@ -9,8 +9,9 @@ class TopologicalEfficiencyResult_t {
 public:
   std::vector<Strategy> efficient;
   std::vector<Strategy> pending;
+  uint64_t n_efficient_and_defensible;
   uint64_t n_rejected;
-  TopologicalEfficiencyResult_t() : n_rejected(0) {};
+  TopologicalEfficiencyResult_t() : n_efficient_and_defensible(0), n_rejected(0) {};
   uint64_t NumEfficient() const {
     uint64_t n = 0;
     for(const Strategy& s: efficient) { n += s.Size(); }
@@ -28,7 +29,7 @@ public:
     for(const Strategy& s: pending) {
       os << "P: " << s.ToString() << std::endl;
     }
-    os << "# E/P/R : " << ToC(NumEfficient()) << " / " << ToC(NumPending()) << " / " << ToC(n_rejected) << std::endl;
+    os << "# E&D/E/P/R : " << ToC(n_efficient_and_defensible) << " / " << ToC(NumEfficient()) << " / " << ToC(NumPending()) << " / " << ToC(n_rejected) << std::endl;
   }
 };
 
