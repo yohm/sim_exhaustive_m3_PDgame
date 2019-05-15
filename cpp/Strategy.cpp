@@ -364,3 +364,56 @@ DirectedGraph Strategy::ITG() const {
   return std::move(g);
 }
 
+bool Strategy::IsEfficientTopo() const {
+  if(NumFixed() != 64) { throw "must not happen"; }
+  // first calculate all cycle
+
+  const DirectedGraph g = ITG();
+
+  auto TraceITG = [&g](long ini) {
+    long current = ini;
+    std::vector<long> histo;
+    while( std::find(histo.begin(), histo.end(), current) == histo.end() ) {
+      histo.push_back(current);
+      if( g.m_links[current].size() != 1 ) { throw "must not happen"; }
+      current = g.m_links[current][0];
+    }
+    return std::move(histo);
+  };
+
+  auto CalcDistance = [&g,&TraceITG](long ini) {
+    std::array<long,64> dist;
+    for(int i=0; i<64; i++) { dist[i] = -1; }
+
+    dist[0] = 0;
+    std::vector<long> cn_1 = TraceITG(ini);
+    for(long n: cn_1) { dist[n] = 0; }
+
+    for(int d=1; d<=6; d++) { // d-step error
+      std::vector<long> cn;
+      for(long n: cn_1) {
+        for(int i=0; i<2; i++) {
+          long _ini = (unsigned long)n^((i==0)?1UL:8UL);
+          std::vector<long> h = TraceITG(_ini);
+          cn.insert( cn.end(), h.begin(), h.end() );
+        }
+      }
+      std::sort( cn.begin(), cn.end() );
+      cn.erase( std::unique(cn.begin(), cn.end()), cn.end() );  // == cn.uniq!
+
+      cn_1.clear();
+      for(long n: cn) {
+        if(dist[n] < 0) { dist[n] = d; cn_1.push_back(n); }
+      }
+    }
+    for(int i=0; i<64; i++) { assert(dist[i] >= 0); }
+    return std::move(dist);
+  };
+
+  std::array<long,64> dist_0 = CalcDistance(0);
+  components_t comps = g.NonTransitionComponents();
+  // WIP
+
+  return false;
+}
+
