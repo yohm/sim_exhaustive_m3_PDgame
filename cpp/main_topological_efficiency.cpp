@@ -90,7 +90,6 @@ int main(int argc, char** argv) {
   uint64_t n_unjudgeable = 0;
   uint64_t n_rejected = 0;
 
-  vector<Strategy> ins;
   int count = 0;
   for( string line; fin >> line; count++) {
     if(count % 1000 == 0) {

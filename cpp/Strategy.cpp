@@ -366,6 +366,7 @@ DirectedGraph Strategy::ITG() const {
 
 bool Strategy::IsEfficientTopo() const {
   if(NumFixed() != 64) { throw "must not happen"; }
+  if( actions[0] != C ) { return false; }
   // first calculate all cycle
 
   const DirectedGraph g = ITG();
@@ -381,11 +382,11 @@ bool Strategy::IsEfficientTopo() const {
     return std::move(histo);
   };
 
+  typedef std::array<long,64> dist_t;
   auto CalcDistance = [&g,&TraceITG](long ini) {
-    std::array<long,64> dist;
+    dist_t dist;
     for(int i=0; i<64; i++) { dist[i] = -1; }
 
-    dist[0] = 0;
     std::vector<long> cn_1 = TraceITG(ini);
     for(long n: cn_1) { dist[n] = 0; }
 
@@ -406,14 +407,25 @@ bool Strategy::IsEfficientTopo() const {
         if(dist[n] < 0) { dist[n] = d; cn_1.push_back(n); }
       }
     }
-    for(int i=0; i<64; i++) { assert(dist[i] >= 0); }
-    return std::move(dist);
+    for(long d: dist) { assert(d >= 0); }
+    return dist;
   };
 
-  std::array<long,64> dist_0 = CalcDistance(0);
+  const dist_t dist_0 = CalcDistance(0);
   components_t comps = g.NonTransitionComponents();
-  // WIP
 
-  return false;
+  for(const auto& comp: comps) {
+    if( comp.size() == 1 && comp[0] == 0 ) { continue; }  // skip c-component
+
+    long nd = comp[0];
+    const dist_t dist_d = CalcDistance(nd);
+    long c_to_d = dist_0[nd];
+    long d_to_c = dist_d[0];
+    if(c_to_d <= d_to_c) {
+      return false;  // cannot be efficient
+    }
+  }
+
+  return true;
 }
 

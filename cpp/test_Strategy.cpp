@@ -67,6 +67,7 @@ void test_Strategy() {
     Strategy alld("dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd");
     assert( alld.IsDefensible() == true );
     assert( alld.IsEfficient() == false );
+    assert( alld.IsEfficientTopo() == false );
     auto dests = alld.DestsOfITG();
     for(int i: dests) { assert( i == 63 ); } // all goes to dddddd
 
@@ -78,6 +79,7 @@ void test_Strategy() {
     Strategy allc("cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc");
     assert( allc.IsDefensible() == false );
     assert( allc.IsEfficient() == true );
+    assert( allc.IsEfficientTopo() == true );
     auto dests = allc.DestsOfITG();
     for(int i: dests) { assert( i == 0 ); } // all goes to cccccc
 
@@ -89,6 +91,7 @@ void test_Strategy() {
     Strategy tft("cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd");
     assert( tft.IsDefensible() == true );
     assert( tft.IsEfficient() == false );
+    assert( tft.IsEfficientTopo() == false );
     auto dests = tft.DestsOfITG();
     for(int i: dests) { assert( i == 0 || i == 63 || State("cdcdcd").ID() ); } // all goes to either cccccc, dddddd, cdcdcd
 
@@ -102,6 +105,7 @@ void test_Strategy() {
     Strategy wsls("cdcdcdcddcdcdcdccdcdcdcddcdcdcdccdcdcdcddcdcdcdccdcdcdcddcdcdcdc");
     assert( wsls.IsDefensible() == false );
     assert( wsls.IsEfficient() == true );
+    assert( wsls.IsEfficientTopo() == true );
     auto dests = wsls.DestsOfITG();
     for(int i: dests) { assert( i == 0 ); } // all goes to cccccc
 
@@ -113,12 +117,25 @@ void test_Strategy() {
     Strategy tf2t("cccdcccdcccdcccdcccdcccdcccdcccdcccdcccdcccdcccdcccdcccdcccdcccd"); // tf2t
     assert( tf2t.IsDefensible() == false );
     assert( tf2t.IsEfficient() == true );
+    assert( tf2t.IsEfficientTopo() == true );
     auto dests = tf2t.DestsOfITG();
     for(int i: dests) { assert( i == 0 || i == 63 ); }
 
     auto stat = tf2t.StationaryState(0.001);
     assert(stat[0] > 0.99);
     for(int i=1; i<64; i++) { assert(stat[i] < 0.01); }
+  }
+
+  {
+    Strategy s("ccddcdddccccdccdcdddddccdccccccdcdccccdcdccddccdcccdddccdccccccd");
+    assert( s.IsEfficient() == true );
+    auto stat1 = s.StationaryState(0.01);
+    auto stat2 = s.StationaryState(0.001);
+    auto stat3 = s.StationaryState(0.0001);
+    auto stat4 = s.StationaryState(0.00001);
+    auto stat5 = s.StationaryState(0.000001);
+    auto stat6 = s.StationaryState(0.0000001);
+    assert( s.IsEfficientTopo() == true );
   }
 }
 
