@@ -8,7 +8,8 @@
 #include <set>
 #include <functional>
 
-typedef std::vector< std::vector<long> > components_t;
+typedef std::vector<long> comp_t;
+typedef std::vector<comp_t> components_t;
 
 class DirectedGraph {
 public:
@@ -22,6 +23,7 @@ public:
   }
   std::set<long> TransitionNodes() const;
   components_t NonTransitionComponents() const;
+  components_t SinkSCCs() const; // SCCs that has no outgoing link
   template <class T>
   void ForEachLink( const T& f) const {
     for( long i=0; i<m_num_nodes; i++) {

@@ -110,3 +110,25 @@ bool DirectedGraph::HasSelfLoop(long n) const {
   return b;
 }
 
+components_t DirectedGraph::SinkSCCs() const {
+  components_t sccs;
+  SCCs(sccs);
+  components_t ans;
+  for(const auto& scc: sccs) {
+    bool no_out = true;
+    for(const long i: scc) {
+      for(const long j: m_links[i]) {
+        if(std::find(scc.begin(),scc.end(),j) == scc.end() ) {
+          no_out = false;
+          break;
+        }
+      }
+      if(!no_out) { break; }
+    }
+    if(no_out) {
+      ans.push_back(scc);
+    }
+  }
+  return std::move(ans);
+}
+
