@@ -129,12 +129,7 @@ void test_Strategy() {
   {
     Strategy s("ccddcdddccccdccdcdddddccdccccccdcdccccdcdccddccdcccdddccdccccccd");
     assert( s.IsEfficient() == true );
-    auto stat1 = s.StationaryState(0.01);
-    auto stat2 = s.StationaryState(0.001);
-    auto stat3 = s.StationaryState(0.0001);
-    auto stat4 = s.StationaryState(0.00001);
-    auto stat5 = s.StationaryState(0.000001);
-    auto stat6 = s.StationaryState(0.0000001);
+    auto stat = s.StationaryState(0.0001);
     assert( s.IsEfficientTopo() == true );
   }
 }

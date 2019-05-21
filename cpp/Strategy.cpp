@@ -367,62 +367,45 @@ DirectedGraph Strategy::ITG() const {
 bool Strategy::IsEfficientTopo() const {
   if(NumFixed() != 64) { throw "must not happen"; }
   if( actions[0] != C ) { return false; }
-  // first calculate all cycle
 
-  const DirectedGraph g = ITG();
-
-  auto TraceITG = [&g](long ini) {
-    long current = ini;
-    std::vector<long> histo;
-    while( std::find(histo.begin(), histo.end(), current) == histo.end() ) {
-      histo.push_back(current);
-      if( g.m_links[current].size() != 1 ) { throw "must not happen"; }
-      current = g.m_links[current][0];
-    }
-    return std::move(histo);
-  };
-
-  typedef std::array<long,64> dist_t;
-  auto CalcDistance = [&g,&TraceITG](long ini) {
-    dist_t dist;
-    for(int i=0; i<64; i++) { dist[i] = -1; }
-
-    std::vector<long> cn_1 = TraceITG(ini);
-    for(long n: cn_1) { dist[n] = 0; }
-
-    for(int d=1; d<=6; d++) { // d-step error
-      std::vector<long> cn;
-      for(long n: cn_1) {
+  auto UpdateGn = [](DirectedGraph& gn) {
+    components_t sinks = gn.SinkSCCs();
+    for(const comp_t& sink: sinks) {
+      for(long from: sink) {
         for(int i=0; i<2; i++) {
-          long _ini = (unsigned long)n^((i==0)?1UL:8UL);
-          std::vector<long> h = TraceITG(_ini);
-          cn.insert( cn.end(), h.begin(), h.end() );
+          long to = (unsigned long)from^((i==0)?1UL:8UL);
+          if( ! gn.HasLink(from, to) ) {
+            gn.AddLink(from, to);
+          }
         }
       }
-      std::sort( cn.begin(), cn.end() );
-      cn.erase( std::unique(cn.begin(), cn.end()), cn.end() );  // == cn.uniq!
-
-      cn_1.clear();
-      for(long n: cn) {
-        if(dist[n] < 0) { dist[n] = d; cn_1.push_back(n); }
-      }
     }
-    for(long d: dist) { assert(d >= 0); }
-    return dist;
   };
 
-  const dist_t dist_0 = CalcDistance(0);
-  components_t comps = g.NonTransitionComponents();
+  std::vector<int> checked(64, 0);
+  checked[0] = 1;
+  auto complete = [&checked]() {
+    for(int i: checked) {
+      if(i==0) { return false; }
+    }
+    return true;
+  };
 
-  for(const auto& comp: comps) {
-    if( comp.size() == 1 && comp[0] == 0 ) { continue; }  // skip c-component
-
-    long nd = comp[0];
-    const dist_t dist_d = CalcDistance(nd);
-    long c_to_d = dist_0[nd];
-    long d_to_c = dist_d[0];
-    if(c_to_d <= d_to_c) {
-      return false;  // cannot be efficient
+  DirectedGraph gn = ITG();
+  for( int n=0; !complete(); n++ ) {
+    if(n > 0) {
+      UpdateGn(gn);
+    }
+    for(int i=1; i<64; i++) {
+      if( checked[i] == 1 ) { continue; }
+      if( gn.Reachable(i,0) ) {
+        if( gn.Reachable(0,i) ) {
+          return false;   // inefficient
+        }
+        else {
+          checked[i] = 1;
+        }
+      }
     }
   }
 
