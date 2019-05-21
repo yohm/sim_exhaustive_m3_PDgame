@@ -23,10 +23,12 @@ struct Counts {
 void EfficiencyDFS(const Strategy& s, Counts& counter) {
   assert( s.NumU() == 0 );
   if( s.NumFixed() == 64 ) {
-    //if( s.IsEfficientTopo() ) { counter.n_efficient++;}
+    if( s.IsEfficientTopo() ) { counter.n_efficient++;}
+    /*
     if( s.IsEfficient() ) {
       if( s.IsEfficientTopo() == false ) { std::cerr << s.ToString() << std::endl; throw "inconsistent judge"; }
       counter.n_efficient++;}
+      */
     else { counter.n_inefficient++; }
     return;
   }
