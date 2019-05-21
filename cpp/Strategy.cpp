@@ -269,16 +269,20 @@ std::array<double, 64> Strategy::StationaryState(double e) const {
   return ans;
 }
 
-DirectedGraph Strategy::ITG() const {
+DirectedGraph Strategy::ITG(bool make_link_UW) const {
   DirectedGraph g(64);
   for(int i=0; i<64; i++) {
     State sa(i);
     State sb = sa.SwapAB();
     int j = sb.ID();
     std::vector<Action> acts_a, acts_b;
-    if( actions[i] == U || actions[i] == W ) { acts_a.push_back(C); acts_a.push_back(D); }
+    if( actions[i] == U || actions[i] == W ) {
+      if(make_link_UW) { acts_a.push_back(C); acts_a.push_back(D); }
+    }
     else { acts_a.push_back(actions[i]); }
-    if( actions[j] == U || actions[j] == W ) { acts_b.push_back(C); acts_b.push_back(D); }
+    if( actions[j] == U || actions[j] == W ) {
+      if(make_link_UW) { acts_b.push_back(C); acts_b.push_back(D); }
+    }
     else { acts_b.push_back(actions[j]); }
 
     for(Action act_a: acts_a) {

@@ -129,7 +129,7 @@ public:
   bool SetActionAndRecalcD(const State& s, Action a); // set action[s]=a, and recalculate `m_d`. If not defensible, return false.
   std::vector<State> DanglingStates() const; // states that has incoming links but has no outgoing links (i.e. its action is U)
   std::vector<State> NegativeDanglingStates() const; // states that has incoming links but has no outgoing links (i.e. its action is U). IsDefensible must be called beforehand
-  DirectedGraph ITG() const;  // construct ITG. When a state is U or W, outgoing links for both {c,d} actions are added.
+  DirectedGraph ITG(bool make_link_UW = true) const;  // construct ITG. When a state is U or W, outgoing links for both {c,d} actions are added when make_link_UW is true.
   std::array<int,64> DestsOfITG() const; // Trace the intra-transition-graph from node i. Destination is stored in i'th element. Undetermined destination is -1
   int NextITGState(const State& s) const; // Trace the intra-transition graph by one step
 private:
