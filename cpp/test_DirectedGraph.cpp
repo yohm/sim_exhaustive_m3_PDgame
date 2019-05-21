@@ -35,6 +35,7 @@ void test_g1() {
   g1.AddLink(2, 1);
   g1.AddLink(0, 3);
   g1.AddLink(3, 4);
+  g1.AddLink(4, 4);
   {
     components_t components;
     g1.SCCs(components);
@@ -163,23 +164,6 @@ void test_transitionNodes1() {
 }
 
 int main( int argc, char* argv[]) {
-  DirectedGraph g(5);
-  g.AddLink(1,0);
-  g.AddLink(0,2);
-  g.AddLink(2,1);
-  g.AddLink(0,3);
-  g.AddLink(3,4);
-  g.AddLink(4,4);
-  std::cout << g;
-  components_t components;
-  g.SCCs(components);
-  for(auto comp: components) {
-    for( auto n: comp) {
-      std::cout << n << ' ';
-    }
-    std::cout << "\n";
-  }
-
   test_g1();
   test_g2();
   test_g3();
