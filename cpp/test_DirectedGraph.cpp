@@ -48,6 +48,14 @@ void test_g1() {
     bool b = CompareComponents(sinks, {{4}});
     assert(b);
   }
+  {
+    assert( g1.HasLink(0,2) );
+    assert( ! g1.HasLink(0,4) );
+  }
+  {
+    assert( g1.Reachable(0, 4) );
+    assert( ! g1.Reachable(4, 0) );
+  }
 }
 
 void test_g2() {

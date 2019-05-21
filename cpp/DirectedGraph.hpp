@@ -16,6 +16,8 @@ public:
   DirectedGraph(size_t num_nodes);
 
   void AddLink(long from, long to);
+  bool HasLink(long from, long to);
+  bool Reachable(long from, long to);
   friend std::ostream &operator<<(std::ostream &os, const DirectedGraph &graph);
   void SCCs(components_t& components) const {
     ComponentFinder cf(*this);
