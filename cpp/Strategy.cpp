@@ -268,79 +268,7 @@ std::array<double, 64> Strategy::StationaryState(double e) const {
    */
   return ans;
 }
-bool Strategy::CannotBeEfficient() const {
-  std::array<int,64> dests = DestsOfITG();
-  if( dests[State("ccdccc").ID()] == -1 || dests[State("cccccd").ID()] == -1 ) { return false; } // cannot judge efficiency
-  if( dests[State("ccdccc").ID()] > 0 || dests[State("cccccd").ID()] > 0 ) { return true; } // one-bit tolerance of State(0) is absent. cannot be efficient.
 
-  auto TraceITG = [this, &dests](const State& s) {
-    std::set<int> histo;
-    histo.insert( s.ID() );
-    int n = this->NextITGState(s);
-    while( histo.find(n) == histo.end() ) {
-      histo.insert(n);
-      if( n < 0 ) { break; }
-      n = this->NextITGState(n);
-    }
-    return std::move(histo);
-  };
-
-  std::map<int,bool> memo;
-  auto CannotReturnTo0By1BitError = [this, &dests, &TraceITG, &memo](const State& s) {
-    if( memo.find(s.ID()) != memo.end() ) {
-      return memo.at(s.ID());
-    }
-    // true : It is sure that it cannot reach state0 by 1-bit error
-    std::set<int> set0 = TraceITG(s);  // nodes accessible by 0-bit error
-    if( set0.find(-1) != set0.end() ) {
-      memo[s.ID()] = false;
-      return false;  // unfixed node exists.
-    }
-    std::set<int> set1;
-    for(int n0: set0) {
-      for(State s1 : State(n0).NoisedStates() ) {
-        set1.insert(s1.ID());
-      }
-    }
-    std::set<int> set1_dests;
-    for(int n1: set1) {
-      set1_dests.insert( dests[n1] );
-    }
-
-    if( set1_dests.find(-1) != set1_dests.end() ) {
-      memo[s.ID()] = false;
-      return false;  // unfixed node exists
-    }
-    if( set1_dests.find(0) == set1_dests.end() ) {
-      // no path returning to 0
-      // It is sure that the state cannot return to "cccccc" by 1-bit error
-      memo[s.ID()] = true;
-      return true;
-    }
-    memo[s.ID()] = false;
-    return false;
-  };
-
-  std::set<int> c1s = {0}; // "cccccc" is included
-  { // populate c1s
-    auto c1_a = TraceITG( State("ccdccc") );
-    c1s.insert(c1_a.begin(), c1_a.end());
-    auto c1_b = TraceITG( State("cccccd") );
-    c1s.insert(c1_b.begin(), c1_b.end());
-  }
-
-  for(int c1: c1s) {
-    if( c1 < 0 ) { continue; }
-    for(State c2: State(c1).NoisedStates() ) {
-      int d = dests[ c2.ID() ];
-      if( d <= 0 ) { continue; }  // not judgeable if 0 or -1
-      if( CannotReturnTo0By1BitError(State(d)) ) {
-        return true;
-      }
-    }
-  }
-  return false; // cannot judge whether it is efficient or not
-}
 DirectedGraph Strategy::ITG() const {
   DirectedGraph g(64);
   for(int i=0; i<64; i++) {

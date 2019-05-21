@@ -230,23 +230,6 @@ void test_EfficiencyDefensible() {
   // for(int i=0; i<64; i++) { assert(stat[i] < 0.01); }
 }
 
-void test_CannotBeEfficient() {
-  {
-    Strategy s1("cdddddddcdcdddcddcddcdddddccdcddddcdcdddddddddcdddddddcddddcdddd");  // efficient and defensible
-    assert( s1.CannotBeEfficient() == false );
-  }
-  {
-    Strategy s1("cdd******************************************************ddcdddd");
-    assert( s1.CannotBeEfficient() == false );
-  }
-
-  {
-    Strategy s1("cdddcccdcdcdccdccccdddddcdcdccddd*ddcd*cdccddcddddcd***ccddddcdd");
-    bool b = s1.CannotBeEfficient();
-    assert(b);
-  }
-}
-
 int main() {
   std::cout << "Testing Strategy class" << std::endl;
 
@@ -255,7 +238,6 @@ int main() {
   test_MetaStrategy();
   test_EfficiencyDefensible();
   test_TFTATFT();
-  test_CannotBeEfficient();
   return 0;
 }
 

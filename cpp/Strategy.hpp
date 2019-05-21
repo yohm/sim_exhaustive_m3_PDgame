@@ -132,7 +132,6 @@ public:
   DirectedGraph ITG() const;  // construct ITG. When a state is U or W, outgoing links for both {c,d} actions are added.
   std::array<int,64> DestsOfITG() const; // Trace the intra-transition-graph from node i. Destination is stored in i'th element. Undetermined destination is -1
   int NextITGState(const State& s) const; // Trace the intra-transition graph by one step
-  bool CannotBeEfficient() const; // check efficiency condition by investigating two-bit flip from cccccc.
 private:
   typedef std::array<std::array<int8_t,64>,64> d_matrix_t;
   d_matrix_t m_d;
