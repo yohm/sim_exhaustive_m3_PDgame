@@ -132,11 +132,11 @@ components_t DirectedGraph::SinkSCCs() const {
   return std::move(ans);
 }
 
-bool DirectedGraph::HasLink(long from, long to) {
+bool DirectedGraph::HasLink(long from, long to) const {
   return ( std::find(m_links[from].begin(), m_links[from].end(), to) != m_links[from].end() );
 }
 
-bool DirectedGraph::Reachable(long from, long to) {
+bool DirectedGraph::Reachable(long from, long to) const {
   std::vector<int> visited(m_num_nodes, 0);
   std::function<bool(long)> dfs = [to,&visited,this,&dfs] (long i) {
     visited[i] = 1;
