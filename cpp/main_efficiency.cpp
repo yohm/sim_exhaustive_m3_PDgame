@@ -23,12 +23,16 @@ struct Counts {
 void EfficiencyDFS(const Strategy& s, Counts& counter) {
   assert( s.NumU() == 0 );
   if( s.NumFixed() == 64 ) {
+#ifdef NDEBUG
     if( s.IsEfficientTopo() ) { counter.n_efficient++;}
-    /*
-    if( s.IsEfficient() ) {
-      if( s.IsEfficientTopo() == false ) { std::cerr << s.ToString() << std::endl; throw "inconsistent judge"; }
-      counter.n_efficient++;}
-      */
+#else
+    bool t = s.IsEfficientTopo();
+    bool l = s.IsEfficient();
+    assert( t == l );
+    if(t) {
+      counter.n_efficient++;
+    }
+#endif
     else { counter.n_inefficient++; }
     return;
   }
@@ -52,15 +56,26 @@ Counts CheckEfficiency(const Strategy& str) {
   return std::move(counter);
 }
 
-void test() {
-  // Strategy s1("cdddcccdc*cdccdccccdddddcc**ccddc*ddcd*cdccddcddddcd***c****ccdd");
-  Strategy s1("ccddcccdccccddcdcdccddccdcddcccd*d*dccddddcdcc**c*ccddcc*c**cccd");  // all inefficient
-  // Strategy s1("ccdd*c*dc*ccddcdcd*cddccdcdd**cd*d*dccddddcd******ccdd******cccd");  // partly efficient
-  // Strategy s1("cd*dcd*dd*dd**dcddcd*ddd*ddddcdd*d*dcdcddddcccdd**dd***ccc*cdcdd");
-  // Strategy s1("cd*d*d*dd*ddccdcddcdddcd*ddddcdd****cdddcddd**cd**cd***cdc*cdcdd"); // all efficient
-  // Strategy s1("cdcdddcdddddccdcddcdddcdcddddcdddcdccdddcddd**cd**cd***cdc*cdcdd"); // all efficient
-  auto counter = CheckEfficiency(s1);
+void testStrategy(const std::string& str, int64_t E_expected = -1, int64_t R_expected = -1) {
+  Strategy s(str.c_str());
+  auto counter = CheckEfficiency(s);
+  if(E_expected >= 0) {
+    assert( counter.n_efficient == E_expected );
+  }
+  if(R_expected >= 0) {
+    assert( counter.n_inefficient == R_expected );
+  }
   std::cout << "efficient/inefficient : " << counter.n_efficient << " / " << counter.n_inefficient << std::endl;
+}
+
+void test() {
+  testStrategy("cdddcccdcdcdccdccccdddddcccdccddccddcd*cdccddcddddcd***c****ccdd", 0, 256);  // all inefficient
+  testStrategy("ccddcccdccccddcdcdccddccdcddcccd*d*dccddddcdcc**c*ccddcc*c**cccd", 0, 256);  // all inefficient
+  // testStrategy("ccdd*c*dc*ccddcdcd*cddccdcdd**cd*d*dccddddcd******ccdd******cccd");  // partly efficient
+  // testStrategy("cd*dcd*dd*dd**dcddcd*ddd*ddddcdd*d*dcdcddddcccdd**dd***ccc*cdcdd");
+  testStrategy("cdddddddddddccdcddcdddcddddddcddddddcdddcddd**cd**cd***cdc*cdcdd", 256, 0); // all efficient
+  testStrategy("cdcdddcdddddccdcddcdddcdcddddcdddcdccdddcddd**cd**cd***cdc*cdcdd", 256, 0); // all efficient
+  testStrategy("ccdd*cddc*ccdccdc*ddddccdcc**ccd*dc*ccdcdccddccdcccddd*cdccccccd", 0, 256); // all inefficient
 }
 
 
