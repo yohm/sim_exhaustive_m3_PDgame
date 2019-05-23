@@ -76,6 +76,8 @@ void test() {
   testStrategy("cdddddddddddccdcddcdddcddddddcddddddcdddcddd**cd**cd***cdc*cdcdd", 256, 0); // all efficient
   testStrategy("cdcdddcdddddccdcddcdddcdcddddcdddcdccdddcddd**cd**cd***cdc*cdcdd", 256, 0); // all efficient
   testStrategy("ccdd*cddc*ccdccdc*ddddccdcc**ccd*dc*ccdcdccddccdcccddd*cdccccccd", 0, 256); // all inefficient
+  testStrategy("ccddddddcdccdccdccddddccdccccccddddcccdcdccddccd**cddd*cdc****cd", 0, 128); // inefficient
+  testStrategy("ccddcd*dccccddcdccccddcddccc*dcdddc*ccc*ddcdddcdd*cddddddccdcddd", 0, 32); // inefficient
 }
 
 

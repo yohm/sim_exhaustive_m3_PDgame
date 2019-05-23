@@ -37,29 +37,23 @@ using namespace std;
 void test_strategy(const std::string& str, int64_t ED=-1, int64_t E=-1, int64_t P=-1, int64_t R=-1) {
   Strategy s(str.c_str()); // is efficient
   TopologicalEfficiencyResult_t res = CheckTopologicalEfficiency(s);
+  res.PrintStrategies(std::cout);
   assert( s.Size() == res.n_efficient_and_defensible + res.n_rejected + res.NumEfficient() + res.NumPending() );
   if(ED>=0) { assert( res.n_efficient_and_defensible == ED ); }
   if( E>=0) { assert( res.NumEfficient() == E); }
   if( P>=0) { assert( res.NumPending() == P); }
   if( R>=0) { assert( res.n_rejected == R); }
-
-  res.PrintStrategies(std::cout);
 }
 
 void test() {
   test_strategy("cd*d*dddd*dddcdcddcd*cdd*d**dcdd*d*ccddddcddccdd**dd***cdc*cdcdd", 32768,0,0,0); // is efficient
   test_strategy("cddd*c*dd*ddcddc*d*d*dcd*dcddcdd*dddcddd**dd**dd*ccd***cdc*cdcdd", 131072,0,0,0); // all efficient
-  test_strategy("ccdd**ddc*ccdccdc*ddddccdc****cd*d**ccdcdccddccd**cddd**d*****cd", 0,0,0,1048576); // unjudgeable
-  // judged by two-bit error tolerance of d0 and c0
-  test_strategy("ccddcd_dcdccddcdccddddcddccdcdcdcdd_ccc_dccddcddd_cddd_cddcd__cd", 0,128,0,0);
-  // pending
-  test_strategy("ccddcd_dccccddcdccccddcddccc_dcdddc_ccc_ddcdddcdd_cddddddccdcddd", 0,0,32,0);
-  // recursive failure strategy
-  test_strategy("ccddcdcdd*dcccdddcdd**ddd***cdddccdd***ccc**ccddc**c*****ccdcddd", 0,0,0,262144);
-  // slow strategy
-  test_strategy("cd__cd__c_cc__dc_c__cdddccccddddcdcd______dcdddd__dd__dd__ccccdd");
-  // requires huge memory since most of them requires expansion of the wild card to judge efficiency
-  // test_strategy("cdddcdcdccdddddccc****cd**ccdcdd**dccd********dd**cd**cddc**dcdd");
+  test_strategy("ccdd**ddc*ccdccdc*ddddccdc****cd*d**ccdcdccddccd**cddd**d*****cd", 245760,0,0,802816); // partly efficient
+  test_strategy("ccddcd_dcdccddcdccddddcddccdcdcdcdd_ccc_dccddcddd_cddd_cddcd__cd", 0,128,0,0);  // efficient
+  test_strategy("ccddcd_dccccddcdccccddcddccc_dcdddc_ccc_ddcdddcdd_cddddddccdcddd", 0,0,0,32);  // inefficient
+  test_strategy("ccddcdcdd*dcccdddcdd**ddd***cdddccdd***ccc**ccddc**c*****ccdcddd", 131072,0,0,131072);
+  test_strategy("cd__cd__c_cc__dc_c__cdddccccddddcdcd______dcdddd__dd__dd__ccccdd", 0,337056,0,3857248);
+  test_strategy("cdddcdcdccdddddccc****cd**ccdcdd**dccd********dd**cd**cddc**dcdd", 4194304,0,0,0);
 }
 
 

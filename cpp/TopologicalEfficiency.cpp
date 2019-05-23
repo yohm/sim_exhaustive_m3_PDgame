@@ -229,6 +229,7 @@ namespace {
 
     // All L belongs to Lc
     if( Ld.empty() && Lu.empty() ) {
+      DP("[efficient] Ld and Lu are empty");
       if(s.NumU() > 0) { f.efficient.push_back(s); }
       else { f.n_efficient_and_defensible += s.Size(); }
       return;
@@ -236,6 +237,7 @@ namespace {
 
     if( Lu.size()>0 ) {
       // Fixing Lu
+      DP("Fixing Lu : (# Lu" << Lu.size() << ", Lu[0]:" << Lu[0][0]);
       std::vector<Strategy> v_s2 = FixL1States(s, g1, Lu[0][0], f.n_rejected);
       for(const Strategy& s2: v_s2) {
         JudgeEfficiencyDFS(s2, f);
@@ -243,6 +245,7 @@ namespace {
       return;
     }
     else {
+      DP("Constructing g2");
       // SinkSCC in g1 is all fixed because
       //   - Lc cannot be sinkSCC because it has a link going to 0.
       //   - Ld and its error moves are fixed.
@@ -252,6 +255,7 @@ namespace {
 
       for(const comp_t& ld: Ld) {
         if( g2.Reachable(0,ld[0]) ) {
+          DP("[rejected] rejected by g2: " << ld[0]);
           // 0->ld[0] occurs with O(e^2). ld[0]->0 occurs with O(e^2) or smaller. cannot be efficient.
           f.n_rejected += s.Size();
           return;
@@ -259,6 +263,7 @@ namespace {
       }
 
       // we cannot judge the efficiency without considering higher order
+      DP("[pending] cannot judge");
       f.pending.push_back(s);
       return;
     }
