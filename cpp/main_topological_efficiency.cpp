@@ -140,9 +140,16 @@ int main(int argc, char** argv) {
 
         for(const Strategy& s: res.pending) {
           TraceNegativeDefensibleResult_t res_d = TraceNegativeDefensible(s, 64, 64);
-          n_pending_d += res_d.NumDefensible();
           n_rejected_d += res_d.n_rejected;
-          for(const Strategy& _s: res_d.passed) { v_pending.push_back( _s.ToString() ); }
+          for(Strategy& _s: res_d.passed) {
+            TopologicalEfficiencyResult_t res_e2 = CheckTopologicalEfficiency(_s);
+            n_passed_d += res_e2.n_efficient_and_defensible;
+            n_rejected_d += res_e2.n_rejected;
+            for(const Strategy& s3: res_e2.pending) {
+              v_pending.push_back(s3.ToString());
+              n_pending_d += s3.Size();
+            }
+          }
         }
         auto m3 = std::chrono::system_clock::now();
         double e3 = std::chrono::duration_cast<std::chrono::milliseconds>(m3-m2).count();
