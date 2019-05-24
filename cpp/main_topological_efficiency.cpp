@@ -46,6 +46,7 @@ void test_strategy(const std::string& str, int64_t ED=-1, int64_t E=-1, int64_t 
 }
 
 void test() {
+  /*
   test_strategy("cd*d*dddd*dddcdcddcd*cdd*d**dcdd*d*ccddddcddccdd**dd***cdc*cdcdd", 32768,0,0,0); // is efficient
   test_strategy("cddd*c*dd*ddcddc*d*d*dcd*dcddcdd*dddcddd**dd**dd*ccd***cdc*cdcdd", 131072,0,0,0); // all efficient
   test_strategy("ccdd**ddc*ccdccdc*ddddccdc****cd*d**ccdcdccddccd**cddd**d*****cd", 245760,0,0,802816); // partly efficient
@@ -54,6 +55,8 @@ void test() {
   test_strategy("ccddcdcdd*dcccdddcdd**ddd***cdddccdd***ccc**ccddc**c*****ccdcddd", 131072,0,0,131072);
   test_strategy("cd__cd__c_cc__dc_c__cdddccccddddcdcd______dcdddd__dd__dd__ccccdd", 0,337056,0,3857248);
   test_strategy("cdddcdcdccdddddccc****cd**ccdcdd**dccd********dd**cd**cddc**dcdd", 4194304,0,0,0);
+   */
+  test_strategy("cddcdcddcccddcdc*ccdddcddcccdccd*dcdcd*dddcdddcd*dcddddddccddddd", 0,0,16,0);
 }
 
 
@@ -83,6 +86,10 @@ int main(int argc, char** argv) {
   sprintf(infile, argv[1], my_rank / PROCS_PER_FILE);
   std::cerr << "reading " << infile << " @ rank " << my_rank << std::endl;
   ifstream fin(infile);
+  if( !fin.is_open() ) {
+    std::cerr << "[Error] No input file " << infile << std::endl;
+    throw "no input file";
+  }
 
   char outfile[256];
   sprintf(outfile, argv[3], my_rank);
@@ -91,63 +98,59 @@ int main(int argc, char** argv) {
   sprintf(outfile2, argv[4], my_rank);
   std::ofstream fout2(outfile2);
 
-  uint64_t n_efficient = 0;
-  uint64_t n_unjudgeable = 0;
-  uint64_t n_rejected = 0;
+  uint64_t n_efficient_total = 0;
+  uint64_t n_unjudgeable_total = 0;
+  uint64_t n_rejected_total = 0;
 
   int count = 0;
   for( string line; fin >> line; count++) {
     if(count % 1000 == 0) {
       std::cerr << "step: " << count << " @ " << my_rank << std::endl;
-      RecursiveCommas(std::cerr, n_efficient);
-      std::cerr << " / ";
-      RecursiveCommas(std::cerr, n_unjudgeable);
-      std::cerr << " / ";
-      RecursiveCommas(std::cerr, n_rejected);
-      std::cerr << std::endl;
+      std::cerr << ToC(n_efficient_total) << " / " << ToC(n_unjudgeable_total) << " / " << ToC(n_rejected_total) << std::endl;
     }
 
 
     if( count % PROCS_PER_FILE == my_rank%PROCS_PER_FILE ) {
       // std::cerr << "checking: " << line << std::endl;
-      auto start = std::chrono::system_clock::now();
-
-      Strategy _str(line.c_str());
-
-      TopologicalEfficiencyResult_t res = CheckTopologicalEfficiency(_str);
-
+      uint64_t n_passed = 0;
+      uint64_t n_pending = 0;
+      uint64_t n_rejected = 0;
+      
+      Strategy s1(line.c_str());
+      
+      auto m0 = std::chrono::system_clock::now();
+      TopologicalEfficiencyResult_t res1 = CheckTopologicalEfficiency(s1);
+      n_passed += res1.n_efficient_and_defensible;
+      n_rejected += res1.n_rejected;
       auto m1 = std::chrono::system_clock::now();
-      double e1 = std::chrono::duration_cast<std::chrono::milliseconds>(m1-start).count();
+      double e1 = std::chrono::duration_cast<std::chrono::milliseconds>(m1-m0).count();
       if(e1 > 3000.0) { std::cerr << "e1 > 3sec : " << line << std::endl; }
-      if(e1 > 3000.0) { std::cerr << "  " << res.efficient.size() << " : " << res.pending.size() << std::endl; }
+      if(e1 > 3000.0) { std::cerr << "  " << res1.efficient.size() << " : " << res1.pending.size() << std::endl; }
 
-      uint64_t n_passed_d = 0;
-      uint64_t n_pending_d = 0;
-      uint64_t n_rejected_d = res.n_rejected;
-      std::vector<std::string> v_pending;
-      {
-        n_passed_d += res.n_efficient_and_defensible;
-        // check defensibility
-        for(const Strategy& s: res.efficient) {
+      { // check defensibility against efficient strategies
+        for(const Strategy& s: res1.efficient) {
           TraceNegativeDefensibleResult_t res_d = TraceNegativeDefensible(s, 64, 64);
-          n_passed_d += res_d.NumDefensible();
-          n_rejected_d += res_d.n_rejected;
+          n_passed += res_d.NumDefensible();
+          n_rejected += res_d.n_rejected;
         }
-
         auto m2 = std::chrono::system_clock::now();
         double e2 = std::chrono::duration_cast<std::chrono::milliseconds>(m2-m1).count();
         if(e2 > 3000.0) { std::cerr << "e2 > 3sec : " << line << std::endl; }
+      }
 
-        for(const Strategy& s: res.pending) {
-          TraceNegativeDefensibleResult_t res_d = TraceNegativeDefensible(s, 64, 64);
-          n_rejected_d += res_d.n_rejected;
-          for(Strategy& _s: res_d.passed) {
-            TopologicalEfficiencyResult_t res_e2 = CheckTopologicalEfficiency(_s);
-            n_passed_d += res_e2.n_efficient_and_defensible;
-            n_rejected_d += res_e2.n_rejected;
-            for(const Strategy& s3: res_e2.pending) {
-              v_pending.push_back(s3.ToString());
-              n_pending_d += s3.Size();
+      std::vector<std::string> v_pending;
+      { // check defensibility against pending strategies
+        auto m2 = std::chrono::system_clock::now();
+        for(const Strategy& s2: res1.pending) {
+          TraceNegativeDefensibleResult_t res_d = TraceNegativeDefensible(s2, 64, 64);
+          n_rejected += res_d.n_rejected;
+          for(Strategy& s3: res_d.passed) { // we check the efficiency again
+            TopologicalEfficiencyResult_t res_e2 = CheckTopologicalEfficiency(s3);
+            n_passed += res_e2.n_efficient_and_defensible;
+            n_rejected += res_e2.n_rejected;
+            for(const Strategy& s4: res_e2.pending) {
+              v_pending.push_back(s4.ToString());
+              n_pending += s4.Size();
             }
           }
         }
@@ -155,10 +158,10 @@ int main(int argc, char** argv) {
         double e3 = std::chrono::duration_cast<std::chrono::milliseconds>(m3-m2).count();
         if(e3 > 3000.0) { std::cerr << "e3 > 3sec : " << line << std::endl; }
       }
-      fout << line << ' ' << n_passed_d << ' ' << n_pending_d << ' ' << n_rejected_d << std::endl;
-      n_efficient += n_passed_d;
-      n_unjudgeable += n_pending_d;
-      n_rejected += n_rejected_d;
+      fout << line << ' ' << n_passed << ' ' << n_pending << ' ' << n_rejected << std::endl;
+      n_efficient_total += n_passed;
+      n_unjudgeable_total += n_pending;
+      n_rejected_total += n_rejected;
 
       for(const std::string& s: v_pending) {
         fout2 << s << std::endl;
@@ -171,12 +174,12 @@ int main(int argc, char** argv) {
   uint64_t sum_n_efficient = 0;
   uint64_t sum_n_unjudgeable = 0;
   uint64_t sum_n_rejected = 0;
-  MPI_Reduce(&n_efficient, &sum_n_efficient, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
-  MPI_Reduce(&n_unjudgeable, &sum_n_unjudgeable, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
-  MPI_Reduce(&n_rejected, &sum_n_rejected, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&n_efficient_total, &sum_n_efficient, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&n_unjudgeable_total, &sum_n_unjudgeable, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&n_rejected_total, &sum_n_rejected, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
 
   if(my_rank == 0) {
-    std::cerr << "n_efficient/n_unjudgeable/n_rejected : ";
+    std::cerr << "n_efficient_total/n_unjudgeable_total/n_rejected_total : ";
     RecursiveCommas(std::cerr, sum_n_efficient);
     std::cerr << " / ";
     RecursiveCommas(std::cerr, sum_n_unjudgeable);
