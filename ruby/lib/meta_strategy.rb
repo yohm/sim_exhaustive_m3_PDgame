@@ -224,6 +224,7 @@ end
 
 if __FILE__ == $0 and ARGV.size == 1
   s = MetaStrategy.make_from_str(ARGV[0])
+  $stderr.puts s.inspect
   g = s.transition_graph_with_self
   g.to_dot($stdout)
   $stderr.puts g.terminanl_components.inspect
