@@ -86,6 +86,10 @@ int main(int argc, char** argv) {
   sprintf(infile, argv[1], my_rank / PROCS_PER_FILE);
   std::cerr << "reading " << infile << " @ rank " << my_rank << std::endl;
   ifstream fin(infile);
+  if( !fin.is_open() ) {
+    std::cerr << "[Error] No input file " << infile << std::endl;
+    throw "no input file";
+  }
 
   char outfile[256];
   sprintf(outfile, argv[3], my_rank);
