@@ -288,6 +288,10 @@ namespace {
         return;
       }
       else {
+        if(s.NumU() > 0) { // when defensibility is not assured, check defensibility first
+          f.pending.push_back(s);
+          return;
+        }
         std::vector<Strategy> v_s2 = FixStates(s, g2, 0, true, f.n_rejected);
         for(const Strategy& s2: v_s2) {
           JudgeEfficiencyDFS(s2, f);
