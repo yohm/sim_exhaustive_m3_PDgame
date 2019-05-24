@@ -46,7 +46,6 @@ void test_strategy(const std::string& str, int64_t ED=-1, int64_t E=-1, int64_t 
 }
 
 void test() {
-  /*
   test_strategy("cd*d*dddd*dddcdcddcd*cdd*d**dcdd*d*ccddddcddccdd**dd***cdc*cdcdd", 32768,0,0,0); // is efficient
   test_strategy("cddd*c*dd*ddcddc*d*d*dcd*dcddcdd*dddcddd**dd**dd*ccd***cdc*cdcdd", 131072,0,0,0); // all efficient
   test_strategy("ccdd**ddc*ccdccdc*ddddccdc****cd*d**ccdcdccddccd**cddd**d*****cd", 245760,0,0,802816); // partly efficient
@@ -55,9 +54,8 @@ void test() {
   test_strategy("ccddcdcdd*dcccdddcdd**ddd***cdddccdd***ccc**ccddc**c*****ccdcddd", 131072,0,0,131072);
   test_strategy("cd__cd__c_cc__dc_c__cdddccccddddcdcd______dcdddd__dd__dd__ccccdd", 0,337056,0,3857248);
   test_strategy("cdddcdcdccdddddccc****cd**ccdcdd**dccd********dd**cd**cddc**dcdd", 4194304,0,0,0);
-   */
-  test_strategy("cddcdcddcccddcdc*ccdddcddcccdccd*dcdcd*dddcdddcd*dcddddddccddddd", 0,0,16,0); // need to consider g2
-  test_strategy("cddc*cddc*cddccd*ccddd**cc****dd**c*cddddccddccddddcdd*d**cdcddd");  // g2 must be considered to judge efficiency (many unfixed nodes)
+  test_strategy("cddcdcddcccddcdc*ccdddcddcccdccd*dcdcd*dddcdddcd*dcddddddccddddd", 16,0,0,0); // need to consider g2 to confirm efficiency
+  test_strategy("cddc*cddc*cddccd*ccddd**cc****dd**c*cddddccddccddddcdd*d**cdcddd", 4224,0,0,28544);  // g2 must be considered to judge efficiency (many unfixed nodes)
 }
 
 

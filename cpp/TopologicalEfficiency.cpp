@@ -156,7 +156,11 @@ namespace {
     }
   }
 
-  std::vector<Strategy> FixL1States(const Strategy& str, const DirectedGraph& g1, long start_node, uint64_t& n_indefensible) {
+  std::vector<Strategy> FixStates(const Strategy &str,
+                                  const DirectedGraph &g1,
+                                  long start_node,
+                                  bool is_g2, // true: g2, false: g1
+                                  uint64_t &n_indefensible) {
     // Traverse g1 from start_node by DFS. If nodes with unfixed actions are found, fix their actions recursively.
 
     std::vector<long> unfixed_nodes = FindNodeWithoutOutlink(g1, start_node);
@@ -173,7 +177,7 @@ namespace {
 
     // Recursively construct strategies
     std::vector<Strategy> ans;
-    std::function<void(const Strategy&,const std::vector<long>&)> dfs = [&ans,&dfs,&n_indefensible](const Strategy& s, const std::vector<long>& a) {
+    std::function<void(const Strategy&,const std::vector<long>&)> dfs = [&ans,&dfs,&n_indefensible,is_g2](const Strategy& s, const std::vector<long>& a) {
       if(a.empty()) {
         ans.push_back(s);
         return;
@@ -190,7 +194,7 @@ namespace {
             continue;
           }
           const DirectedGraph _g0 = _s.ITG(false);
-          const DirectedGraph _g1 = ConstructGn1(_g0);
+          const DirectedGraph _g1 = is_g2 ? ConstructGn1(ConstructGn1(_g0)) : ConstructGn1(_g0);
           for(long u : FindNodeWithoutOutlink(_g1, last) ) {
             State sa(u);
             State sb = sa.SwapAB();
@@ -238,7 +242,7 @@ namespace {
     if( Lu.size()>0 ) {
       // Fixing Lu
       DP("Fixing Lu : (# Lu" << Lu.size() << ", Lu[0]:" << Lu[0][0]);
-      std::vector<Strategy> v_s2 = FixL1States(s, g1, Lu[0][0], f.n_rejected);
+      std::vector<Strategy> v_s2 = FixStates(s, g1, Lu[0][0], false, f.n_rejected);
       for(const Strategy& s2: v_s2) {
         JudgeEfficiencyDFS(s2, f);
       }
@@ -262,10 +266,34 @@ namespace {
         }
       }
 
-      // we cannot judge the efficiency without considering higher order
-      DP("[pending] cannot judge");
-      f.pending.push_back(s);
-      return;
+      auto unfixed = FindNodeWithoutOutlink(g2, 0);
+      if( unfixed.empty() ) {  // transition from 0 in g2 is all fixed => state-0 is robust against two-bit errors
+        bool ok = true;
+        for(const comp_t& ld: Ld) {
+          if( !g2.Reachable(ld[0],0) ) {
+            ok = false;
+            break;
+          }
+        }
+        if( ok ) {  // All ld is reachable to 0 in g2
+          DP("[efficient] ld->0 reachable while 0->ld is not in g2");
+          if(s.NumU() > 0) { f.efficient.push_back(s); }
+          else { f.n_efficient_and_defensible += s.Size(); }
+        }
+        else {
+          // we cannot judge the efficiency without considering higher order
+          DP("[pending] cannot judge");
+          f.pending.push_back(s);
+        }
+        return;
+      }
+      else {
+        std::vector<Strategy> v_s2 = FixStates(s, g2, 0, true, f.n_rejected);
+        for(const Strategy& s2: v_s2) {
+          JudgeEfficiencyDFS(s2, f);
+        }
+        return;
+      }
     }
   }
 
