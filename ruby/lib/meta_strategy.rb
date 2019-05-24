@@ -38,16 +38,16 @@ class MetaStrategy < Strategy
     g
   end
 
-  def next_states_with_self(current)
+  def next_states_with_self(current, skip_unfixed=false)
     act_a = action(current)
     if act_a == :_ or act_a == :*
-      acts_a = [:c,:d]
+      acts_a = (skip_unfixed) ? [] : [:c,:d]
     else
       acts_a = [act_a]
     end
     act_b = action(current.swap)
     if act_b == :_ or act_b == :*
-      acts_b = [:c,:d]
+      acts_b = (skip_unfixed) ? [] : [:c,:d]
     else
       acts_b = [act_b]
     end
@@ -60,11 +60,11 @@ class MetaStrategy < Strategy
     ans
   end
 
-  def transition_graph_with_self
+  def transition_graph_with_self(skip_unfixed=false)
     g = DirectedGraph.new(64)
     64.times do |i|
       s = State.make_from_id(i)
-      ns = next_states_with_self(s)
+      ns = next_states_with_self(s, skip_unfixed)
       ns.each do |n|
         g.add_link( i, n.to_i )
       end
@@ -225,7 +225,7 @@ end
 if __FILE__ == $0 and ARGV.size == 1
   s = MetaStrategy.make_from_str(ARGV[0])
   $stderr.puts s.inspect
-  g = s.transition_graph_with_self
+  g = s.transition_graph_with_self(true)
   g.to_dot($stdout)
   $stderr.puts g.terminanl_components.inspect
   # pp g
