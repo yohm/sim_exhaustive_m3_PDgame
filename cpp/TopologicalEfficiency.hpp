@@ -7,6 +7,7 @@
 
 class TopologicalEfficiencyResult_t {
 public:
+  std::vector<std::string> efficient_and_defensible;
   std::vector<Strategy> efficient;
   std::vector<Strategy> pending;
   uint64_t n_efficient_and_defensible;
