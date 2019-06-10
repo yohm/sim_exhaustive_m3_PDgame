@@ -235,7 +235,10 @@ namespace {
     if( Ld.empty() && Lu.empty() ) {
       DP("[efficient] Ld and Lu are empty");
       if(s.NumU() > 0) { f.efficient.push_back(s); }
-      else { f.n_efficient_and_defensible += s.Size(); }
+      else {
+        f.efficient_and_defensible.push_back(s.ToString());
+        f.n_efficient_and_defensible += s.Size();
+      }
       return;
     }
 
@@ -278,7 +281,9 @@ namespace {
         if( ok ) {  // All ld is reachable to 0 in g2
           DP("[efficient] ld->0 reachable while 0->ld is not in g2");
           if(s.NumU() > 0) { f.efficient.push_back(s); }
-          else { f.n_efficient_and_defensible += s.Size(); }
+          else {
+            f.efficient_and_defensible.push_back(s.ToString());
+            f.n_efficient_and_defensible += s.Size(); }
         }
         else {
           // we cannot judge the efficiency without considering higher order

@@ -67,9 +67,9 @@ int main(int argc, char** argv) {
 
   MPI_Init(&argc, &argv);
 
-  if( argc != 5 ) {
+  if( argc != 6 ) {
     cerr << "Error : invalid argument" << endl;
-    cerr << "  Usage : " << argv[0] << " <in_format> <num_files> <out_format> <pending_out_format>" << endl;
+    cerr << "  Usage : " << argv[0] << " <in_format> <num_files> <out_format> <passed_out_format> <pending_out_format>" << endl;
     return 1;
   }
 
@@ -95,7 +95,10 @@ int main(int argc, char** argv) {
   std::ofstream fout(outfile);
   char outfile2[256];
   sprintf(outfile2, argv[4], my_rank);
-  std::ofstream fout2(outfile2);
+  std::ofstream passed_out(outfile2);
+  char outfile3[256];
+  sprintf(outfile3, argv[5], my_rank);
+  std::ofstream pending_out(outfile3);
 
   uint64_t n_efficient_total = 0;
   uint64_t n_unjudgeable_total = 0;
@@ -123,12 +126,18 @@ int main(int argc, char** argv) {
       n_rejected += res1.n_rejected;
       auto m1 = std::chrono::system_clock::now();
       double e1 = std::chrono::duration_cast<std::chrono::milliseconds>(m1-m0).count();
-      if(e1 > 3000.0) { std::cerr << "e1 > 3sec : " << line << std::endl; }
-      if(e1 > 3000.0) { std::cerr << "  " << res1.efficient.size() << " : " << res1.pending.size() << std::endl; }
+      bool print_passed = false;
+      if(e1 > 3000.0) {
+        std::cerr << "e1 > 3sec : " << line << std::endl;
+        std::cerr << "  " << res1.efficient.size() << " : " << res1.pending.size() << std::endl;
+      }
+      if(res1.efficient.size() >= 8192) { print_passed = true; }
+      if(print_passed) { for(const std::string& s: res1.efficient_and_defensible) { passed_out << s << " 0\n"; } }
 
       { // check defensibility against efficient strategies
         for(const Strategy& s: res1.efficient) {
           TraceNegativeDefensibleResult_t res_d = TraceNegativeDefensible(s, 64, 64);
+          if(print_passed) { for(const Strategy& s: res_d.passed) { passed_out << s.ToString() << " 0\n"; } }
           n_passed += res_d.NumDefensible();
           n_rejected += res_d.n_rejected;
         }
@@ -145,6 +154,7 @@ int main(int argc, char** argv) {
           n_rejected += res_d.n_rejected;
           for(Strategy& s3: res_d.passed) { // we check the efficiency again
             TopologicalEfficiencyResult_t res_e2 = CheckTopologicalEfficiency(s3);
+            if(print_passed) { for(const std::string& s: res_e2.efficient_and_defensible) { passed_out << s << " 0\n"; } }
             n_passed += res_e2.n_efficient_and_defensible;
             n_rejected += res_e2.n_rejected;
             for(const Strategy& s4: res_e2.pending) {
@@ -162,13 +172,16 @@ int main(int argc, char** argv) {
       n_unjudgeable_total += n_pending;
       n_rejected_total += n_rejected;
 
+      if(!print_passed && n_passed > 0) { passed_out << line << ' ' << n_pending+n_rejected << "\n"; }
+
       for(const std::string& s: v_pending) {
-        fout2 << s << std::endl;
+        pending_out << s << std::endl;
       }
     }
   }
   fout.close();
-  fout2.close();
+  passed_out.close();
+  pending_out.close();
 
   uint64_t sum_n_efficient = 0;
   uint64_t sum_n_unjudgeable = 0;
