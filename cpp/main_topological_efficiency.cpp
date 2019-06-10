@@ -122,18 +122,22 @@ int main(int argc, char** argv) {
       
       auto m0 = std::chrono::system_clock::now();
       TopologicalEfficiencyResult_t res1 = CheckTopologicalEfficiency(s1);
-      for(const std::string& s: res1.efficient_and_defensible) { passed_out << s << std::endl; }
       n_passed += res1.n_efficient_and_defensible;
       n_rejected += res1.n_rejected;
       auto m1 = std::chrono::system_clock::now();
       double e1 = std::chrono::duration_cast<std::chrono::milliseconds>(m1-m0).count();
-      if(e1 > 3000.0) { std::cerr << "e1 > 3sec : " << line << std::endl; }
-      if(e1 > 3000.0) { std::cerr << "  " << res1.efficient.size() << " : " << res1.pending.size() << std::endl; }
+      bool print_passed = false;
+      if(e1 > 3000.0) {
+        std::cerr << "e1 > 3sec : " << line << std::endl;
+        std::cerr << "  " << res1.efficient.size() << " : " << res1.pending.size() << std::endl;
+      }
+      if(res1.efficient.size() >= 8192) { print_passed = true; }
+      if(print_passed) { for(const std::string& s: res1.efficient_and_defensible) { passed_out << s << " 0\n"; } }
 
       { // check defensibility against efficient strategies
         for(const Strategy& s: res1.efficient) {
           TraceNegativeDefensibleResult_t res_d = TraceNegativeDefensible(s, 64, 64);
-          for(const Strategy& s: res_d.passed) { passed_out << s.ToString() << std::endl; }
+          if(print_passed) { for(const Strategy& s: res_d.passed) { passed_out << s.ToString() << " 0\n"; } }
           n_passed += res_d.NumDefensible();
           n_rejected += res_d.n_rejected;
         }
@@ -150,7 +154,7 @@ int main(int argc, char** argv) {
           n_rejected += res_d.n_rejected;
           for(Strategy& s3: res_d.passed) { // we check the efficiency again
             TopologicalEfficiencyResult_t res_e2 = CheckTopologicalEfficiency(s3);
-            for(const std::string& s: res_e2.efficient_and_defensible) { passed_out << s << std::endl; }
+            if(print_passed) { for(const std::string& s: res_e2.efficient_and_defensible) { passed_out << s << " 0\n"; } }
             n_passed += res_e2.n_efficient_and_defensible;
             n_rejected += res_e2.n_rejected;
             for(const Strategy& s4: res_e2.pending) {
@@ -167,6 +171,8 @@ int main(int argc, char** argv) {
       n_efficient_total += n_passed;
       n_unjudgeable_total += n_pending;
       n_rejected_total += n_rejected;
+
+      if(!print_passed && n_passed > 0) { passed_out << line << ' ' << n_pending+n_rejected << "\n"; }
 
       for(const std::string& s: v_pending) {
         pending_out << s << std::endl;
