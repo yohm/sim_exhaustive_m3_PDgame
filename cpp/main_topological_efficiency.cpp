@@ -58,9 +58,54 @@ void test() {
   test_strategy("cddc*cddc*cddccd*ccddd**cc****dd**c*cddddccddccddddcdd*d**cdcddd", 4224,0,0,28544);  // g2 must be considered to judge efficiency (many unfixed nodes)
 }
 
+std::vector<std::string> CompressStrategies(const std::vector<std::string>& strategies) {
+  std::vector<std::string> v0( strategies.begin(), strategies.end() );
+
+  bool updated = true;
+  while(updated) {
+    updated = false;
+    std::vector<std::string> v1;
+    for(size_t i=0; i<v0.size(); i++) {
+      if(i == v0.size()-1) { v1.push_back(v0[i]); break; }
+      std::string s1 = v0[i];
+      std::string s2 = v0[i+1];
+      int diff = 0;
+      for(size_t j=0; j<s1.size(); j++) { if(s1[j] != s2[j]) diff++; }
+      if( diff == 1 ) {
+        int idx = 0;
+        for(; idx<s1.size(); idx++) { if(s1[idx] != s2[idx]) break; }
+        assert( (s1[idx]=='c'&&s2[idx]=='d') || (s1[idx]=='d'&&s2[idx]=='c') );
+        s1[idx] = '*';
+        v1.push_back(s1);
+        i++;  // i+1 is already checked
+        updated = true;
+      }
+      else {
+        v1.push_back(s1);
+      }
+    }
+
+    // copy v1 to v0
+    v0.clear();
+    v0.resize(v1.size());
+    std::copy(v1.begin(), v1.end(), v0.begin());
+  }
+  return v0;
+}
 
 int main(int argc, char** argv) {
 #ifndef NDEBUG
+  std::vector<std::string> v =
+  {
+      "cccc",
+      "cccd",
+      "ccdc",
+      "ccdd",
+      "dccc",
+      "dccd",
+      "dcdc",
+      "dcdd"};
+  auto v2 = CompressStrategies(v);
   test();
   return 0;
 #else
@@ -132,15 +177,19 @@ int main(int argc, char** argv) {
         std::cerr << "  " << res1.efficient.size() << " : " << res1.pending.size() << std::endl;
       }
       if(res1.efficient.size() >= 8192) { print_passed = true; }
-      if(print_passed) { for(const std::string& s: res1.efficient_and_defensible) { passed_out << s << " 0\n"; } }
+      if(print_passed) { for(const std::string& s: CompressStrategies(res1.efficient_and_defensible)) { passed_out << s << " 0\n"; } }
 
       { // check defensibility against efficient strategies
+        std::vector<std::string> strings;
         for(const Strategy& s: res1.efficient) {
           TraceNegativeDefensibleResult_t res_d = TraceNegativeDefensible(s, 64, 64);
-          if(print_passed) { for(const Strategy& s: res_d.passed) { passed_out << s.ToString() << " 0\n"; } }
+          if(print_passed) {
+            for(const Strategy& s: res_d.passed) { strings.push_back(s.ToString()); }
+          }
           n_passed += res_d.NumDefensible();
           n_rejected += res_d.n_rejected;
         }
+        if(print_passed) { for(const std::string& s: CompressStrategies(strings)) { passed_out << s << " 0\n"; } }
         auto m2 = std::chrono::system_clock::now();
         double e2 = std::chrono::duration_cast<std::chrono::milliseconds>(m2-m1).count();
         if(e2 > 3000.0) { std::cerr << "e2 > 3sec : " << line << std::endl; }
@@ -154,7 +203,7 @@ int main(int argc, char** argv) {
           n_rejected += res_d.n_rejected;
           for(Strategy& s3: res_d.passed) { // we check the efficiency again
             TopologicalEfficiencyResult_t res_e2 = CheckTopologicalEfficiency(s3);
-            if(print_passed) { for(const std::string& s: res_e2.efficient_and_defensible) { passed_out << s << " 0\n"; } }
+            if(print_passed) { for(const std::string& s: CompressStrategies(res_e2.efficient_and_defensible)) { passed_out << s << " 0\n"; } }
             n_passed += res_e2.n_efficient_and_defensible;
             n_rejected += res_e2.n_rejected;
             for(const Strategy& s4: res_e2.pending) {
