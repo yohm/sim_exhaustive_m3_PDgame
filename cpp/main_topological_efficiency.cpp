@@ -176,7 +176,7 @@ int main(int argc, char** argv) {
         std::cerr << "e1 > 3sec : " << line << std::endl;
         std::cerr << "  " << res1.efficient.size() << " : " << res1.pending.size() << std::endl;
       }
-      if(res1.efficient.size() >= 8192) { print_passed = true; }
+      if(res1.efficient.size() >= 4096) { print_passed = true; }
       if(print_passed) { for(const std::string& s: CompressStrategies(res1.efficient_and_defensible)) { passed_out << s << " 0\n"; } }
 
       { // check defensibility against efficient strategies
