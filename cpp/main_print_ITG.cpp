@@ -58,7 +58,7 @@ int main(int argc, char** argv) {
       histo.push_back(current);
       oss << current << ",";
       current = str.NextITGState(State(current));
-      if(current < 0) { std::cerr << "U" << std::endl; oss << -1; break; }
+      if(current < 0) { oss << -1; break; }
     }
     std::string key = oss.str();
     if( counts.find(key) == counts.end() ) { counts[key] = 1; }

@@ -17,7 +17,11 @@ def format_trace(trace)
   c = "\e[42m\e[30mc\e[0m"
   d = "\e[45m\e[30md\e[0m"
   mapped = trace.split(',').map do |i|
-    s = sprintf("%06b",i.to_i).gsub('0',c).gsub('1',d)
+    if i.to_i == -1
+      "\e[44m\e\[30mU\e\[0m"
+    else
+      s = sprintf("%06b",i.to_i).gsub('0',c).gsub('1',d)
+    end
   end
   mapped.join(" -> ")
 end
