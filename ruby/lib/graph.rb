@@ -119,6 +119,20 @@ class DirectedWeightedGraph < DirectedGraph
     @weights[from][to] = weight
   end
 
+  def bellman_ford(from)
+    dist = Array.new(@n) {|i| i==from ? 0 : Float::INFINITY }
+    (@n-1).times do |t|
+      for_each_link do |u,v,w|
+        dist[v] = dist[u] + w if dist[v] > dist[u] + w
+      end
+    end
+    # check negative cycle
+    for_each_link do |u,v,w|
+      raise "negative cycle detected" if dist[u] + w < dist[v]
+    end
+    dist
+  end
+
   def for_each_link
     super do |i,j|
       yield i, j, @weights[i][j]
@@ -280,6 +294,12 @@ if __FILE__ == $0
         assert_equal @g.weights[i][j], w
       end
       assert_equal count, 6
+    end
+
+    def test_bellman_ford
+      dist = @g.bellman_ford(0)
+      expected = [0, 0.5, 0.2, 0.4, 0.9]
+      assert_equal dist, expected
     end
 
     def test_negative_cycle
