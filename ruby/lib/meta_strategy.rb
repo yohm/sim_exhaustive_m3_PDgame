@@ -235,7 +235,9 @@ if __FILE__ == $0 and ARGV.size == 1
   attributes = {}
   64.times.each.map do |i|
     c = scc.include?(i) ? "green" : "black"
-    attributes[i] = {label: "#{i}_#{sprintf('%06b',i).gsub('0','c').gsub('1','d')}", fontcolor: c}
+    c = "red" if scc.include?(i) and distance[i] < 0
+    l = "#{i}_#{sprintf('%06b',i).gsub('0','c').gsub('1','d')}_#{distance[i]}"
+    attributes[i] = {label: l, fontcolor: c}
   end
   g.to_dot($stdout, node_attributes: attributes )
   #$stderr.puts g.terminanl_components.inspect
