@@ -348,4 +348,62 @@ bool Strategy::IsEfficientTopo() const {
 
   return true;
 }
+bool Strategy::IsDistinguishableTopo() const {
+  if(NumFixed() != 64) { throw "must not happen"; }
+  const Strategy allc("cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc");
+  if( actions[0] != C ) { return true; }
+
+  auto UpdateGn = [](DirectedGraph& gn) {
+    components_t sinks = gn.SinkSCCs();
+    for(const comp_t& sink: sinks) {
+      for(long from: sink) {
+        for(int i=0; i<2; i++) {
+          long to = (unsigned long)from^((i==0)?1UL:8UL);
+          if( ! gn.HasLink(from, to) ) {
+            gn.AddLink(from, to);
+          }
+        }
+      }
+    }
+  };
+
+  std::vector<int> checked(64, 0);
+  checked[0] = 1;
+  auto complete = [&checked]() {
+    for(int i: checked) {
+      if(i==0) { return false; }
+    }
+    return true;
+  };
+
+  DirectedGraph gn(64);
+  for(int i=0; i<64; i++) {
+    State sa(i);
+    State sb = sa.SwapAB();
+    Action act_a = ActionAt(sa);
+    Action act_b = allc.ActionAt(sb);
+    assert( act_b == C );  // assert AllC
+    int j = sa.NextState(act_a, act_b).ID();
+    gn.AddLink(i, j);
+  }
+
+  for( int n=0; !complete(); n++ ) {
+    if(n > 0) {
+      UpdateGn(gn);
+    }
+    for(int i=1; i<64; i++) {
+      if( checked[i] == 1 ) { continue; }
+      if( gn.Reachable(i,0) ) {
+        if( gn.Reachable(0,i) ) {
+          return true;   // inefficient
+        }
+        else {
+          checked[i] = 1;
+        }
+      }
+    }
+  }
+
+  return false;
+}
 
