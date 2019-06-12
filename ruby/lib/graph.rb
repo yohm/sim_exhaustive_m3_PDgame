@@ -41,7 +41,7 @@ class DirectedGraph
 
   # node_attributes = { 0=> {label: "0_cccccc", fontcolor: "red"}, 1=>{ ...}, ... }
   # for available attributes, see the graphviz documentation https://graphviz.gitlab.io/_pages/doc/info/attrs.html#d:fillcolor
-  def to_dot(io, node_attributes: {}, remove_isolated: false, node_ranks: [])
+  def to_dot(io, node_attributes: {}, remove_isolated: false)
     io.puts "digraph \"\" {"
     @n.times do |ni|
       next if remove_isolated and @links[ni].empty?
@@ -53,13 +53,6 @@ class DirectedGraph
       next if remove_isolated and @links[ni].empty?
       @links[ni].each do |nj|
         io.puts "  #{ni} -> #{nj};"
-      end
-    end
-    if node_ranks.size > 0
-      ranks = node_ranks.map.with_index {|_,i| "rank_#{i}"}
-      io.puts "  #{ranks.join(' -> ')}"
-      node_ranks.each_with_index do |nodes,i|
-        io.puts "  {rank=same; #{ranks[i]}; #{nodes.join(';')};}"
       end
     end
     io.puts "}"
