@@ -39,13 +39,15 @@ class DirectedGraph
     (0..(@n-1)).to_a - transient_nodes
   end
 
+  # node_attributes = { 0=> {label: "0_cccccc", fontcolor: "red"}, 1=>{ ...}, ... }
+  # for available attributes, see the graphviz documentation https://graphviz.gitlab.io/_pages/doc/info/attrs.html#d:fillcolor
   def to_dot(io, node_attributes: {}, remove_isolated: false, node_ranks: [])
     io.puts "digraph \"\" {"
     @n.times do |ni|
       next if remove_isolated and @links[ni].empty?
-      label = node_attributes.dig(ni,:label) || ni.to_s
-      fontcolor = node_attributes.dig(ni,:fontcolor) || "black"
-      io.puts "  #{ni} [ label=\"#{label}\"; fontcolor = #{fontcolor} ];"
+      a = node_attributes[ni] || {}
+      attr = "[ " + a.map {|k,v| "#{k}=\"#{v}\";" }.join(' ') + " ];"
+      io.puts "  #{ni} #{attr}"
     end
     @n.times do |ni|
       next if remove_isolated and @links[ni].empty?
