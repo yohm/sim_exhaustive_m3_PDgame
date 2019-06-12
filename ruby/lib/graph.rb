@@ -40,8 +40,9 @@ class DirectedGraph
   end
 
   # node_attributes = { 0=> {label: "0_cccccc", fontcolor: "red"}, 1=>{ ...}, ... }
+  # edge_attributes = { [0,1] => {color: "yellow"}, [1,3]=>{....}, ...}
   # for available attributes, see the graphviz documentation https://graphviz.gitlab.io/_pages/doc/info/attrs.html#d:fillcolor
-  def to_dot(io, node_attributes: {}, remove_isolated: false)
+  def to_dot(io, node_attributes: {}, edge_attributes: {}, remove_isolated: false)
     io.puts "digraph \"\" {"
     @n.times do |ni|
       next if remove_isolated and @links[ni].empty?
@@ -52,7 +53,9 @@ class DirectedGraph
     @n.times do |ni|
       next if remove_isolated and @links[ni].empty?
       @links[ni].each do |nj|
-        io.puts "  #{ni} -> #{nj};"
+        a = edge_attributes[ [ni,nj] ] || {}
+        attr = "[ " + a.map {|k,v| "#{k}=\"#{v}\";" }.join(' ') + " ];"
+        io.puts "  #{ni} -> #{nj} #{attr}"
       end
     end
     io.puts "}"

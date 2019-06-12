@@ -234,12 +234,16 @@ if __FILE__ == $0 and ARGV.size == 1
   $stderr.puts Hash[scc.map {|i| [i,distance[i]] }.sort_by{|k,v| k}].inspect
   attributes = {}
   64.times.each.map do |i|
-    c = scc.include?(i) ? "green" : "black"
-    c = "red" if scc.include?(i) and distance[i] < 0
+    c = scc.include?(i) ? "lawngreen" : "white"
+    #c = "red" if scc.include?(i) and distance[i] < 0
     l = "#{i}_#{sprintf('%06b',i).gsub('0','c').gsub('1','d')}_#{distance[i]}"
-    attributes[i] = {label: l, fontcolor: c}
+    attributes[i] = {label: l, fillcolor: c, style: "filled"}
   end
-  g.to_dot($stdout, node_attributes: attributes )
+  edge_attributes = {}
+  s.transition_graph_with_self.for_each_link {|i,j|
+    edge_attributes[ [i,j] ] = {color: "red"}
+  }
+  g.to_dot($stdout, node_attributes: attributes, edge_attributes: edge_attributes )
   #$stderr.puts g.terminanl_components.inspect
 end
 
