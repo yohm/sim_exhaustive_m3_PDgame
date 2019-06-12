@@ -221,8 +221,10 @@ int Strategy::NextITGState(const State &s) const {
   return -1;
 }
 
-std::array<double, 64> Strategy::StationaryState(double e) const {
+std::array<double, 64> Strategy::StationaryState(double e, const Strategy* coplayer) const {
   assert( NumFixed() == 64 );
+  if(coplayer==NULL) { coplayer = this; }
+  assert( coplayer->NumFixed() == 64 );
   Eigen::Matrix<double,65,64> A;
 
   for(int i=0; i<64; i++) {
@@ -230,7 +232,10 @@ std::array<double, 64> Strategy::StationaryState(double e) const {
     for(int j=0; j<64; j++) {
       // calculate transition probability from j to i
       const State sj(j);
-      State next = NextITGState(sj);
+      // State next = NextITGState(sj);
+      Action act_a = ActionAt(sj);
+      Action act_b = coplayer->ActionAt( sj.SwapAB() );
+      State next = sj.NextState(act_a, act_b);
       int d = next.NumDiffInT1(si);
       if( d < 0 ) {
         A(i,j) = 0.0;

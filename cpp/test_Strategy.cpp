@@ -74,6 +74,9 @@ void test_Strategy() {
     auto stat = alld.StationaryState(0.001);
     for(int i=0; i<63; i++) { assert(stat[i] < 0.01); }
     assert(stat[63] > 0.99);
+
+    Strategy allc("cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc");
+    assert( alld.IsDistinguishable(allc) == true );
   }
   {
     Strategy allc("cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc");
@@ -86,6 +89,8 @@ void test_Strategy() {
     auto stat = allc.StationaryState(0.001);
     for(int i=1; i<64; i++) { assert(stat[i] < 0.01); }
     assert(stat[0] > 0.99);
+
+    assert( allc.IsDistinguishable(allc) == false );
   }
   {
     Strategy tft("cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd");
@@ -100,6 +105,9 @@ void test_Strategy() {
     assert( abs(stat[21]-0.25) < 0.01 );
     assert( abs(stat[42]-0.25) < 0.01 );
     assert( abs(stat[63]-0.25) < 0.01 );
+
+    Strategy allc("cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc");
+    assert( tft.IsDistinguishable(allc) == false );
   }
   {
     Strategy wsls("cdcdcdcddcdcdcdccdcdcdcddcdcdcdccdcdcdcddcdcdcdccdcdcdcddcdcdcdc");
@@ -112,6 +120,9 @@ void test_Strategy() {
     auto stat = wsls.StationaryState(0.001);
     for(int i=1; i<64; i++) { assert(stat[i] < 0.01); }
     assert(stat[0] > 0.99);
+
+    Strategy allc("cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc");
+    assert( wsls.IsDistinguishable(allc) == true );
   }
   {
     Strategy tf2t("cccdcccdcccdcccdcccdcccdcccdcccdcccdcccdcccdcccdcccdcccdcccdcccd"); // tf2t
@@ -124,6 +135,9 @@ void test_Strategy() {
     auto stat = tf2t.StationaryState(0.001);
     assert(stat[0] > 0.99);
     for(int i=1; i<64; i++) { assert(stat[i] < 0.01); }
+
+    Strategy allc("cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc");
+    assert( tf2t.IsDistinguishable(allc) == false );
   }
 
   {
@@ -208,6 +222,9 @@ void test_TFTATFT() {
 
   assert( tft_atft.IsDefensible() );
   assert( tft_atft.IsEfficient() );
+
+  Strategy allc("cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc");
+  assert( tft_atft.IsDistinguishable(allc) == true );
 }
 
 void test_EfficiencyDefensible() {
