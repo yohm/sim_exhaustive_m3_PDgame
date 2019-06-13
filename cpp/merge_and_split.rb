@@ -18,10 +18,12 @@ line_n = 0
 file_count = 0
 f = nil
 
-Dir.glob(in_pattern).each do |infile|
+Dir.glob(in_pattern).sort_by {|x| x.split('/')[0].to_i }.each do |infile|
+  $stderr.puts "reading #{infile}"
   File.open(infile).each_with_index do |line|
     if line_n % num_lines_per_file == 0
       outfile = sprintf(output_pattern, file_count)
+      $stderr.puts "writing #{outfile}"
       f&.flush; f&.close
       f = File.open(outfile, 'w')
       file_count += 1
