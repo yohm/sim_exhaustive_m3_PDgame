@@ -85,7 +85,7 @@ class MetaStrategy < Strategy
       ns = possible_next_states(s)
       ns.each do |n|
         j = n.to_id
-        g.add_link(i,j,n.relative_payoff)
+        g.add_link(i,j,s.relative_payoff)
       end
     end
     g
@@ -225,10 +225,25 @@ end
 if __FILE__ == $0 and ARGV.size == 1
   s = MetaStrategy.make_from_str(ARGV[0])
   $stderr.puts s.inspect
-  g = s.transition_graph_with_self(true)
-  g.to_dot($stdout)
-  $stderr.puts g.terminanl_components.inspect
-  # pp g
-
+  $stderr.puts "defensible? : #{s.defensible?}"
+  g = s.weighted_transition_graph
+  # g = s.transition_graph_with_self(true)
+  $stderr.puts g.sccs.inspect
+  scc = g.sccs.find {|x| x.include?(0) }
+  distance = g.bellman_ford(0)
+  $stderr.puts Hash[scc.map {|i| [i,distance[i]] }.sort_by{|k,v| k}].inspect
+  attributes = {}
+  64.times.each.map do |i|
+    c = scc.include?(i) ? "lawngreen" : "white"
+    #c = "red" if scc.include?(i) and distance[i] < 0
+    l = "#{i}_#{sprintf('%06b',i).gsub('0','c').gsub('1','d')}_#{distance[i]}"
+    attributes[i] = {label: l, fillcolor: c, style: "filled"}
+  end
+  edge_attributes = {}
+  s.transition_graph_with_self.for_each_link {|i,j|
+    edge_attributes[ [i,j] ] = {color: "red"}
+  }
+  g.to_dot($stdout, node_attributes: attributes, edge_attributes: edge_attributes )
+  #$stderr.puts g.terminanl_components.inspect
 end
 

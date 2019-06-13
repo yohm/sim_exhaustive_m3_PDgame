@@ -39,25 +39,23 @@ class DirectedGraph
     (0..(@n-1)).to_a - transient_nodes
   end
 
-  def to_dot(io, node_attributes: {}, remove_isolated: false, node_ranks: [])
+  # node_attributes = { 0=> {label: "0_cccccc", fontcolor: "red"}, 1=>{ ...}, ... }
+  # edge_attributes = { [0,1] => {color: "yellow"}, [1,3]=>{....}, ...}
+  # for available attributes, see the graphviz documentation https://graphviz.gitlab.io/_pages/doc/info/attrs.html#d:fillcolor
+  def to_dot(io, node_attributes: {}, edge_attributes: {}, remove_isolated: false)
     io.puts "digraph \"\" {"
     @n.times do |ni|
       next if remove_isolated and @links[ni].empty?
-      label = node_attributes.dig(ni,:label) || ni.to_s
-      fontcolor = node_attributes.dig(ni,:fontcolor) || "black"
-      io.puts "  #{ni} [ label=\"#{label}\"; fontcolor = #{fontcolor} ];"
+      a = node_attributes[ni] || {}
+      attr = "[ " + a.map {|k,v| "#{k}=\"#{v}\";" }.join(' ') + " ];"
+      io.puts "  #{ni} #{attr}"
     end
     @n.times do |ni|
       next if remove_isolated and @links[ni].empty?
       @links[ni].each do |nj|
-        io.puts "  #{ni} -> #{nj};"
-      end
-    end
-    if node_ranks.size > 0
-      ranks = node_ranks.map.with_index {|_,i| "rank_#{i}"}
-      io.puts "  #{ranks.join(' -> ')}"
-      node_ranks.each_with_index do |nodes,i|
-        io.puts "  {rank=same; #{ranks[i]}; #{nodes.join(';')};}"
+        a = edge_attributes[ [ni,nj] ] || {}
+        attr = "[ " + a.map {|k,v| "#{k}=\"#{v}\";" }.join(' ') + " ];"
+        io.puts "  #{ni} -> #{nj} #{attr}"
       end
     end
     io.puts "}"
@@ -117,6 +115,20 @@ class DirectedWeightedGraph < DirectedGraph
   def add_link( from, to, weight )
     super(from, to)
     @weights[from][to] = weight
+  end
+
+  def bellman_ford(from)
+    dist = Array.new(@n) {|i| i==from ? 0 : Float::INFINITY }
+    (@n-1).times do |t|
+      for_each_link do |u,v,w|
+        dist[v] = dist[u] + w if dist[v] > dist[u] + w
+      end
+    end
+    # check negative cycle
+    for_each_link do |u,v,w|
+      raise "negative cycle detected" if dist[u] + w < dist[v]
+    end
+    dist
   end
 
   def for_each_link
@@ -280,6 +292,12 @@ if __FILE__ == $0
         assert_equal @g.weights[i][j], w
       end
       assert_equal count, 6
+    end
+
+    def test_bellman_ford
+      dist = @g.bellman_ford(0)
+      expected = [0, 0.5, 0.2, 0.4, 0.9]
+      assert_equal dist, expected
     end
 
     def test_negative_cycle

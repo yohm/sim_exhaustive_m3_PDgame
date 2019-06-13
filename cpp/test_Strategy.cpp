@@ -74,6 +74,9 @@ void test_Strategy() {
     auto stat = alld.StationaryState(0.001);
     for(int i=0; i<63; i++) { assert(stat[i] < 0.01); }
     assert(stat[63] > 0.99);
+
+    assert( alld.IsDistinguishable() == true );
+    assert( alld.IsDistinguishableTopo() == true );
   }
   {
     Strategy allc("cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc");
@@ -86,6 +89,9 @@ void test_Strategy() {
     auto stat = allc.StationaryState(0.001);
     for(int i=1; i<64; i++) { assert(stat[i] < 0.01); }
     assert(stat[0] > 0.99);
+
+    assert( allc.IsDistinguishable() == false );
+    assert( allc.IsDistinguishableTopo() == false );
   }
   {
     Strategy tft("cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd");
@@ -100,6 +106,9 @@ void test_Strategy() {
     assert( abs(stat[21]-0.25) < 0.01 );
     assert( abs(stat[42]-0.25) < 0.01 );
     assert( abs(stat[63]-0.25) < 0.01 );
+
+    assert( tft.IsDistinguishable() == false );
+    assert( tft.IsDistinguishableTopo() == false );
   }
   {
     Strategy wsls("cdcdcdcddcdcdcdccdcdcdcddcdcdcdccdcdcdcddcdcdcdccdcdcdcddcdcdcdc");
@@ -112,6 +121,9 @@ void test_Strategy() {
     auto stat = wsls.StationaryState(0.001);
     for(int i=1; i<64; i++) { assert(stat[i] < 0.01); }
     assert(stat[0] > 0.99);
+
+    assert( wsls.IsDistinguishable() == true );
+    assert( wsls.IsDistinguishableTopo() == true );
   }
   {
     Strategy tf2t("cccdcccdcccdcccdcccdcccdcccdcccdcccdcccdcccdcccdcccdcccdcccdcccd"); // tf2t
@@ -124,6 +136,9 @@ void test_Strategy() {
     auto stat = tf2t.StationaryState(0.001);
     assert(stat[0] > 0.99);
     for(int i=1; i<64; i++) { assert(stat[i] < 0.01); }
+
+    assert( tf2t.IsDistinguishable() == false );
+    assert( tf2t.IsDistinguishableTopo() == false );
   }
 
   {
@@ -208,6 +223,9 @@ void test_TFTATFT() {
 
   assert( tft_atft.IsDefensible() );
   assert( tft_atft.IsEfficient() );
+
+  assert( tft_atft.IsDistinguishable() == true );
+  assert( tft_atft.IsDistinguishableTopo() == true );
 }
 
 void test_EfficiencyDefensible() {

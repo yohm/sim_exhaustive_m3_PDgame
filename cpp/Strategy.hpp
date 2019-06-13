@@ -123,9 +123,13 @@ public:
   int NumU() const { int c=0; for(auto a: actions) { if(a==U) c++;} return c; }
   uint64_t Size() const { return (1ULL << (64 - NumFixed())); }
   bool IsDefensible();  // check defensibility. If defensible, m_d is also calculated
-  std::array<double,64> StationaryState(double e=0.0001) const; // all actions must be fixed to calculated stationary state
+  std::array<double,64> StationaryState(double e=0.0001, const Strategy* coplayer = NULL) const; // all actions must be fixed to calculated stationary state
   bool IsEfficient(double e=0.0001, double th=0.95) const { return (StationaryState(e)[0]>th); } // check efficiency. all actions must be fixed
   bool IsEfficientTopo() const; // check efficiency using ITG
+  bool IsDistinguishable(double e=0.0001, double th=0.95) const {
+    const Strategy allc("cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc");
+    return (StationaryState(e,&allc)[0]<th); };  // check distinguishability against AllC
+  bool IsDistinguishableTopo() const; // check distinguishability using the transition graph
   bool SetActionAndRecalcD(const State& s, Action a); // set action[s]=a, and recalculate `m_d`. If not defensible, return false.
   std::vector<State> DanglingStates() const; // states that has incoming links but has no outgoing links (i.e. its action is U)
   std::vector<State> NegativeDanglingStates() const; // states that has incoming links but has no outgoing links (i.e. its action is U). IsDefensible must be called beforehand
