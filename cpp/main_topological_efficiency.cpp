@@ -158,7 +158,7 @@ int main(int argc, char** argv) {
 
 
     if( count % PROCS_PER_FILE == my_rank%PROCS_PER_FILE ) {
-      // std::cerr << "checking: " << line << std::endl;
+      std::cerr << "checking: " << line << std::endl;
       uint64_t n_passed = 0;
       uint64_t n_pending = 0;
       uint64_t n_rejected = 0;
@@ -176,7 +176,7 @@ int main(int argc, char** argv) {
         std::cerr << "e1 > 3sec : " << line << std::endl;
         std::cerr << "  " << res1.efficient.size() << " : " << res1.pending.size() << std::endl;
       }
-      if(res1.efficient.size() >= 4096) { print_passed = true; }
+      if(res1.efficient.size() >= 0) { print_passed = true; }
       if(print_passed) { for(const std::string& s: CompressStrategies(res1.efficient_and_defensible)) { passed_out << s << " 0\n"; } }
 
       { // check defensibility against efficient strategies
