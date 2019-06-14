@@ -12,7 +12,7 @@ ARGV.each do |arg|
   Dir.glob(arg).sort.each do |infile|
     $stderr.puts "reading #{infile}"
     File.open(infile).each_with_index do |line,idx|
-      $stderr.puts "  line : #{idx}" if idx % 10000 == 0
+      $stderr.puts "  line : #{idx}" if idx % 100000 == 0
       str = line.chomp.split[0]
       num_w = str.count('*')
       num = 2 ** num_w
