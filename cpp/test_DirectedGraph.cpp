@@ -36,6 +36,9 @@ void test_g1() {
   g1.AddLink(0, 3);
   g1.AddLink(3, 4);
   g1.AddLink(4, 4);
+  // 1 -> 0 -> 3 -> 4 --
+  // ^     --> 2    ^  |
+  // |---------|    |---
   {
     components_t components;
     g1.SCCs(components);
@@ -56,6 +59,22 @@ void test_g1() {
   {
     assert( g1.Reachable(0, 4) );
     assert( ! g1.Reachable(4, 0) );
+  }
+  {
+    std::vector<long> v;
+    g1.BFS(0, [&v](long n) {
+      v.push_back(n);
+    });
+    std::vector<long> expected = {0, 2, 3, 1, 4};
+    assert( v == expected );
+  }
+  {
+    std::vector<long> v;
+    g1.DFS(0, [&v](long n) {
+      v.push_back(n);
+    });
+    std::vector<long> expected = {0, 3, 4, 2, 1};
+    assert( v == expected );
   }
 }
 

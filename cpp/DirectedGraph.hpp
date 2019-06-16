@@ -7,6 +7,7 @@
 #include <stack>
 #include <set>
 #include <functional>
+#include <queue>
 
 typedef std::vector<long> comp_t;
 typedef std::vector<comp_t> components_t;
@@ -31,6 +32,38 @@ public:
     for( long i=0; i<m_num_nodes; i++) {
       for( long j: m_links[i]) {
         f(i,j);
+      }
+    }
+  }
+  template <class T> void BFS(long init, const T& f) const {
+    std::vector<int> visited(m_num_nodes, 0);
+    std::queue<long> q;
+    q.push(init);
+    visited[init] = 1;
+    while( q.size() > 0 ) {
+      long i = q.front();
+      q.pop();
+      f(i);
+      for(long j: m_links[i]) {
+        if(visited[j] == 0) {
+          visited[j] = 1;
+          q.push(j);
+        }
+      }
+    }
+  }
+  template <class T> void DFS(long init, const T& f) const {
+    std::vector<int> visited(m_num_nodes, 0);
+    std::stack<long> s;
+    s.push(init);
+    while( s.size() > 0 ) {
+      long i = s.top();
+      s.pop();
+      if( visited[i] > 0 ) { continue; }
+      visited[i] = 1;
+      f(i);
+      for(long j: m_links[i]) {
+        if(visited[j] == 0) { s.push(j); }
       }
     }
   }
