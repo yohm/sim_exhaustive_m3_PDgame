@@ -84,32 +84,74 @@ DirectedGraph ConstructG0(const Strategy& str1, const Strategy& str2, bool make_
 }
 
 void UpdateGn(DirectedGraph& g) {
-  // [TODO] implement me
-}
+  components_t sinks = g.SinkSCCs();
 
-std::vector<int> UnfixedNodes(const DirectedGraph& g, std::vector<int> start) {
-  std::vector<int> ans;
-
-  start.push_back(0);
-  for(int init: start) {
-    // [TODO] BFS to find a node of out-degree 0
+  for(comp_t sink: sinks) {
+    if( sink.size() == 1 && g.m_links[sink[0]].size() == 0 ) { continue; } // skip unfixed nodes
+    for(long n: sink) {
+      assert( g.m_links[n].size() > 0 );  // A node sink SCC must be a fixed node.
+      for(int i=0; i<2; i++) {
+        long to = n ^ ((i==0)?1UL:8UL);
+        if( !g.HasLink(n, to) ) { g.AddLink(n, to); }
+      }
+    }
   }
 }
 
-std::vector<Strategy> FixStates(const Strategy& strategy, const DirectedGraph& g, const std::vector<int>& unfixed) {
-  // [TODO] implement me
+bool HasNodeWithoutOutlink(const DirectedGraph& g, long init) {
+  std::vector<long> ans;
+  g.BFS(init, [&ans,&g](long n) {
+    if( g.m_links[n].size() == 0 ) {
+      ans.push_back(n);
+    }
+  });
+  return (ans.size() > 0);
+}
 
+std::vector<Strategy> FixStates(const Strategy& strategy, const Strategy& B_strategy, const DirectedGraph& g, long init) {
+  std::vector<long> unfixed;
+  g.BFS(init, [&unfixed,&g](long n) {
+    if( g.m_links[n].size() == 0 ) {
+      unfixed.push_back(n);
+    }
+  });
+
+  std::vector<Strategy> ans;
+  if( unfixed.empty() ) {
+    ans.push_back(strategy);
+  }
+  else {
+    long n = unfixed[0];
+    for(int i=0; i<2; i++) {
+      Strategy _s = strategy;
+      DirectedGraph _g = g;
+      assert( _s.ActionAt(State(n)) == U || _s.ActionAt(State(n)) == W );
+      Action  act_a = (i==0)?C:D;
+      State current(n);
+      _s.SetAction( current, act_a );
+      Action act_b = B_strategy.ActionAt( current.SwapAB() );
+      State next_state = current.NextState( act_a, act_b );
+      _g.AddLink( current.ID(), next_state.ID() );
+      std::vector<Strategy> v = FixStates(_s, B_strategy, _g, init);
+      ans.insert( ans.end(), v.begin(), v.end() );
+    }
+  }
+  return std::move(ans);
 }
 
 void Distinguishable_DFS(const Strategy& strategy, DistinguishabilityResult_t& res) {
   const Strategy AllC("cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc");
   DirectedGraph g0 = ConstructG0(strategy, AllC, false);
   components_t sccs = g0.NonTransitionComponents();
-  std::vector<int> unjudged;
+  std::vector<int> scc_nodes, unjudged;
   for(const comp_t& comp: sccs) {
-    if(comp.size() == 1 && comp[0] == 0) { continue; }
-    unjudged.push_back(comp[0]);
+    if(comp.size() == 1 && comp[0] == 0) { scc_nodes.push_back(comp[0]); }
+    else {
+      scc_nodes.push_back(comp[0]);
+      unjudged.push_back(comp[0]);
+    }
   }
+  std::sort( scc_nodes.begin(), scc_nodes.end() );
   std::sort( unjudged.begin(), unjudged.end() );
 
   DirectedGraph gn = g0;
@@ -120,6 +162,7 @@ void Distinguishable_DFS(const Strategy& strategy, DistinguishabilityResult_t& r
       return;
     }
 
+    // At this moment, all SCCs in Gn must be fixed
     UpdateGn(gn);
 
     for(int l : unjudged) {
@@ -130,17 +173,18 @@ void Distinguishable_DFS(const Strategy& strategy, DistinguishabilityResult_t& r
       }
     }
 
-    // fix all actions from 0 and unjudged
-    std::vector<int> unfixed = UnfixedNodes(gn, unjudged);
-    if(unfixed.size() > 0) {
-      std::vector<Strategy> strategies2 = FixStates(strategy, gn, unfixed);
-      for(const Strategy& s: strategies2) {
-        Distinguishable_DFS(s, res);
+    // fix all actions from scc_nodes
+    for(int l: scc_nodes) {
+      if( HasNodeWithoutOutlink(gn, l) ) {
+        std::vector<Strategy> strategies2 = FixStates(strategy, AllC, gn, l);
+        for(const Strategy& s: strategies2) {
+          Distinguishable_DFS(s, res);
+        }
+        return;
       }
-      return;
     }
 
-    // all SCCs reachable from [unjudged] are now fixed
+    // all SCCs reachable from scc_nodes are now fixed
     std::vector<int> to_be_removed;
     for(int l: unjudged) {
       if( gn.Reachable(l,0) ) {
@@ -164,7 +208,7 @@ DistinguishabilityResult_t CheckDistinguishability(const Strategy& strategy) {
 }
 
 void test_strategy(const std::string& str, int64_t n_passed = -1, int64_t n_rejected = -1) {
-  Strategy s(str.c_str()); // is efficient
+  Strategy s(str.c_str());
   DistinguishabilityResult_t res = CheckDistinguishability(s);
   res.PrintStrategies(std::cout);
   assert( s.Size() == res.n_passed + res.n_rejected );
@@ -173,7 +217,7 @@ void test_strategy(const std::string& str, int64_t n_passed = -1, int64_t n_reje
 }
 
 void test() {
-  test_strategy("cd*d*dddd*dddcdcddcd*cdd*d**dcdd*d*ccddddcddccdd**dd***cdc*cdcdd", 32768,0); // is distinguishable?
+  test_strategy("cdcccdddc*cddcdddcdccd*ccddccdcdcdcd*ccdcdddddddddd*ddddccccddcd", 16,0); // 0 moves to 16<->40 by 1-bit error
 }
 
 int main(int argc, char** argv) {
