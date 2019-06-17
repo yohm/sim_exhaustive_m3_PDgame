@@ -209,6 +209,24 @@ DistinguishabilityResult_t CheckDistinguishability(const Strategy& strategy) {
   return res;
 }
 
+void ExpandWildcard(const Strategy& strategy, std::vector<Strategy>& ans) {
+  if( strategy.NumFixed() == 64 ) {
+    ans.push_back(strategy);
+    return;
+  }
+  for(int n=0; n<64; n++) {
+    Action ai = strategy.ActionAt(n);
+    if( ai == U || ai == W ) {
+      for(int i=0; i<2; i++) {
+        Strategy _s = strategy;
+        _s.SetAction( State(n), (i==0)?C:D );
+        ExpandWildcard(_s, ans);
+      }
+      return;
+    }
+  }
+}
+
 void test_strategy(const std::string& str, int64_t n_passed = -1, int64_t n_rejected = -1) {
   Strategy s(str.c_str());
   DistinguishabilityResult_t res = CheckDistinguishability(s);
@@ -216,11 +234,21 @@ void test_strategy(const std::string& str, int64_t n_passed = -1, int64_t n_reje
   assert( s.Size() == res.n_passed + res.n_rejected );
   if(n_passed>=0) { assert( res.n_passed == n_passed ); }
   if(n_rejected>=0) { assert( res.n_rejected == n_rejected); }
+
+  std::vector<Strategy> expanded;
+  ExpandWildcard(s, expanded);
+  int n_passed2 = 0, n_rejected2 = 0;
+  for(const Strategy& e: expanded) {
+    if( e.IsDistinguishable() ) { n_passed2 ++; }
+    else { n_rejected2++; }
+  }
+  assert( n_passed2 == n_passed );
+  assert( n_rejected2 == n_rejected );
 }
 
 void test() {
   test_strategy("cdcccdddc*cddcdddcdccd*ccddccdcdcdcd*ccdcdddddddddd*ddddccccddcd", 16,0); // 0 moves to 16(cdcccc)<->40(dcdccc) by 1-bit error
-  test_strategy("cddd*c*dd*dddddcddcd*ddd*ddddcdd*d*dcddddcddccdd**dd***cdc*cdcdd", 1<<13, 0);
+  // test_strategy("cddd*c*dd*dddddcddcd*ddd*ddddcdd*d*dcddddcddccdd**dd***cdc*cdcdd", 1<<13, 0);
   test_strategy("ccddcccdc*dcddcdccc*ddcdcccdddcdcdcdccc*ddcd*cddcccddd*cdcdd**cd", 0, 1<<7);  // indistinguishable. 0/->56(dddccc) & 56->0.
   test_strategy("ccddcccdc*dcddcdccc*ddcdcccdddcdcdcdccc*ddcd*cddcccddd*cdddd**cd", 0, 1<<7);  // G1's sccs (node60) is not fixed. For both expanded strategies, indistinguishable as 0/->56(dddccc) & 56->0.
   test_strategy("cddcccddc*ccd*c*ccddcddddccccdcdcdc*cd**dddddcddddcdddddddcccddd", 1<<6, 0); // second order error must be taken into account. 0->>56 & 56/->0.
