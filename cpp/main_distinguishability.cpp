@@ -88,11 +88,11 @@ void UpdateGn(DirectedGraph& g) {
 
   for(comp_t sink: sinks) {
     if( sink.size() == 1 && g.m_links[sink[0]].size() == 0 ) { continue; } // skip unfixed nodes
-    for(long n: sink) {
-      assert( g.m_links[n].size() > 0 );  // A node sink SCC must be a fixed node.
+    for(long from: sink) {
+      assert( g.m_links[from].size() > 0 );  // A node sink SCC must be a fixed node.
       for(int i=0; i<2; i++) {
-        long to = n ^ ((i==0)?1UL:8UL);
-        if( !g.HasLink(n, to) ) { g.AddLink(n, to); }
+        long to = from ^ ((i==0)?1UL:8UL);
+        if( !g.HasLink(from, to) ) { g.AddLink(from, to); }
       }
     }
   }
@@ -175,10 +175,11 @@ void Distinguishable_DFS(const Strategy& strategy, DistinguishabilityResult_t& r
       }
     }
 
-    // fix all actions from scc_nodes
+    // fix all actions to nodes that are accessible from scc_nodes
     for(int l: scc_nodes) {
-      if( HasNodeWithoutOutlink(gn, l) ) {
-        std::vector<Strategy> strategies2 = FixStates(strategy, AllC, gn, l);
+      //if( HasNodeWithoutOutlink(gn, l) ) {
+      std::vector<Strategy> strategies2 = FixStates(strategy, AllC, gn, l);
+      if( strategies2.size() > 1 ) {
         for(const Strategy& s: strategies2) {
           Distinguishable_DFS(s, res);
         }
