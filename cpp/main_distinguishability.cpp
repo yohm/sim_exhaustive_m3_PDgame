@@ -155,6 +155,7 @@ void Distinguishable_DFS(const Strategy& strategy, DistinguishabilityResult_t& r
   std::sort( unjudged.begin(), unjudged.end() );
 
   DirectedGraph gn = g0;
+  long errors = 0;
 
   while(true) {
     if( unjudged.empty() ) {  // indistinguishable
@@ -164,6 +165,7 @@ void Distinguishable_DFS(const Strategy& strategy, DistinguishabilityResult_t& r
 
     // At this moment, all SCCs in Gn must be fixed
     UpdateGn(gn);
+    errors += 1;
 
     for(int l : unjudged) {
       if( gn.Reachable(0, l) ) {  // distinguishable
@@ -217,8 +219,48 @@ void test_strategy(const std::string& str, int64_t n_passed = -1, int64_t n_reje
 }
 
 void test() {
-  test_strategy("cdcccdddc*cddcdddcdccd*ccddccdcdcdcd*ccdcdddddddddd*ddddccccddcd", 16,0); // 0 moves to 16<->40 by 1-bit error
+  test_strategy("cdcccdddc*cddcdddcdccd*ccddccdcdcdcd*ccdcdddddddddd*ddddccccddcd", 16,0); // 0 moves to 16(cdcccc)<->40(dcdccc) by 1-bit error
+  test_strategy("cddd*c*dd*dddddcddcd*ddd*ddddcdd*d*dcddddcddccdd**dd***cdc*cdcdd", 1<<13, 0);
+  test_strategy("ccddcccdc*dcddcdccc*ddcdcccdddcdcdcdccc*ddcd*cddcccddd*cdcdd**cd", 0, 1<<7);  // indistinguishable. 0/->56(dddccc) & 56->0.
+  test_strategy("ccddcccdc*dcddcdccc*ddcdcccdddcdcdcdccc*ddcd*cddcccddd*cdddd**cd", 0, 1<<7);  // G1's sccs (node60) is not fixed. For both expanded strategies, indistinguishable as 0/->56(dddccc) & 56->0.
+  test_strategy("cddcccddc*ccd*c*ccddcddddccccdcdcdc*cd**dddddcddddcdddddddcccddd", 1<<6, 0); // second order error must be taken into account. 0->>56 & 56/->0.
 }
+
+std::vector<std::string> CompressStrategies(const std::vector<std::string>& strategies) {
+  std::vector<std::string> v0( strategies.begin(), strategies.end() );
+
+  bool updated = true;
+  while(updated) {
+    updated = false;
+    std::vector<std::string> v1;
+    for(size_t i=0; i<v0.size(); i++) {
+      if(i == v0.size()-1) { v1.push_back(v0[i]); break; }
+      std::string s1 = v0[i];
+      std::string s2 = v0[i+1];
+      int diff = 0;
+      for(size_t j=0; j<s1.size(); j++) { if(s1[j] != s2[j]) diff++; }
+      if( diff == 1 ) {
+        int idx = 0;
+        for(; idx<s1.size(); idx++) { if(s1[idx] != s2[idx]) break; }
+        assert( (s1[idx]=='c'&&s2[idx]=='d') || (s1[idx]=='d'&&s2[idx]=='c') );
+        s1[idx] = '*';
+        v1.push_back(s1);
+        i++;  // i+1 is already checked
+        updated = true;
+      }
+      else {
+        v1.push_back(s1);
+      }
+    }
+
+    // copy v1 to v0
+    v0.clear();
+    v0.resize(v1.size());
+    std::copy(v1.begin(), v1.end(), v0.begin());
+  }
+  return v0;
+}
+
 
 int main(int argc, char** argv) {
 #ifndef NDEBUG
@@ -286,7 +328,7 @@ int main(int argc, char** argv) {
       n_passed_total += res.n_passed;
       n_rejected_total += res.n_rejected;
 
-      for(const std::string s: res.passed) { passed_out << s << std::endl; }
+      for(const std::string s: CompressStrategies(res.passed)) { passed_out << s << std::endl; }
     }
   }
   fout.close();
