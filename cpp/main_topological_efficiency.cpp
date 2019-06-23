@@ -187,7 +187,7 @@ int main(int argc, char** argv) {
 
 
     if( count % PROCS_PER_FILE == my_rank%PROCS_PER_FILE ) {
-      std::cerr << "checking: " << line << std::endl;
+      // std::cerr << "checking: " << line << std::endl;
       uint64_t n_passed = 0;
       uint64_t n_pending = 0;
       uint64_t n_rejected = 0;

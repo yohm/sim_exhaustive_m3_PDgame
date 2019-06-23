@@ -499,8 +499,8 @@ TopologicalEfficiencyResult_t CheckTopologicalEfficiency(Strategy& str) {
     // assert( res.NumEfficient() == res2.NumEfficient() );
     assert( res.n_rejected == res0.n_rejected );
     assert( res.NumTotal() == res0.NumTotal() );
-#endif
     std::cout << s.ToString() << " " << res.efficient.size() << ' ' << res.n_rejected << std::endl;
+#endif
   }
   return std::move(res);
 }
