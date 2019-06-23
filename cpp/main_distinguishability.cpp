@@ -177,9 +177,8 @@ void Distinguishable_DFS(const Strategy& strategy, DistinguishabilityResult_t& r
 
     // fix all actions to nodes that are accessible from scc_nodes
     for(int l: scc_nodes) {
-      //if( HasNodeWithoutOutlink(gn, l) ) {
-      std::vector<Strategy> strategies2 = FixStates(strategy, AllC, gn, l);
-      if( strategies2.size() > 1 ) {
+      if( HasNodeWithoutOutlink(gn, l) ) {
+        std::vector<Strategy> strategies2 = FixStates(strategy, AllC, gn, l);
         for(const Strategy& s: strategies2) {
           Distinguishable_DFS(s, res);
         }
