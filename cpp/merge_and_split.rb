@@ -2,7 +2,7 @@ require 'pp'
 
 unless ARGV.size == 4
   $stderr.puts "Usage: ruby #{__FILE__} infile_pattern num_input_total num_output output_pattern"
-  $stderr.puts "       ruby #{__FILE__} '*/out.passed.[0-9]*' 1486146878 1200 'merged/passed.%05d'"
+  $stderr.puts "       ruby #{__FILE__} '*/out.passed.[0-9]*' 5476807859 1200 'merged/passed.%05d'"
   raise ArgumentError
 end
 

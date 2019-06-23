@@ -80,9 +80,9 @@ namespace {
     stk.push(ini);
     while( stk.size() > 0 ) {
       long i = stk.top();
-      // [TODO] if( visited[i] ) continue;  が必要？
-      visited[i] = 1;
       stk.pop();
+      if( visited[i] > 0 ) continue;
+      visited[i] = 1;
       if( g.m_links[i].size() == 0 ) {
         ans.push_back(i);
       }
