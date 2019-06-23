@@ -23,6 +23,9 @@ public:
     for(const Strategy& s: pending) { n += s.Size(); }
     return n;
   }
+  uint64_t NumTotal() const {
+    return n_efficient_and_defensible + NumEfficient() + NumPending() + n_rejected;
+  }
   void PrintStrategies(std::ostream &os) const {
     for(const Strategy& s: efficient) {
       // os << "E: " << s.ToString() << std::endl;

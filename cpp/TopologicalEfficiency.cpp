@@ -462,21 +462,44 @@ void JudgeEfficiencyDFS(const Strategy& s, res_t & f) {
 }
 
 TopologicalEfficiencyResult_t CheckTopologicalEfficiency(Strategy& str) {
-  TopologicalEfficiencyResult_t res, res2;
+  TopologicalEfficiencyResult_t res;
   if( !str.IsDefensible() ) {
     res.n_rejected += str.Size();
     return std::move(res);
   }
   std::vector<Strategy> assigned = FixL0(str, res.n_rejected);
-  res2.n_rejected = res.n_rejected;
+#ifndef NDEBUG
+  TopologicalEfficiencyResult_t res0;
+  res0.n_rejected = res.n_rejected;
+#endif
 
   for(const Strategy& s: assigned) {
-    JudgeEfficiencyDFS(s, res);
-    JudgeEfficiencyDFS2(s, res2);
+    JudgeEfficiencyDFS2(s, res);
+#ifndef NDEBUG
+    uint64_t offset = res0.NumTotal();
+    JudgeEfficiencyDFS(s, res0);
     res.PrintStrategies(std::cerr);
-    res2.PrintStrategies(std::cerr);
-    assert( res.NumEfficient() == res2.NumEfficient() );
-    assert( res.n_rejected == res2.n_rejected );
+    res0.PrintStrategies(std::cerr);
+    assert( res.NumTotal() == s.Size() + offset );
+    assert( res0.NumTotal() == s.Size() + offset );
+    assert( res.NumTotal() == res0.NumTotal() );
+    for(const auto& s: res.efficient) {
+      TraceNegativeDefensibleResult_t res_d = TraceNegativeDefensible(s,64,64);
+      res.n_efficient_and_defensible += res_d.NumPassed();
+      res.n_rejected += res_d.n_rejected;
+    }
+    res.efficient.clear();
+    for(const auto& s: res0.efficient) {
+      TraceNegativeDefensibleResult_t res_d = TraceNegativeDefensible(s,64,64);
+      res0.n_efficient_and_defensible += res_d.NumPassed();
+      res0.n_rejected += res_d.n_rejected;
+    }
+    res0.efficient.clear();
+    assert( res.n_efficient_and_defensible == res0.n_efficient_and_defensible );
+    // assert( res.NumEfficient() == res2.NumEfficient() );
+    assert( res.n_rejected == res0.n_rejected );
+    assert( res.NumTotal() == res0.NumTotal() );
+#endif
     std::cout << s.ToString() << " " << res.efficient.size() << ' ' << res.n_rejected << std::endl;
   }
   return std::move(res);
