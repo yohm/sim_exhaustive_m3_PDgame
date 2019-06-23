@@ -45,17 +45,50 @@ void test_strategy(const std::string& str, int64_t ED=-1, int64_t E=-1, int64_t 
   if( R>=0) { assert( res.n_rejected == R); }
 }
 
+void ExpandWildcard(const Strategy& strategy, std::vector<Strategy>& ans) {
+  if( strategy.NumFixed() == 64 ) {
+    ans.push_back(strategy);
+    return;
+  }
+  for(int n=0; n<64; n++) {
+    Action ai = strategy.ActionAt(n);
+    if( ai == U || ai == W ) {
+      for(int i=0; i<2; i++) {
+        Strategy _s = strategy;
+        _s.SetAction( State(n), (i==0)?C:D );
+        ExpandWildcard(_s, ans);
+      }
+      return;
+    }
+  }
+}
+
 void test() {
+  /*
+  std::vector<Strategy> expanded;
+  ExpandWildcard("cddc*cddc*cddccd*ccddd**cc****dd**c*cddddccddccddddcdd*d**cdcddd", expanded);
+  uint64_t cnt_e = 0, cnt_r = 0;
+  for(const Strategy& e: expanded) {
+    if( e.IsEfficientTopo() ) { cnt_e++; }
+    else { cnt_r++; }
+  }
+  std::cout << cnt_e << " / " << cnt_r << std::endl;
+   */
+  /*
+  test_strategy("cddc*cddc*cddccd*ccddd**cc***cdd**c*cddddccddccddddcdd*d**cdcddd",4224,0,0,12160);
   test_strategy("cd*d*dddd*dddcdcddcd*cdd*d**dcdd*d*ccddddcddccdd**dd***cdc*cdcdd", 32768,0,0,0); // is efficient
   test_strategy("cddd*c*dd*ddcddc*d*d*dcd*dcddcdd*dddcddd**dd**dd*ccd***cdc*cdcdd", 131072,0,0,0); // all efficient
   test_strategy("ccdd**ddc*ccdccdc*ddddccdc****cd*d**ccdcdccddccd**cddd**d*****cd", 245760,0,0,802816); // partly efficient
   test_strategy("ccddcd_dcdccddcdccddddcddccdcdcdcdd_ccc_dccddcddd_cddd_cddcd__cd", 0,128,0,0);  // efficient
   test_strategy("ccddcd_dccccddcdccccddcddccc_dcdddc_ccc_ddcdddcdd_cddddddccdcddd", 0,0,0,32);  // inefficient
   test_strategy("ccddcdcdd*dcccdddcdd**ddd***cdddccdd***ccc**ccddc**c*****ccdcddd", 131072,0,0,131072);
+  */
   test_strategy("cd__cd__c_cc__dc_c__cdddccccddddcdcd______dcdddd__dd__dd__ccccdd", 0,337056,0,3857248);
+  /*
   test_strategy("cdddcdcdccdddddccc****cd**ccdcdd**dccd********dd**cd**cddc**dcdd", 4194304,0,0,0);
   test_strategy("cddcdcddcccddcdc*ccdddcddcccdccd*dcdcd*dddcdddcd*dcddddddccddddd", 16,0,0,0); // need to consider g2 to confirm efficiency
   test_strategy("cddc*cddc*cddccd*ccddd**cc****dd**c*cddddccddccddddcdd*d**cdcddd", 4224,0,0,28544);  // g2 must be considered to judge efficiency (many unfixed nodes)
+   */
 }
 
 std::vector<std::string> CompressStrategies(const std::vector<std::string>& strategies) {

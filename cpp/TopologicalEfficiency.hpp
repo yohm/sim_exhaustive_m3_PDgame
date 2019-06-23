@@ -25,10 +25,10 @@ public:
   }
   void PrintStrategies(std::ostream &os) const {
     for(const Strategy& s: efficient) {
-      os << "E: " << s.ToString() << std::endl;
+      // os << "E: " << s.ToString() << std::endl;
     }
     for(const Strategy& s: pending) {
-      os << "P: " << s.ToString() << std::endl;
+      // os << "P: " << s.ToString() << std::endl;
     }
     os << "# E&D/E/P/R : " << ToC(n_efficient_and_defensible) << " / " << ToC(NumEfficient()) << " / " << ToC(NumPending()) << " / " << ToC(n_rejected) << std::endl;
   }
