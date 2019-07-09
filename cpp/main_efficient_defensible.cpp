@@ -137,34 +137,65 @@ Strategy ReplaceWwithU(const Strategy& s) {
 }
 
 int main(int argc, char** argv) {
-  // test();
-  // return 0;
+#ifndef NDEBUG
+  test();
+  return 0;
+#else
 
-  if( argc != 3 ) {
+  MPI_Init(&argc, &argv);
+
+  if( argc != 4 ) {
     cerr << "Error : invalid argument" << endl;
-    cerr << "  Usage : " << argv[0] << " <strategy_file> <max_depth>" << endl;
+    cerr << "  Usage : " << argv[0] << " <strategy_file> <out_file> <max_depth>" << endl;
     return 1;
   }
 
+  int my_rank = 0;
+  MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+  int num_procs = 0;
+  MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
+
   ifstream fin(argv[1]);
+
+  std::string out_format = argv[2];
+  char outfile[256];
+  sprintf(outfile, (out_format+".%02d").c_str(), my_rank);
+  std::ofstream fout(outfile);
+
   vector<Strategy> ins;
   int count = 0;
-  for( string s; fin >> s; ) {
+  for( string s; fin >> s; count++ ) {
     if(count % 1000 == 0) {
       std::cerr << "step: " << count << std::endl;
       std::cerr << "recovered/pending/indefensible/rejected :" << n_recovered << " / " << n_pending << " / " << n_indefensible << " / " << n_rejected_by_loop << std::endl;
     }
-    Strategy _str(s.c_str());
-    Strategy str = ReplaceWwithU(_str);
+    if( count % num_procs == my_rank ) {
+      Strategy _str(s.c_str());
+      Strategy str = ReplaceWwithU(_str);
 
-    assert(str.ActionAt("cccccc") == C);
-    auto found = SelectEfficientDefensible(str, atoi(argv[2]));
-    for(auto s: found) {
-      cout << s.ToString() << endl;
+      assert(str.ActionAt("cccccc") == C);
+      auto found = SelectEfficientDefensible(str, atoi(argv[3]));
+      for(auto s: found) {
+        fout << s.ToString() << endl;
+      }
     }
-    count++;
   }
-  std::cerr << "recovered/pending/indefensible/rejected :" << n_recovered << " / " << n_pending << " / " << n_indefensible << " / " << n_rejected_by_loop << std::endl;
+  std::cerr << my_rank << " : recovered/pending/indefensible/rejected : " << n_recovered << " / " << n_pending << " / " << n_indefensible << " / " << n_rejected_by_loop << std::endl;
+
+  uint64_t sum_n_recovered = 0;
+  uint64_t sum_n_pending = 0;
+  uint64_t sum_n_indefensible = 0;
+  uint64_t sum_n_rejected = 0;
+  MPI_Reduce(&n_recovered, &sum_n_recovered, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&n_pending, &sum_n_pending, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&n_indefensible, &sum_n_indefensible, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&n_rejected_by_loop, &sum_n_rejected, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+  if( my_rank == 0 ) {
+    std::cerr << "[sum] : recovered/pending/indefensible/rejected : " << sum_n_recovered << " / " << sum_n_pending << " / " << sum_n_indefensible << " / " << sum_n_rejected << std::endl;
+  }
+
+  MPI_Finalize();
   return 0;
+#endif
 }
 
