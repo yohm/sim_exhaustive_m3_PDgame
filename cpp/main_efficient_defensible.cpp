@@ -17,15 +17,20 @@ using namespace std;
 #define DP(x) do { std::cerr << x << std::endl; } while (0)
 #endif
 
-int64_t n_recovered = 0;
-int64_t n_pending = 0;
-int64_t n_rejected_by_loop = 0;
-int64_t n_indefensible = 0;
+uint64_t n_recovered = 0;
+uint64_t n_pending = 0;
+uint64_t n_rejected_by_loop = 0;
+uint64_t n_indefensible = 0;
+uint64_t n_recovered_event = 0;
+uint64_t n_pending_event = 0;
+uint64_t n_rejected_by_loop_event = 0;
+uint64_t n_indefensible_event = 0;
 
 void Explore(const Strategy& s, const State& a_state, const std::set<uint64_t>& histo, const int depth, vector<Strategy>& found) {
   if(depth == 0) {
     DP("reached maximum depth");
-    n_pending++;
+    n_pending += s.Size();
+    n_pending_event++;
     found.push_back(s);
     return;
   }
@@ -65,7 +70,8 @@ void Explore(const Strategy& s, const State& a_state, const std::set<uint64_t>& 
       bool defensible = _s.SetActionAndRecalcD(a_state, ab.first);
       if(!defensible) {
         DP("not defensible: "+std::to_string(depth));
-        n_indefensible++;
+        n_indefensible += _s.Size();
+        n_indefensible_event++;
         continue;
       }
 
@@ -74,21 +80,24 @@ void Explore(const Strategy& s, const State& a_state, const std::set<uint64_t>& 
       bool defensible = _s.SetActionAndRecalcD(b_state, ab.second);
       if(!defensible) {
         DP("not defensible: "+std::to_string(depth));
-        n_indefensible++;
+        n_indefensible += _s.Size();
+        n_indefensible_event++;
         continue;
       }
     }
     State ns = a_state.NextState(ab.first, ab.second);
     if( ns.ID() == 0 ) { // recovered cooperation
       DP("recovered cooperation: "+std::to_string(depth));
-      n_recovered++;
+      n_recovered += _s.Size();
+      n_recovered_event++;
       found.push_back(_s);
       continue;
     }
     else if( histo.find(ns.ID()) != histo.end() || histo.find(ns.SwapAB().ID()) != histo.end() )
     { // loop is detected before recovering full-cooperation
       DP("loop is detected: "+std::to_string(depth));
-      n_rejected_by_loop++;
+      n_rejected_by_loop += _s.Size();
+      n_rejected_by_loop_event++;
       continue;
     }
     std::set<uint64_t > n_histo = histo;

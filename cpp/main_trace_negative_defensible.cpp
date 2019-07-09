@@ -57,7 +57,7 @@ int main(int argc, char** argv) {
   ifstream fin(argv[1]);
   std::string out_format = argv[2];
   char outfile[256];
-  sprintf(outfile, (out_format+".%d").c_str(), my_rank);
+  sprintf(outfile, (out_format+".%02d").c_str(), my_rank);
   std::ofstream fout(outfile);
 
   int count = 0;
@@ -74,23 +74,20 @@ int main(int argc, char** argv) {
       TraceNegativeDefensibleResult_t res = TraceNegativeDefensible(str, atoi(argv[3]), n_target_fixed);
       for(const auto& s: res.passed) {
         fout << s.ToString() << endl;
+        if(s.NumU() == 0) { n_determined += s.Size(); }
+        else { n_pending += s.Size(); }
       }
-
-      uint64_t n_d = res.DefensibleStrategies().size();
-      n_determined += n_d;
-      n_pending += (res.passed.size() - n_d);
-      n_rejected += res.n_rejection_events;
-
+      n_rejected += res.n_rejected;
     }
   }
   std::cerr << my_rank << " : determined/pending/rejected : " << n_determined << " / " << n_pending << " / " << n_rejected << std::endl;
 
-  int sum_n_determined = 0;
-  int sum_n_pending = 0;
-  int sum_n_rejected = 0;
-  MPI_Reduce(&n_determined, &sum_n_determined, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-  MPI_Reduce(&n_pending, &sum_n_pending, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-  MPI_Reduce(&n_rejected, &sum_n_rejected, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+  uint64_t sum_n_determined = 0;
+  uint64_t sum_n_pending = 0;
+  uint64_t sum_n_rejected = 0;
+  MPI_Reduce(&n_determined, &sum_n_determined, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&n_pending, &sum_n_pending, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&n_rejected, &sum_n_rejected, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
   if( my_rank == 0 ) {
     std::cerr << "[sum] : determined/pending/rejected : " << sum_n_determined << " / " << sum_n_pending << " / " << sum_n_rejected << std::endl;
   }
