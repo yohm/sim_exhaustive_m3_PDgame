@@ -6,6 +6,7 @@
 #include <set>
 #include <utility>
 #include <deque>
+#include <random>
 #include "mpi.h"
 #include "Strategy.hpp"
 #include "MyLib.hpp"
@@ -22,6 +23,15 @@ struct Counts {
     n_D_nE = 0;
     n_nD_nE = 0;
   }
+  void Print(std::ostream& out) const {
+    out << "D_E / D_nE / nD_E / nD_nE : " << ToC(n_D_E) << " / " << ToC(n_D_nE) << " / " << ToC(n_nD_E) << " / " << ToC(n_nD_nE) << std::endl;
+  }
+  void Add(const Counts& x) {
+    n_D_E += x.n_D_E;
+    n_D_nE += x.n_D_nE;
+    n_nD_E += x.n_nD_E;
+    n_nD_nE += x.n_nD_nE;
+  }
 };
 
 void CheckDFS(const Strategy& s, Counts& counter) {
@@ -29,9 +39,12 @@ void CheckDFS(const Strategy& s, Counts& counter) {
   if( s.NumFixed() == 64 ) {
     bool d = s.IsDefensible2();
     bool e = s.IsEfficientTopo();
-#ifndef NDEBUG
     bool l = s.IsEfficient();
-    assert(e == l);
+    if( e != l ) {
+      std::cerr << s.ToString() << ' ' << d << ' ' << e << ' ' << l << std::endl;
+      throw "must not happen";
+    }
+#ifndef NDEBUG
 #endif
     if( d ) {
       if( e ) { counter.n_D_E++; }
@@ -72,10 +85,12 @@ void testStrategy(const std::string& str, uint64_t D_E = 0, uint64_t D_nE = 0, u
     assert( c.n_nD_E == nD_E );
     assert( c.n_nD_nE == nD_nE );
   }
-  std::cout << "D_E / D_nE / nD_E / nD_nE : " << c.n_D_E << " / " << c.n_D_nE << " / " << c.n_nD_E << " / " << c.n_nD_nE << std::endl;
+  c.Print(std::cout);
 }
 
 void test() {
+  testStrategy("ccdddcddccdcddcdccddddcdccccddddddcdccdddddddcdddcccddddcddcdddd", 1, 0);
+  /*
   testStrategy("cdddcccdcdcdccdccccdddddcccdccddccddcd*cdccddcddddcd***c****ccdd", 0, 256);  // all inefficient
   testStrategy("ccddcccdccccddcdcdccddccdcddcccd*d*dccddddcdcc**c*ccddcc*c**cccd", 0, 256);  // all inefficient
   testStrategy("cdddddddddddccdcddcdddcddddddcddddddcdddcddd**cd**cd***cdc*cdcdd", 256, 0); // all efficient
@@ -83,6 +98,7 @@ void test() {
   testStrategy("ccdd*cddc*ccdccdc*ddddccdcc**ccd*dc*ccdcdccddccdcccddd*cdccccccd", 0, 256); // all inefficient
   testStrategy("ccddddddcdccdccdccddddccdccccccddddcccdcdccddccd**cddd*cdc****cd", 0, 128); // inefficient
   testStrategy("ccddcd*dccccddcdccccddcddccc*dcdddc*ccc*ddcdddcdd*cddddddccdcddd", 0, 16, 0, 16); // inefficient
+   */
 }
 
 
@@ -93,9 +109,9 @@ int main(int argc, char** argv) {
 #else
   MPI_Init(&argc, &argv);
 
-  if( argc != 4 ) {
+  if( argc != 5 ) {
     std::cerr << "Error : invalid argument" << std::endl;
-    std::cerr << "  Usage : " << argv[0] << " <in_format> <num_files> <out_format>" << std::endl;
+    std::cerr << "  Usage : " << argv[0] << " <in_format> <num_files> <out_format> <mode 0:all 1:random>" << std::endl;
     return 1;
   }
 
@@ -116,18 +132,29 @@ int main(int argc, char** argv) {
   sprintf(outfile, argv[3], my_rank);
   std::ofstream fout(outfile);
 
-  uint64_t n_efficient = 0;
-  uint64_t n_inefficient = 0;
+  const int mode = std::atoi(argv[4]);
+  std::mt19937 rnd( my_rank );
+
+  Counts total;
 
   int count = 0;
   for( std::string line; fin >> line; count++) {
     if(count % 1000 == 0) {
-      std::cerr << "step: " << count << " @ " << my_rank << " passed/rejected : " << ToC(n_efficient) << " / " << ToC(n_inefficient) << std::endl;
+      std::cerr << "step: " << count << " @ " << my_rank << "\t";
+      total.Print(std::cerr);
     }
 
     if( count % PROCS_PER_FILE == my_rank%PROCS_PER_FILE ) {
-      std::cerr << "checking: " << line << std::endl;
+      assert( line.size() == 64 );
       auto start = std::chrono::system_clock::now();
+      if(mode > 0) {
+        for(int i=0; i<64; i++) {
+          if(line[i] == '_' || line[i] == '*') {
+            line[i] = ((rnd() & 1) == 0) ? 'c' : 'd';
+          }
+        }
+      }
+      //std::cerr << "checking: " << line << std::endl;
 
       Strategy _str(line.c_str());
 
@@ -137,20 +164,20 @@ int main(int argc, char** argv) {
       double e1 = std::chrono::duration_cast<std::chrono::milliseconds>(m1-start).count();
       if(e1 > 3000.0) { std::cerr << "e1 > 3sec : " << line << std::endl; }
 
-      fout << line << ' ' << res.n_efficient << ' ' << res.n_inefficient << std::endl;
-      n_efficient += res.n_efficient;
-      n_inefficient += res.n_inefficient;
+      fout << line << ' ' << res.n_D_E << ' ' << res.n_D_nE << ' ' << res.n_nD_E << ' ' << res.n_nD_nE << std::endl;
+      total.Add(res);
     }
   }
   fout.close();
 
-  uint64_t sum_n_efficient = 0;
-  uint64_t sum_n_inefficient = 0;
-  MPI_Reduce(&n_efficient, &sum_n_efficient, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
-  MPI_Reduce(&n_inefficient, &sum_n_inefficient, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+  Counts all_total;
+  MPI_Reduce(&total.n_D_E, &all_total.n_D_E, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&total.n_D_nE, &all_total.n_D_nE, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&total.n_nD_E, &all_total.n_nD_E, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&total.n_nD_nE, &all_total.n_nD_nE, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
 
   if(my_rank == 0) {
-    std::cerr << "n_efficient/n_inefficient : " << ToC(sum_n_efficient) << " / " << ToC(sum_n_inefficient) << std::endl;
+    all_total.Print(std::cerr);
   }
 
   MPI_Finalize();
