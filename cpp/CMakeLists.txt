@@ -18,15 +18,15 @@ target_link_libraries(main_efficient_defensible ${MPI_LIBRARIES})
 add_executable(main_trace_negative_defensible main_trace_negative_defensible.cpp ${SOURCE_FILES})
 target_link_libraries(main_trace_negative_defensible ${MPI_LIBRARIES})
 
-add_executable(main_efficiency main_efficiency.cpp ${SOURCE_FILES})
-target_link_libraries(main_efficiency ${MPI_LIBRARIES})
-
-add_executable(main_print_ITG main_print_ITG.cpp ${SOURCE_FILES})
-target_link_libraries(main_print_ITG ${MPI_LIBRARIES})
-
 add_executable(main_topological_efficiency main_topological_efficiency.cpp ${SOURCE_FILES})
 target_link_libraries(main_topological_efficiency ${MPI_LIBRARIES})
 
 add_executable(main_distinguishability main_distinguishability.cpp ${SOURCE_FILES})
 target_link_libraries(main_distinguishability ${MPI_LIBRARIES})
+
+add_executable(main_check_one_by_one main_check_one_by_one.cpp ${SOURCE_FILES})
+target_link_libraries(main_check_one_by_one ${MPI_LIBRARIES})
+
+add_executable(main_print_ITG main_print_ITG.cpp ${SOURCE_FILES})
+target_link_libraries(main_print_ITG ${MPI_LIBRARIES})
 

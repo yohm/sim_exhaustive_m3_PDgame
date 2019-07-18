@@ -93,6 +93,43 @@ bool Strategy::IsDefensible() {
   return true;
 }
 
+bool Strategy::IsDefensible2() const {
+  const size_t N = 64;
+
+  d_matrix_t d;
+
+  // construct adjacency matrix
+  const int INF = 32; // 32 is large enough since the path length is between -16 to 16.
+  for(size_t i=0; i<N; i++) {
+    for(size_t j=0; j<N; j++) {
+      d[i][j] = INF;
+    }
+  }
+
+  for(size_t i=0; i<N; i++) {
+    if(actions[i]==U) continue;
+    State si(i);
+    std::vector<State> sjs = NextPossibleStates(si);
+    for( auto sj: sjs) {
+      size_t j = sj.ID();
+      d[i][j] = si.RelativePayoff();
+    }
+    if(d[i][i] < 0) { return false; }
+  }
+
+  for(size_t k=0; k<N; k++) {
+    if(actions[k]==U) continue; // path i-k-j cannot improve m_d[i][j] since k does not have an out link
+    for(size_t i=0; i<N; i++) {
+      if(actions[i]==U) continue; // m_d[i][j] is not updated since it is always INFINITY when i does not have an out-link
+      for(size_t j=0; j<N; j++) {
+        d[i][j] = MIN(d[i][j], d[i][k]+d[k][j]);
+      }
+      if(d[i][i] < 0) { return false; }
+    }
+  }
+  return true;
+}
+
 // set action[s]=a, and recalculate `m_d`. If not defensible, return false.
 bool Strategy::SetActionAndRecalcD(const State &sk, Action a) {
   assert(actions[sk.ID()]==U);
