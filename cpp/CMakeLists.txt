@@ -31,4 +31,5 @@ add_executable(main_print_ITG main_print_ITG.cpp ${SOURCE_FILES})
 target_link_libraries(main_print_ITG ${MPI_LIBRARIES})
 
 add_executable(find_matching find_matching.cpp)
+add_executable(count_num_strategies count_num_strategies.cpp)
 

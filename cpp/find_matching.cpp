@@ -43,6 +43,7 @@ int main(int argc, char* argv[]) {
     }
 
     std::cout << s << ' ' << found << std::endl;
+    if( found == "NOT_FOUND" ) { throw "matching strategy is not found"; }
   }
 
   return 0;
