@@ -125,9 +125,11 @@ public:
   bool IsDefensible();  // check defensibility. If defensible, m_d is also calculated
   bool IsDefensible2() const;  // check defensibility without caching d matrix
   std::array<double,64> StationaryState(double e=0.0001, const Strategy* coplayer = NULL) const; // all actions must be fixed to calculated stationary state
-  bool IsEfficient(double e=0.0001, double th=0.95) const { return (StationaryState(e)[0]>th); } // check efficiency. all actions must be fixed
+  bool IsEfficient(double e=0.00001, double th=0.95) const {
+    return (StationaryState(e)[0]>th);
+  } // check efficiency. all actions must be fixed
   bool IsEfficientTopo() const; // check efficiency using ITG
-  bool IsDistinguishable(double e=0.0001, double th=0.95) const {
+  bool IsDistinguishable(double e=0.00001, double th=0.95) const {
     const Strategy allc("cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc");
     return (StationaryState(e,&allc)[0]<th); };  // check distinguishability against AllC
   bool IsDistinguishableTopo() const; // check distinguishability using the transition graph
