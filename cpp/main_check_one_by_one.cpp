@@ -44,8 +44,6 @@ void CheckDFS(const Strategy& s, Counts& counter) {
       std::cerr << s.ToString() << ' ' << d << ' ' << e << ' ' << l << std::endl;
       throw "must not happen";
     }
-#ifndef NDEBUG
-#endif
     if( d ) {
       if( e ) { counter.n_D_E++; }
       else { counter.n_D_nE++; }
