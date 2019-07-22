@@ -332,8 +332,7 @@ int main(int argc, char** argv) {
   uint64_t n_rejected_total = 0;
 
   long count = 0;
-  int _n;
-  for( std::string line; fin >> line >> _n; count++) {
+  for( std::string line; fin >> line; count++) {
     if(count % 1000 == 0) {
       std::cerr << "step: " << count << " @ " << my_rank << std::endl;
       std::cerr << ToC(n_passed_total) << ToC(n_rejected_total) << std::endl;
