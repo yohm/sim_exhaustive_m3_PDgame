@@ -17,7 +17,6 @@
 #PJM --stgin  "rank=16800-19199 /data/ra000014/a03115/m3_PDgame/run_2/candidates_s7 %r:./"
 #PJM --stgout "rank=* %r:./out.%05r /data/ra000014/a03115/m3_PDgame/%j/%05r/"
 #PJM --stgout "rank=* %r:./out.passed.%05r /data/ra000014/a03115/m3_PDgame/%j/%05r/"
-#PJM --stgout "rank=* %r:./out.pending.%05r /data/ra000014/a03115/m3_PDgame/%j/%05r/"
 #PJM --stgout "rank=* %r:./stderr.txt.%r /data/ra000014/a03115/m3_PDgame/%j/%05r/"
 #PJM -s
 
@@ -25,5 +24,5 @@
 
 ulimit -s 8192
 
-mpiexec -ofout-proc stdout.txt -oferr-proc stderr.txt ./main_topological_efficiency.out candidates_s%01d 8 out.%05d out.passed.%05d out.pending.%05d
+mpiexec -ofout-proc stdout.txt -oferr-proc stderr.txt ./main_topological_efficiency.out candidates_s%01d 8 out.%05d out.passed.%05d
 
