@@ -1,4 +1,5 @@
 require 'pp'
+require 'parallel'
 
 unless ARGV.size == 3
   $stderr.puts "Usage: ruby #{__FILE__} infile_pattern num_output output_pattern"
@@ -13,7 +14,7 @@ output_pattern = ARGV[2]
 
 IN_FILES = Dir.glob(in_pattern).sort_by {|x| x.split('/')[0].to_i }
 
-lines = IN_FILES.map do |infile|
+lines = Parallel.map(IN_FILES, in_processes: 6) do |infile|
   $stderr.puts "counting lines : #{infile}"
   `wc -l #{infile}`.split[0].to_i
 end
@@ -35,7 +36,7 @@ IN_FILES.each do |infile|
       f = File.open(outfile, 'w')
       file_count += 1
     end
-    f.print line
+    f.puts line.split[0]
     line_n += 1
   end
 end
