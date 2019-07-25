@@ -326,7 +326,7 @@ int main(int argc, char** argv) {
   std::ofstream fout(outfile);
   char outfile2[256];
   sprintf(outfile2, argv[4], my_rank);
-  std::ofstream passed_out(outfile2);
+  // std::ofstream passed_out(outfile2);
 
   uint64_t n_passed_total = 0;
   uint64_t n_rejected_total = 0;
@@ -340,7 +340,7 @@ int main(int argc, char** argv) {
 
 
     if( count % PROCS_PER_FILE == my_rank%PROCS_PER_FILE ) {
-      std::cerr << "checking: " << line << std::endl;
+      // std::cerr << "checking: " << line << std::endl;
 
       Strategy s1(line.c_str());
       
@@ -355,11 +355,11 @@ int main(int argc, char** argv) {
       n_passed_total += res.n_passed;
       n_rejected_total += res.n_rejected;
 
-      for(const std::string s: CompressStrategies(res.passed)) { passed_out << s << std::endl; }
+      // for(const std::string s: CompressStrategies(res.passed)) { passed_out << s << std::endl; }
     }
   }
   fout.close();
-  passed_out.close();
+  // passed_out.close();
 
   uint64_t n_passed_all_total = 0;
   uint64_t n_rejected_all_total = 0;

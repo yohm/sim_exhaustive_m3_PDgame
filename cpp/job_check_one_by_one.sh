@@ -1,9 +1,9 @@
 #!/bin/sh
 #============ pjsub Options ============
-#PJM --rsc-list "node=300"
-#PJM --rsc-list "elapse=03:00:00"
+#PJM --rsc-list "node=150"
+#PJM --rsc-list "elapse=05:00:00"
 #PJM --rsc-list "rscgrp=small"
-#PJM --mpi "proc=2400"
+#PJM --mpi "proc=1200"
 #PJM --stg-transfiles all
 #PJM --mpi "use-rankdir"
 #PJM --stgin  "rank=* ./main_check_one_by_one.out %r:./"
