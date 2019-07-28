@@ -82,7 +82,7 @@ Counts CheckOneByOne(const Strategy& str) {
 void testStrategy(const std::string& str, uint64_t D_E = 0, uint64_t D_nE = 0, uint64_t nD_E = 0, uint64_t nD_nE = 0) {
   Strategy s(str.c_str());
   auto c = CheckOneByOne(s);
-  if(D_E+D_nE+nD_E+nD_nE >= 0) {
+  if(D_E+D_nE+nD_E+nD_nE > 0) {
     assert( c.n_D_E == D_E );
     assert( c.n_D_nE == D_nE );
     assert( c.n_nD_E == nD_E );
