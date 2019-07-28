@@ -17,20 +17,23 @@ struct Counts {
   uint64_t n_nD_E; // not defensible & efficient
   uint64_t n_D_nE; // defensible & not efficient
   uint64_t n_nD_nE; // not defensible & not efficient
+  uint64_t n_Error;
   Counts() {
     n_D_E = 0;
     n_nD_E = 0;
     n_D_nE = 0;
     n_nD_nE = 0;
+    n_Error = 0;
   }
   void Print(std::ostream& out) const {
-    out << "D_E / D_nE / nD_E / nD_nE : " << ToC(n_D_E) << " / " << ToC(n_D_nE) << " / " << ToC(n_nD_E) << " / " << ToC(n_nD_nE) << std::endl;
+    out << "D_E / D_nE / nD_E / nD_nE : " << ToC(n_D_E) << " / " << ToC(n_D_nE) << " / " << ToC(n_nD_E) << " / " << ToC(n_nD_nE) << " / " << ToC(nError) << std::endl;
   }
   void Add(const Counts& x) {
     n_D_E += x.n_D_E;
     n_D_nE += x.n_D_nE;
     n_nD_E += x.n_nD_E;
     n_nD_nE += x.n_nD_nE;
+    n_Error += x.n_Error;
   }
 };
 
@@ -42,7 +45,9 @@ void CheckDFS(const Strategy& s, Counts& counter) {
     bool l = s.IsEfficient();
     if( e != l ) {
       std::cerr << s.ToString() << ' ' << d << ' ' << e << ' ' << l << std::endl;
-      throw "must not happen";
+      counter.n_Error++;
+      return;
+      // throw "must not happen";
     }
     if( d ) {
       if( e ) { counter.n_D_E++; }
@@ -173,6 +178,7 @@ int main(int argc, char** argv) {
   MPI_Reduce(&total.n_D_nE, &all_total.n_D_nE, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
   MPI_Reduce(&total.n_nD_E, &all_total.n_nD_E, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
   MPI_Reduce(&total.n_nD_nE, &all_total.n_nD_nE, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&total.n_Error, &all_total.n_Error, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
 
   if(my_rank == 0) {
     all_total.Print(std::cerr);
