@@ -1,7 +1,7 @@
 #!/bin/sh
 #============ pjsub Options ============
 #PJM --rsc-list "node=150"
-#PJM --rsc-list "elapse=05:00:00"
+#PJM --rsc-list "elapse=08:00:00"
 #PJM --rsc-list "rscgrp=small"
 #PJM --rsc-list "node-quota=29G"
 #PJM --mpi "proc=1200"
