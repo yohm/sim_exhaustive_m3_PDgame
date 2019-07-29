@@ -26,7 +26,7 @@ struct Counts {
     n_Error = 0;
   }
   void Print(std::ostream& out) const {
-    out << "D_E / D_nE / nD_E / nD_nE : " << ToC(n_D_E) << " / " << ToC(n_D_nE) << " / " << ToC(n_nD_E) << " / " << ToC(n_nD_nE) << " / " << ToC(nError) << std::endl;
+    out << "D_E / D_nE / nD_E / nD_nE : " << ToC(n_D_E) << " / " << ToC(n_D_nE) << " / " << ToC(n_nD_E) << " / " << ToC(n_nD_nE) << " / " << ToC(n_Error) << std::endl;
   }
   void Add(const Counts& x) {
     n_D_E += x.n_D_E;
