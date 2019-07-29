@@ -26,7 +26,7 @@ struct Counts {
     n_Error = 0;
   }
   void Print(std::ostream& out) const {
-    out << "D_E / D_nE / nD_E / nD_nE : " << ToC(n_D_E) << " / " << ToC(n_D_nE) << " / " << ToC(n_nD_E) << " / " << ToC(n_nD_nE) << " / " << ToC(n_Error) << std::endl;
+    out << "D_E / D_nE / nD_E / nD_nE / n_Error : " << ToC(n_D_E) << " / " << ToC(n_D_nE) << " / " << ToC(n_nD_E) << " / " << ToC(n_nD_nE) << " / " << ToC(n_Error) << std::endl;
   }
   void Add(const Counts& x) {
     n_D_E += x.n_D_E;
@@ -43,6 +43,12 @@ void CheckDFS(const Strategy& s, Counts& counter) {
     bool d = s.IsDefensible2();
     bool e = s.IsEfficientTopo();
     bool l = s.IsEfficient();
+    if( e && !l ) {
+      l = s.IsEfficient(0.000001);  // check with a smaller threshold
+      if(!l) {
+        l = s.IsEfficient(0.0000001);  // check with a smaller threshold
+      }
+    }
     if( e != l ) {
       std::cerr << s.ToString() << ' ' << d << ' ' << e << ' ' << l << std::endl;
       counter.n_Error++;
@@ -92,7 +98,8 @@ void testStrategy(const std::string& str, uint64_t D_E = 0, uint64_t D_nE = 0, u
 }
 
 void test() {
-  testStrategy("ccdddcddccdcddcdccddddcdccccddddddcdccdddddddcdddcccddddcddcdddd", 1, 0);
+  // testStrategy("ccdddcddccdcddcdccddddcdccccddddddcdccdddddddcdddcccddddcddcdddd", 1, 0);
+  testStrategy("cdddcdcdccddddccccccdddddddccdddcdccdccdddcdddddcdcccdddccdccddd", 1);
   /*
   testStrategy("cdddcccdcdcdccdccccdddddcccdccddccddcd*cdccddcddddcd***c****ccdd", 0, 256);  // all inefficient
   testStrategy("ccddcccdccccddcdcdccddccdcddcccd*d*dccddddcdcc**c*ccddcc*c**cccd", 0, 256);  // all inefficient
