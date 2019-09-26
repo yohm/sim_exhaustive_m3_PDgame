@@ -44,8 +44,8 @@ int main(int argc, char** argv) {
 
   int64_t n = 0;
   for( std::string s; fin >> s; n++) {
-    uint64_t n_passed, n_pending, n_rejected;
-    fin >> n_passed >> n_pending >> n_rejected;
+    uint64_t n_passed, n_rejected;
+    fin >> n_passed >> n_rejected;
     if(n % 1000000 == 0) { std::cerr << n << " at rank " << my_rank << std::endl; }
     if(n % num_procs != my_rank) { continue; }
     if(n_passed == 0) { continue; }
