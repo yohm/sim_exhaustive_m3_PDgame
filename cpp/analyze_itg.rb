@@ -6,11 +6,13 @@ unless ARGV.size == 1
   raise "invalid number of arguments"
 end
 
-counts = {}
+counts = Hash.new(0)
 
-File.open(ARGV[0]).each do |line|
-  trace,_,n = line.chomp.split
-  counts[trace] = n.to_i
+Dir.glob(ARGV[0]).each do |f|
+  File.open(f).each do |line|
+    trace,_,n = line.chomp.split
+    counts[trace] += n.to_i
+  end
 end
 
 def format_trace(trace)
@@ -27,6 +29,7 @@ def format_trace(trace)
 end
 
 counts.sort_by {|key,val| -val}.each do |key,val|
-  puts "#{format_trace(key)} #{val.to_s.reverse.gsub( /(\d{3})(?=\d)/, '\1,').reverse}"
+  puts "#{format_trace(key)} #{val}"
+  #puts "#{format_trace(key)} #{val.to_s.reverse.gsub( /(\d{3})(?=\d)/, '\1,').reverse}"
 end
 
