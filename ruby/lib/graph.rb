@@ -39,27 +39,38 @@ class DirectedGraph
     (0..(@n-1)).to_a - transient_nodes
   end
 
+  def remove_duplicate_links!
+    @links.values.each {|ns| ns.uniq! }
+  end
+
   # node_attributes = { 0=> {label: "0_cccccc", fontcolor: "red"}, 1=>{ ...}, ... }
   # edge_attributes = { [0,1] => {color: "yellow"}, [1,3]=>{....}, ...}
   # for available attributes, see the graphviz documentation https://graphviz.gitlab.io/_pages/doc/info/attrs.html#d:fillcolor
-  def to_dot(io, node_attributes: {}, edge_attributes: {}, remove_isolated: false)
+  def to_dot(node_attributes: {}, remove_isolated: false, node_ranks: [], edge_labels: {})
+    io = StringIO.new
     io.puts "digraph \"\" {"
     @n.times do |ni|
       next if remove_isolated and @links[ni].empty?
-      a = node_attributes[ni] || {}
-      attr = "[ " + a.map {|k,v| "#{k}=\"#{v}\";" }.join(' ') + " ];"
-      io.puts "  #{ni} #{attr}"
+      label = node_attributes.dig(ni,:label) || ni.to_s
+      fontcolor = node_attributes.dig(ni,:fontcolor) || "black"
+      io.puts "  #{ni} [ label=\"#{label}\"; fontcolor = #{fontcolor} ];"
     end
     @n.times do |ni|
       next if remove_isolated and @links[ni].empty?
       @links[ni].each do |nj|
-        a = edge_attributes[ [ni,nj] ] || {}
-        attr = "[ " + a.map {|k,v| "#{k}=\"#{v}\";" }.join(' ') + " ];"
-        io.puts "  #{ni} -> #{nj} #{attr}"
+        io.puts "  #{ni} -> #{nj} [label=\"#{edge_labels[[ni,nj]]}\"];"
+      end
+    end
+    if node_ranks.size > 0
+      ranks = node_ranks.map.with_index {|_,i| "rank_#{i}"}
+      io.puts "  #{ranks.join(' -> ')}"
+      node_ranks.each_with_index do |nodes,i|
+        io.puts "  {rank=same; #{ranks[i]}; #{nodes.join(';')};}"
       end
     end
     io.puts "}"
     io.flush
+    io.string
   end
 
   def is_accessible?(from, to)

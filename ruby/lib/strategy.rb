@@ -80,6 +80,8 @@ class Strategy
         State.new(*state)
       when String
         State.make_from_str(state)
+      when Integer
+        State.make_from_id(state)
       else
         raise "invalid input"
       end
