@@ -92,6 +92,20 @@ if __FILE__ == $0 and ARGV.size == 1
   uf, min_g = DFAminimize.minimize_DFA(str)
   pp uf.to_h
 
+  def recovery_path(str, init_state = 'ccdccc')
+    path = []
+    s = State.make_from_str('ccdccc')
+    until path.include?(s)
+      path.push(s)
+      s = str.next_state_with_self(s)
+    end
+    path
+  end
+
+  path = recovery_path(str)
+  puts "recovered in #{path.length-1} rounds"
+  puts path.map {|s| "#{s} (#{uf.root(s.to_id)},#{uf.root(s.swap.to_id)})" }.join(' -> ')
+
   def to_dot(str, uf, min_g)
     mapped = uf.roots.map do |n|
       [ n, {label: "#{str.action(n)}@#{n}"} ]
