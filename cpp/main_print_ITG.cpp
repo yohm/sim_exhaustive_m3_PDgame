@@ -60,6 +60,7 @@ int main(int argc, char** argv) {
       current = str.NextITGState(State(current));
       if(current < 0) { oss << -1; break; }
     }
+    if( histo.size() > 17 ) { std::cerr << s << ' ' << histo.size() << std::endl; }
     std::string key = oss.str();
     if( counts.find(key) == counts.end() ) { counts[key] = 1; }
     else { counts[key]++; }
