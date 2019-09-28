@@ -86,15 +86,17 @@ if __FILE__ == $0 and ARGV.size == 1
   s = ARGV[0]
   raise "unsupported input format" unless s.length == 64
 
+  s = s.gsub('*', 'c')
   str = Strategy.make_from_str(s)
   pp str
   puts "defensible? : #{str.defensible?}"
   uf, min_g = DFAminimize.minimize_DFA(str)
   pp uf.to_h
+  puts "automaton size : #{uf.to_h.size}"
 
-  def recovery_path(str, init_state = 'ccdccc')
+  def trace_path(str, init_state = 'cccccd')
     path = []
-    s = State.make_from_str('ccdccc')
+    s = State.make_from_str(init_state)
     until path.include?(s)
       path.push(s)
       s = str.next_state_with_self(s)
@@ -102,8 +104,12 @@ if __FILE__ == $0 and ARGV.size == 1
     path
   end
 
-  path = recovery_path(str)
+  path = trace_path(str)
   puts "recovered in #{path.length-1} rounds"
+  puts path.map {|s| "#{s} (#{uf.root(s.to_id)},#{uf.root(s.swap.to_id)})" }.join(' -> ')
+
+  path = trace_path(str, 'dddddc')
+  puts "ends in #{path.length-1} rounds"
   puts path.map {|s| "#{s} (#{uf.root(s.to_id)},#{uf.root(s.swap.to_id)})" }.join(' -> ')
 
   def to_dot(str, uf, min_g)
