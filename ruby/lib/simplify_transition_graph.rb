@@ -89,7 +89,9 @@ if __FILE__ == $0 and ARGV.size == 1
   s = s.gsub('*', 'c')
   str = Strategy.make_from_str(s)
   pp str
-  puts "defensible? : #{str.defensible?}"
+  puts "defensible?      : #{str.defensible?}"
+  puts "efficient?       : #{str.efficient?}"
+  puts "distinguishable? : #{str.distinguishable?}"
   uf, min_g = DFAminimize.minimize_DFA(str)
   pp uf.to_h
   puts "automaton size : #{uf.to_h.size}"
