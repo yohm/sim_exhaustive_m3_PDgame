@@ -170,6 +170,87 @@ class Strategy
     end
     g
   end
+
+  def efficient?
+    g0 = transition_graph_with_self
+
+    judged = Array.new(64, false)
+    judged[0] = true
+
+    g = g0
+
+    while true
+      # l -> 0
+      judged.each_with_index do |b,l|
+        next if b
+        judged[l] = true if g.is_accessible?(l, 0)
+      end
+      return true if judged.all?
+
+      # update gn
+      update_gn(g)
+
+      # 0 -> l
+      judged.each_with_index do |b,l|
+        next if b
+        return false if g.is_accessible?(0, l)
+      end
+    end
+  end
+
+  def distinguishable?
+    g0 = DirectedGraph.new(64)
+    64.times do |i|
+      s = State.make_from_id(i)
+      n = s.next_state( action(s), :c )
+      g0.add_link( i, n.to_i )
+    end
+
+    judged = Array.new(64, false)
+    judged[0] = true
+
+    g = g0
+
+    while true
+      # l -> 0
+      judged.each_with_index do |b,l|
+        next if b
+        judged[l] = true if g.is_accessible?(l, 0)
+      end
+      return false if judged.all?
+
+      # update gn
+      update_gn(g)
+
+      # 0 -> l
+      judged.each_with_index do |b,l|
+        next if b
+        return true if g.is_accessible?(0, l)
+      end
+    end
+  end
+
+  def update_gn(gn)
+    # find sink sccs
+    sink_sccs = gn.terminanl_components.select do |c|
+      c.all? do |n|
+        gn.links[n].all? do |d|
+          c.include?(d)
+        end
+      end
+    end
+
+    sink_sccs.each do |sink|
+      sink.each do |from|
+        [from^1,from^8].each do |to|
+          unless gn.links[from].include?(to)
+            gn.add_link(from, to)
+          end
+        end
+      end
+    end
+    return gn
+  end
 end
 
 if __FILE__ == $0 and ARGV.size != 1
@@ -192,6 +273,8 @@ if __FILE__ == $0 and ARGV.size != 1
       next_state = strategy.next_state_with_self(s)
       assert_equal 'cddcdd', next_state.to_s
       assert_equal true, strategy.defensible?
+      assert_equal false, strategy.efficient?
+      assert_equal true, strategy.distinguishable?
     end
 
     def test_allC
@@ -210,6 +293,8 @@ if __FILE__ == $0 and ARGV.size != 1
       assert_equal 'cdccdc', next_state.to_s
 
       assert_equal false, strategy.defensible?
+      assert_equal true, strategy.efficient?
+      assert_equal false, strategy.distinguishable?
     end
 
     def test_tft
@@ -228,6 +313,8 @@ if __FILE__ == $0 and ARGV.size != 1
       assert_equal 'cddcdd', next_state.to_s
 
       assert_equal true, strategy.defensible?
+      assert_equal false, strategy.efficient?
+      assert_equal false, strategy.distinguishable?
     end
 
     def test_wsls
@@ -246,6 +333,8 @@ if __FILE__ == $0 and ARGV.size != 1
       assert_equal 'cdccdc', next_state.to_s
 
       assert_equal false, strategy.defensible?
+      assert_equal true, strategy.efficient?
+      assert_equal true, strategy.distinguishable?
     end
   end
 end
