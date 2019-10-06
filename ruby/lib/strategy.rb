@@ -35,30 +35,20 @@ class Strategy
   end
 
   def show_actions_latex(io)
-    raise "not implemented yet"
-=begin
-    num_col = 4
-    num_row = State::ALL_STATES.size / num_col
-    num_row.times do |row|
-      num_col.times do |col|
-        idx = row + col * num_row
-        stat = State::ALL_STATES[idx]
-        s = stat.map do |c|
-          if c == -1
-            '\bar{1}'
-          elsif c.is_a?(Integer)
-            c.to_s
-          else
-            c.capitalize
-          end
-        end
-        s.insert(2,',')
-        io.print "$(#{s.join})$ & $#{@strategy[stat].capitalize}$ "
-        io.print "& " unless col == num_col - 1
-      end
-      io.puts "\\\\"
+    num_col = 8
+    num_row = 8
+    # header
+    b_stats = num_col.times.each.map do |col|
+      "$#{State.make_from_id(col).to_s[3..5]}$"
     end
-=end
+    io.puts b_stats.join(" & ") + "\\\\"
+    num_row.times do |row|
+      l = num_col.times.each.map do |col|
+        idx = row * num_col + col
+        "$#{action(idx)}$"
+      end.join(" & ")
+      io.puts "#{l} \\\\"
+    end
   end
 
   def dup
@@ -340,6 +330,7 @@ if __FILE__ == $0 and ARGV.size != 1
 end
 
 if __FILE__ == $0 and ARGV.size == 1
-  pp Strategy.make_from_str(ARGV[0])
+  pp s = Strategy.make_from_str(ARGV[0])
+  pp s.show_actions_latex($stdout)
 end
 
