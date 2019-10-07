@@ -314,6 +314,7 @@ if __FILE__ == $0 and ARGV.size != 1
         m2_actions[m2_idx]
       end
       strategy = Strategy.new(acts)
+      assert_equal strategy.to_s, "cdcdcdcddccddccdcdcccdccdccddccdcdcdcdcddccddccdcdcccdccdccddccd"
 
       assert_equal true, strategy.defensible?
       assert_equal true, strategy.efficient?
@@ -352,6 +353,27 @@ end
 
 if __FILE__ == $0 and ARGV.size == 1
   pp s = Strategy.make_from_str(ARGV[0])
-  pp s.show_actions_latex($stdout)
+  s.show_actions_latex($stdout)
+  g = s.transition_graph_with_self
+  File.open("g_ss.dot", 'w') do |io|
+    io.puts g.to_dot
+  end
+  sccs = g.terminanl_components
+  pp sccs
+  transition_probs = {}
+  sccs.map {|c| c[0] }.permutation(2) do |i,j|
+    transition_probs[ [i,j] ] = nil
+  end
+  e = 0
+  while transition_probs.values.include?(nil)
+    e += 1
+    s.update_gn(g)
+    transition_probs.select {|k,v| v.nil? }.each do |k,v|
+      if g.is_accessible?( k[0], k[1] )
+        transition_probs[k] = e
+      end
+    end
+  end
+  pp transition_probs
 end
 
