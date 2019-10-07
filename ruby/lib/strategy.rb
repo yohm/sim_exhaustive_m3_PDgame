@@ -307,6 +307,27 @@ if __FILE__ == $0 and ARGV.size != 1
       assert_equal false, strategy.distinguishable?
     end
 
+    def test_tft_atft
+      m2_actions = "cdcddccdcdccdccd".each_char.map(&:to_sym)
+      acts = 64.times.each.map do |i|
+        m2_idx = (i & 3) + ((i & 24) >> 1)
+        m2_actions[m2_idx]
+      end
+      strategy = Strategy.new(acts)
+
+      assert_equal true, strategy.defensible?
+      assert_equal true, strategy.efficient?
+      assert_equal true, strategy.distinguishable?
+
+      recovery_path = [1]
+      until recovery_path.last == 0
+        i = strategy.next_state_with_self( State.make_from_id(recovery_path.last) ).to_id
+        recovery_path << i
+      end
+      # ccc,ccd -> ccd,cdd -> cdd,ddc -> ddc,dcc -> dcc,ccc -> ccc,ccc
+      assert_equal [1,11,30,52,32,0], recovery_path
+    end
+
     def test_wsls
       bits = 64.times.each.map {|i| (i[0] == i[3]) ? 'c' : 'd' }.join  # i[0],i[3] : the last move of b and a
       strategy = Strategy.make_from_str(bits)
