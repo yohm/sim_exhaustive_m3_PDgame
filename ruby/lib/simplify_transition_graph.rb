@@ -120,6 +120,17 @@ if __FILE__ == $0 and ARGV.size == 1
   end
   calc_transition_probs(str)
 
+  # g(S, WSLS)
+  def g_s_wsls(str)
+    File.open("g_s_wsls.dot", 'w') do |io|
+      bits = 64.times.each.map {|i| (i[0] == i[3]) ? 'c' : 'd' }.join  # i[0],i[3] : the last move of b and a
+      wsls = Strategy.make_from_str(bits)
+      io.puts str.transition_graph_with(wsls).to_dot
+    end
+    $stderr.puts "g_s_wsls.dot was written"
+  end
+  g_s_wsls(str)
+
   # automaton representation
   uf, min_g = DFAminimize.minimize_DFA(str)
   pp uf.to_h
