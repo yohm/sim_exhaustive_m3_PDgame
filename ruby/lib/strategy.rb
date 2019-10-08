@@ -133,6 +133,16 @@ class Strategy
     g
   end
 
+  def transition_graph_with( other_s )
+    g = DirectedGraph.new(64)
+    64.times do |i|
+      s = State.make_from_id(i)
+      n = s.next_state( action(s), other_s.action(s) )
+      g.add_link(i, n.to_i)
+    end
+    g
+  end
+
   def self.node_attributes
     node_attributes = {}
     64.times do |i|
@@ -189,17 +199,11 @@ class Strategy
   end
 
   def distinguishable?
-    g0 = DirectedGraph.new(64)
-    64.times do |i|
-      s = State.make_from_id(i)
-      n = s.next_state( action(s), :c )
-      g0.add_link( i, n.to_i )
-    end
+    allc = Strategy.make_from_str('c'*64)
+    g = transition_graph_with(allc)
 
     judged = Array.new(64, false)
     judged[0] = true
-
-    g = g0
 
     while true
       # l -> 0
