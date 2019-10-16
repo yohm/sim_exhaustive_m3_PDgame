@@ -156,7 +156,8 @@ if __FILE__ == $0 and ARGV.size == 1
 
   def to_dot(str, uf, min_g)
     mapped = uf.roots.map do |n|
-      [ n, {label: "#{str.action(n)}@#{n}"} ]
+      c = (str.action(n) == :c) ? "#afeeee" : "#ffa07a"
+      [ n, {label: "#{str.action(n)}@#{n}", style: "filled", fillcolor: c} ]
     end
     attr = Hash[mapped]
     link_label = Hash.new {|h,k| h[k] = [] }

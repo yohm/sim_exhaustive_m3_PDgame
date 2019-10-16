@@ -53,7 +53,10 @@ class DirectedGraph
       next if remove_isolated and @links[ni].empty?
       label = node_attributes.dig(ni,:label) || ni.to_s
       fontcolor = node_attributes.dig(ni,:fontcolor) || "black"
-      io.puts "  #{ni} [ label=\"#{label}\"; fontcolor = #{fontcolor} ];"
+      a = {label: label, fontcolor: fontcolor}.merge( node_attributes.dig(ni) || {} )
+      s = a.each_pair.map {|k,v| "#{k}=\"#{v}\"" }.join('; ')
+      io.puts "  #{ni} [ #{s} ];"
+      # io.puts "  #{ni} [ label=\"#{label}\"; fontcolor = #{fontcolor} ];"
     end
     @n.times do |ni|
       next if remove_isolated and @links[ni].empty?
