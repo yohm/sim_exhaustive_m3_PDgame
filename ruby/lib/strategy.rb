@@ -137,7 +137,7 @@ class Strategy
     g = DirectedGraph.new(64)
     64.times do |i|
       s = State.make_from_id(i)
-      n = s.next_state( action(s), other_s.action(s) )
+      n = s.next_state( action(s), other_s.action(s.swap) )
       g.add_link(i, n.to_i)
     end
     g
@@ -247,7 +247,7 @@ class Strategy
   end
 end
 
-if __FILE__ == $0 and ARGV.size != 1
+if __FILE__ == $0 and ARGV.size == 0
   require 'minitest/autorun'
 
   class StrategyTest < Minitest::Test
@@ -333,6 +333,26 @@ if __FILE__ == $0 and ARGV.size != 1
       assert_equal [1,11,30,52,32,0], recovery_path
     end
 
+    def test_tft_atft_variants
+      m2_tft_atfts = [
+        "cdcddccdcdccdccd",
+        "cdcdddcdcdccdccd",
+        "cdcddccdcddcdccd",
+        "cdcdddcdcddcdccd"
+      ].map {|s| s.each_char.map(&:to_sym) }
+      m2_tft_atfts.each do |m2_actions|
+        acts = 64.times.each.map do |i|
+          m2_idx = (i & 3) + ((i & 24) >> 1)
+          m2_actions[m2_idx]
+        end
+        strategy = Strategy.new(acts)
+        pp strategy.to_s
+        assert_equal true, strategy.defensible?
+        assert_equal true, strategy.efficient?
+        assert_equal true, strategy.distinguishable?
+      end
+    end
+
     def test_wsls
       bits = 64.times.each.map {|i| (i[0] == i[3]) ? 'c' : 'd' }.join  # i[0],i[3] : the last move of b and a
       strategy = Strategy.make_from_str(bits)
@@ -379,5 +399,13 @@ if __FILE__ == $0 and ARGV.size == 1
     end
   end
   pp transition_probs
+elsif __FILE__ == $0 and ARGV.size == 2
+  str1 = Strategy.make_from_str(ARGV[0])
+  str2 = Strategy.make_from_str(ARGV[1])
+
+  File.open("g_s1_s2.dot", 'w') do |io|
+    io.puts str1.transition_graph_with(str2).to_dot
+    $stderr.puts "g_s1_s2.dot was written"
+  end
 end
 

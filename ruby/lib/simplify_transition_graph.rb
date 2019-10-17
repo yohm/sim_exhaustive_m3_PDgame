@@ -120,6 +120,17 @@ if __FILE__ == $0 and ARGV.size == 1
   end
   calc_transition_probs(str)
 
+  # g(S, AllC)
+  def g_s_allc(str)
+    File.open("g_s_allc.dot", 'w') do |io|
+      bits = 'c' * 64
+      allc = Strategy.make_from_str(bits)
+      io.puts str.transition_graph_with(allc).to_dot
+    end
+    $stderr.puts "g_s_allc.dot was written"
+  end
+  g_s_allc(str)
+
   # g(S, WSLS)
   def g_s_wsls(str)
     File.open("g_s_wsls.dot", 'w') do |io|
@@ -177,3 +188,4 @@ if __FILE__ == $0 and ARGV.size == 1
   end
   $stderr.puts "a.dot was written"
 end
+
