@@ -3,7 +3,7 @@ require_relative 'state'
 require_relative 'graph'
 require_relative 'strategy'
 
-class MetaStrategy < Strategy
+class StrategySet < Strategy
 
   # _: undefined action, *: wild-card
   A = [:c,:d,:_,:*]
@@ -25,6 +25,7 @@ class MetaStrategy < Strategy
     end
   end
 
+  # returns g(S,*)
   def transition_graph
     g = DirectedGraph.new(64)
     64.times do |i|
@@ -60,6 +61,7 @@ class MetaStrategy < Strategy
     ans
   end
 
+  # returns g(S,S)
   def transition_graph_with_self(skip_unfixed=false)
     g = DirectedGraph.new(64)
     64.times do |i|
@@ -95,7 +97,7 @@ end
 if __FILE__ == $0 and ARGV.size != 1
   require 'minitest/autorun'
 
-  class MetaStrategyTest < Minitest::Test
+  class StrategySetTest < Minitest::Test
 
     def test_allD_against_allD
       bits = 64.times.each.map {|i|
@@ -105,7 +107,7 @@ if __FILE__ == $0 and ARGV.size != 1
           '_'
         end
       }.join
-      strategy = MetaStrategy.make_from_str(bits)
+      strategy = StrategySet.make_from_str(bits)
       assert_equal bits, strategy.to_s
       assert_equal :d, strategy.action([:d,:d,:c,:d,:d,:d])
       assert_equal :_, strategy.action([:d,:d,:d,:d,:d,:c])
@@ -129,7 +131,7 @@ if __FILE__ == $0 and ARGV.size != 1
           '_'
         end
       }.join
-      strategy = MetaStrategy.make_from_str(bits)
+      strategy = StrategySet.make_from_str(bits)
       strategy.set('ddcddc', :*)
       strategy.set('ddcddd', :*)
       strategy.set('cddcdd', :d)
@@ -138,7 +140,7 @@ if __FILE__ == $0 and ARGV.size != 1
       strategy.set('dddddd', :d)  # `ddcdd*` is unreachable state
       assert_equal true, strategy.defensible?
 
-      s = MetaStrategy.make_from_str('_'*63+'*')
+      s = StrategySet.make_from_str('_'*63+'*')
       s.set('ddcddd',:d)
       s.set('dcdddd',:d)
       s.set('cddddd',:d)
@@ -153,7 +155,7 @@ if __FILE__ == $0 and ARGV.size != 1
           '_'
         end
       }.join
-      strategy = MetaStrategy.make_from_str(bits)
+      strategy = StrategySet.make_from_str(bits)
       assert_equal bits, strategy.to_s
       assert_equal :c, strategy.action([:d,:d,:c,:d,:d,:d])
       assert_equal :_, strategy.action([:d,:d,:d,:d,:d,:c])
@@ -177,7 +179,7 @@ if __FILE__ == $0 and ARGV.size != 1
           '_'
         end
       }.join
-      strategy = MetaStrategy.make_from_str(bits)
+      strategy = StrategySet.make_from_str(bits)
       assert_equal bits, strategy.to_s
       assert_equal :d, strategy.action([:d,:d,:c,:d,:d,:d])
       assert_equal :_, strategy.action([:d,:d,:d,:d,:d,:c])
@@ -201,7 +203,7 @@ if __FILE__ == $0 and ARGV.size != 1
           '_'
         end
       }.join
-      strategy = MetaStrategy.make_from_str(bits)
+      strategy = StrategySet.make_from_str(bits)
       # require 'pry'; binding.pry
       assert_equal bits, strategy.to_s
       assert_equal :d, strategy.action([:d,:d,:c,:d,:d,:d])
@@ -220,10 +222,8 @@ if __FILE__ == $0 and ARGV.size != 1
     end
 
   end
-end
-
-if __FILE__ == $0 and ARGV.size == 1
-  s = MetaStrategy.make_from_str(ARGV[0])
+elsif __FILE__ == $0 and ARGV.size == 1
+  s = StrategySet.make_from_str(ARGV[0])
   $stderr.puts s.inspect
   $stderr.puts "defensible? : #{s.defensible?}"
   g = s.weighted_transition_graph
@@ -235,7 +235,6 @@ if __FILE__ == $0 and ARGV.size == 1
   attributes = {}
   64.times.each.map do |i|
     c = scc.include?(i) ? "lawngreen" : "white"
-    #c = "red" if scc.include?(i) and distance[i] < 0
     l = "#{i}_#{sprintf('%06b',i).gsub('0','c').gsub('1','d')}_#{distance[i]}"
     attributes[i] = {label: l, fillcolor: c, style: "filled"}
   end
@@ -243,7 +242,6 @@ if __FILE__ == $0 and ARGV.size == 1
   s.transition_graph_with_self.for_each_link {|i,j|
     edge_attributes[ [i,j] ] = {color: "red"}
   }
-  g.to_dot($stdout, node_attributes: attributes, edge_attributes: edge_attributes )
-  #$stderr.puts g.terminanl_components.inspect
+  $stdout.puts g.to_dot(node_attributes: attributes, edge_attributes: edge_attributes )
 end
 

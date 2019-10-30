@@ -88,64 +88,15 @@ if __FILE__ == $0 and ARGV.size == 1
 
   s = s.gsub('*', 'c')
   str = Strategy.make_from_str(s)
-  pp str
-  puts "defensible?      : #{str.defensible?}"
-  puts "efficient?       : #{str.efficient?}"
-  puts "distinguishable? : #{str.distinguishable?}"
-
-  # transition probs in g_SS
-  File.open("g_ss.dot", 'w') do |io|
-    io.puts str.transition_graph_with_self.to_dot
-  end
-  $stderr.puts "g_ss.dot was written"
-  def calc_transition_probs(str)
-    g = str.transition_graph_with_self
-    sccs = g.terminanl_components
-    pp sccs
-    transition_probs = {}
-    sccs.map {|c| c.sort[0] }.permutation(2) do |i,j|
-      transition_probs[ [i,j] ] = nil
-    end
-    e = 0
-    while transition_probs.values.include?(nil)
-      e += 1
-      str.update_gn(g)
-      transition_probs.select {|k,v| v.nil? }.each do |k,v|
-        if g.is_accessible?( k[0], k[1] )
-          transition_probs[k] = e
-        end
-      end
-    end
-    pp transition_probs
-  end
-  calc_transition_probs(str)
-
-  # g(S, AllC)
-  def g_s_allc(str)
-    File.open("g_s_allc.dot", 'w') do |io|
-      bits = 'c' * 64
-      allc = Strategy.make_from_str(bits)
-      io.puts str.transition_graph_with(allc).to_dot
-    end
-    $stderr.puts "g_s_allc.dot was written"
-  end
-  g_s_allc(str)
-
-  # g(S, WSLS)
-  def g_s_wsls(str)
-    File.open("g_s_wsls.dot", 'w') do |io|
-      bits = 64.times.each.map {|i| (i[0] == i[3]) ? 'c' : 'd' }.join  # i[0],i[3] : the last move of b and a
-      wsls = Strategy.make_from_str(bits)
-      io.puts str.transition_graph_with(wsls).to_dot
-    end
-    $stderr.puts "g_s_wsls.dot was written"
-  end
-  g_s_wsls(str)
+  $stderr.puts str.inspect
+  $stderr.puts "defensible?      : #{str.defensible?}"
+  $stderr.puts "efficient?       : #{str.efficient?}"
+  $stderr.puts "distinguishable? : #{str.distinguishable?}"
 
   # automaton representation
   uf, min_g = DFAminimize.minimize_DFA(str)
-  pp uf.to_h
-  puts "automaton size : #{uf.to_h.size}"
+  $stderr.puts uf.to_h.inspect
+  $stderr.puts "automaton size : #{uf.to_h.size}"
 
   def trace_path(str, init_state = 'cccccd')
     path = []
@@ -158,12 +109,14 @@ if __FILE__ == $0 and ARGV.size == 1
   end
 
   path = trace_path(str)
-  puts "recovered in #{path.length-1} rounds"
-  puts path.map {|s| "#{s} (#{uf.root(s.to_id)},#{uf.root(s.swap.to_id)})" }.join(' -> ')
+  $stderr.puts "path from 'ccc,ccd'"
+  $stderr.puts "  recovered in #{path.length-1} rounds"
+  $stderr.puts path.map {|s| "#{s} (#{uf.root(s.to_id)},#{uf.root(s.swap.to_id)})" }.join(' -> ')
 
   path = trace_path(str, 'dddddc')
-  puts "ends in #{path.length-1} rounds"
-  puts path.map {|s| "#{s} (#{uf.root(s.to_id)},#{uf.root(s.swap.to_id)})" }.join(' -> ')
+  $stderr.puts "path from 'ddd,ddc'"
+  $stderr.puts "  ends in #{path.length-1} rounds"
+  $stderr.puts path.map {|s| "#{s} (#{uf.root(s.to_id)},#{uf.root(s.swap.to_id)})" }.join(' -> ')
 
   def to_dot(str, uf, min_g)
     mapped = uf.roots.map do |n|

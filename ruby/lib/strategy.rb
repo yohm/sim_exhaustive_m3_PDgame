@@ -34,7 +34,8 @@ class Strategy
     end
   end
 
-  def show_actions_latex(io)
+  def show_actions_latex
+    io = StringIO.new
     num_col = 8
     num_row = 8
     # header
@@ -49,6 +50,7 @@ class Strategy
       end.join(" & ")
       io.puts "#{l} \\\\"
     end
+    io.string
   end
 
   def dup
@@ -346,7 +348,6 @@ if __FILE__ == $0 and ARGV.size == 0
           m2_actions[m2_idx]
         end
         strategy = Strategy.new(acts)
-        pp strategy.to_s
         assert_equal true, strategy.defensible?
         assert_equal true, strategy.efficient?
         assert_equal true, strategy.distinguishable?
@@ -373,17 +374,18 @@ if __FILE__ == $0 and ARGV.size == 0
       assert_equal true, strategy.distinguishable?
     end
   end
-end
-
-if __FILE__ == $0 and ARGV.size == 1
+elsif __FILE__ == $0 and ARGV.size == 1
   pp s = Strategy.make_from_str(ARGV[0])
-  s.show_actions_latex($stdout)
+  $stderr.puts s.show_actions_latex
   g = s.transition_graph_with_self
+
+  # analyze g(S,S)
   File.open("g_ss.dot", 'w') do |io|
     io.puts g.to_dot
   end
+  $stderr.puts "g_ss.dot was written"
   sccs = g.terminanl_components
-  pp sccs
+  $stderr.puts "SCC in g(S,S) : #{sccs.inspect}"
   transition_probs = {}
   sccs.map {|c| c[0] }.permutation(2) do |i,j|
     transition_probs[ [i,j] ] = nil
@@ -398,7 +400,29 @@ if __FILE__ == $0 and ARGV.size == 1
       end
     end
   end
-  pp transition_probs
+  $stderr.puts "transition probs between SCCs: #{transition_probs.inspect}"
+  
+  # g(S, AllC)
+  def g_s_allc(str)
+    File.open("g_s_allc.dot", 'w') do |io|
+      bits = 'c' * 64
+      allc = Strategy.make_from_str(bits)
+      io.puts str.transition_graph_with(allc).to_dot
+    end
+    $stderr.puts "g_s_allc.dot was written"
+  end
+  g_s_allc(s)
+
+  # g(S, WSLS)
+  def g_s_wsls(str)
+    File.open("g_s_wsls.dot", 'w') do |io|
+      bits = 64.times.each.map {|i| (i[0] == i[3]) ? 'c' : 'd' }.join  # i[0],i[3] : the last move of b and a
+      wsls = Strategy.make_from_str(bits)
+      io.puts str.transition_graph_with(wsls).to_dot
+    end
+    $stderr.puts "g_s_wsls.dot was written"
+  end
+  g_s_wsls(s)
 elsif __FILE__ == $0 and ARGV.size == 2
   str1 = Strategy.make_from_str(ARGV[0])
   str2 = Strategy.make_from_str(ARGV[1])
