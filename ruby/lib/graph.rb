@@ -256,12 +256,13 @@ if __FILE__ == $0
     def test_transient_nodes
       assert_equal [3], @g.transient_nodes
       assert_equal [0,1,2,4], @g.non_transient_nodes.sort
+      assert_equal @g.terminanl_components.flatten.sort, @g.non_transient_nodes.sort
     end
 
     def test_to_dot
       sio = StringIO.new
-      @g.to_dot(sio)
-      assert_equal sio.string.empty?, false
+      dot = @g.to_dot
+      assert_equal dot.empty?, false
     end
 
     def test_dfs
