@@ -1,8 +1,6 @@
 require 'pp'
-require 'pry'
-require_relative '../lib/graph'
-require_relative '../lib/state'
-require_relative '../lib/meta_strategy'
+
+# count the number of strategies in a list of strategy sets
 
 def f(i)
   str = i.to_s.reverse
@@ -34,5 +32,4 @@ elsif ARGV.size > 1
     puts "#{file}:\t #{f(total)}"
   end
 end
-
 
