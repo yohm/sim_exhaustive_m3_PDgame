@@ -156,6 +156,10 @@ int main(int argc, char** argv) {
   MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
 
   ifstream fin(argv[1]);
+  if( !fin.is_open() ) {
+    std::cerr << "[Error] No input file : " << argv[1] << std::endl;
+    throw std::runtime_error("no input file");
+  }
 
   std::string out_format = argv[2];
   char outfile[256];
@@ -174,7 +178,7 @@ int main(int argc, char** argv) {
       Strategy str = ReplaceWwithU(_str);
 
       assert(str.ActionAt("cccccc") == C);
-      auto found = SelectEfficientDefensible(str, std::atoi(argv[3]));
+      auto found = SelectEfficientDefensible(str, strtol(argv[3],NULL,0));
       for(const auto& stra: found) {
         fout << stra.ToString() << endl;
       }

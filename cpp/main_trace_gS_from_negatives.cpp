@@ -46,7 +46,7 @@ int main(int argc, char** argv) {
 
   int n_target_fixed = 64;
   if( argc == 5 ) {
-    n_target_fixed = atoi(argv[4]);
+    n_target_fixed = strtol(argv[4], NULL, 0);
   }
 
   int my_rank = 0;
@@ -55,6 +55,10 @@ int main(int argc, char** argv) {
   MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
 
   ifstream fin(argv[1]);
+  if( !fin.is_open() ) {
+    std::cerr << "[Error] No input file : " << argv[1] << std::endl;
+    throw std::runtime_error("no input file");
+  }
   std::string out_format = argv[2];
   char outfile[256];
   sprintf(outfile, (out_format+".%02d").c_str(), my_rank);
@@ -65,13 +69,13 @@ int main(int argc, char** argv) {
   for( string s; fin >> s; count++ ) {
     if(count % 10000 == 0) {
       std::cerr << my_rank << " : step: " << count << std::endl;
-      std::cerr << my_rank << " : determined/pending/rejected : " << n_determined << " / " << n_pending << " / " << n_rejected << std::endl;
+      std::cerr << my_rank << " : passed/pending/rejected : " << n_determined << " / " << n_pending << " / " << n_rejected << std::endl;
     }
     if( count % num_procs == my_rank ) {
       Strategy str(s.c_str());
       if(str.ActionAt("cccccc") == U) { str.SetAction("cccccc", C); }
       assert(str.ActionAt("cccccc") == C);
-      TraceGSNegativesResult_t res = TraceGSNegatives(str, atoi(argv[3]), n_target_fixed);
+      TraceGSNegativesResult_t res = TraceGSNegatives(str, strtol(argv[3],NULL,0), n_target_fixed);
       for(const Strategy& stra: res.passed) {
         fout << stra.ToString() << endl;
         if(stra.NumU() == 0) { n_determined += stra.Size(); }
@@ -80,7 +84,7 @@ int main(int argc, char** argv) {
       n_rejected += res.n_rejected;
     }
   }
-  std::cerr << my_rank << " : determined/pending/rejected : " << n_determined << " / " << n_pending << " / " << n_rejected << std::endl;
+  std::cerr << my_rank << " : passed/pending/rejected : " << n_determined << " / " << n_pending << " / " << n_rejected << std::endl;
 
   uint64_t sum_n_determined = 0;
   uint64_t sum_n_pending = 0;
@@ -89,7 +93,7 @@ int main(int argc, char** argv) {
   MPI_Reduce(&n_pending, &sum_n_pending, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
   MPI_Reduce(&n_rejected, &sum_n_rejected, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
   if( my_rank == 0 ) {
-    std::cerr << "[sum] : determined/pending/rejected : " << sum_n_determined << " / " << sum_n_pending << " / " << sum_n_rejected << std::endl;
+    std::cerr << "[sum] : passed/pending/rejected : " << sum_n_determined << " / " << sum_n_pending << " / " << sum_n_rejected << std::endl;
   }
 
   MPI_Finalize();
