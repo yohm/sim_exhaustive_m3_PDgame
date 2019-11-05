@@ -3,18 +3,26 @@
 C++ and ruby codes are located in 'cpp' and 'ruby' directories, respectively.
 Ruby code is prepared for quick and interactive inspection and debugging while C++ code is for the actual enumeration process.
 
+## Prerequisites
+
+- [cmake](https://cmake.org/)
+- [Eigen](http://eigen.tuxfamily.org/index.php?title=Main_Page)
+    - Eigen is a C++ template library for linear algebra: matrices, vectors, numerical solvers, and related algorithms.
+    - If you're using macOS, run `brew install eigen`.
+- An MPI library such as OpenMPI or mpich.
 
 ## Build
 
-To build, the code
+Use cmake to build the code.
+If something went wrong, path to the libraries might be wrong. Edit CMakeLists.txt to make it conform to your environment.
 
 ```
+cd cpp
 mkdir build
 cd build
 cmake ..
 make
 ```
-
 
 ## Step 1
 
@@ -22,18 +30,18 @@ Initial filtering.
 
 ```
 ../cmake-build-release/main_trace_negative_defensible init init_d 12
-../cmake-build-release/main_efficient_defensible init_d.0 8 > init_d_e
+../cmake-build-release/main_trace_gSS_from_cccccd init_d.0 8 > init_d_e
 mpiexec -n 12 ../cmake-build-release/main_trace_negative_defensible init_d_e init_d_e_d 8
 cat init_d_e_d.* > init_d_e_d
-mpiexec -n 12 ../cmake-build-release/main_efficient_defensible init_d_e_d init_d_e_d_e 16
+mpiexec -n 12 ../cmake-build-release/main_trace_gSS_from_cccccd init_d_e_d init_d_e_d_e 16
 cat init_d_e_d_e.* > init_d_e_d_e
 mpiexec -n 12 ../cmake-build-release/main_trace_negative_defensible init_d_e_d_e init_d_e_d_e_d 6
 cat init_d_e_d_e_d.* > init_d_e_d_e_d
-mpiexec -n 12 ../cmake-build-release/main_efficient_defensible init_d_e_d_e_d init_d_e_d_e_d_e 22
+mpiexec -n 12 ../cmake-build-release/main_trace_gSS_from_cccccd init_d_e_d_e_d init_d_e_d_e_d_e 22
 cat init_d_e_d_e_d_e.* > init_d_e_d_e_d_e
 mpiexec -n 12 ../cmake-build-release/main_trace_negative_defensible init_d_e_d_e init_d_e_d_e_d 6
 cat init_d_e_d_e_d_e_d.* > init_d_e_d_e_d_e_d
-mpiexec -n 12 ../cmake-build-release/main_efficient_defensible init_d_e_d_e_d_e_d init_d_e_d_e_d_e_d_e 32
+mpiexec -n 12 ../cmake-build-release/main_trace_gSS_from_cccccd init_d_e_d_e_d_e_d init_d_e_d_e_d_e_d_e 32
 cat init_d_e_d_e_d_e_d_e.* > init_d_e_d_e_d_e_d_e
 mpiexec -n 12 ../cmake-build-release/main_trace_negative_defensible init_d_e_d_e_d_e_d_e init_d_e_d_e_d_e_d_e_d 3
 cat init_d_e_d_e_d_e_d_e_d.* > init_d_e_d_e_d_e_d_e_d

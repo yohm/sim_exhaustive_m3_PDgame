@@ -174,9 +174,9 @@ int main(int argc, char** argv) {
       Strategy str = ReplaceWwithU(_str);
 
       assert(str.ActionAt("cccccc") == C);
-      auto found = SelectEfficientDefensible(str, atoi(argv[3]));
-      for(auto s: found) {
-        fout << s.ToString() << endl;
+      auto found = SelectEfficientDefensible(str, std::atoi(argv[3]));
+      for(const auto& stra: found) {
+        fout << stra.ToString() << endl;
       }
     }
   }
