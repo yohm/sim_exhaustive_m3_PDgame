@@ -29,23 +29,28 @@ make
 Initial filtering.
 
 ```
+#!/bin/bash -eux
+
+PAR="12 --use-hwthread-cpus"
 ../cmake-build-release/main_trace_gS_from_negatives init init_d 12
-../cmake-build-release/main_trace_gSS_from_cccccd init_d.0 8 > init_d_e
-mpiexec -n 12 ../cmake-build-release/main_trace_gS_from_negatives init_d_e init_d_e_d 8
-cat init_d_e_d.* > init_d_e_d
-mpiexec -n 12 ../cmake-build-release/main_trace_gSS_from_cccccd init_d_e_d init_d_e_d_e 16
-cat init_d_e_d_e.* > init_d_e_d_e
-mpiexec -n 12 ../cmake-build-release/main_trace_gS_from_negatives init_d_e_d_e init_d_e_d_e_d 6
-cat init_d_e_d_e_d.* > init_d_e_d_e_d
-mpiexec -n 12 ../cmake-build-release/main_trace_gSS_from_cccccd init_d_e_d_e_d init_d_e_d_e_d_e 22
-cat init_d_e_d_e_d_e.* > init_d_e_d_e_d_e
-mpiexec -n 12 ../cmake-build-release/main_trace_gS_from_negatives init_d_e_d_e init_d_e_d_e_d 6
-cat init_d_e_d_e_d_e_d.* > init_d_e_d_e_d_e_d
-mpiexec -n 12 ../cmake-build-release/main_trace_gSS_from_cccccd init_d_e_d_e_d_e_d init_d_e_d_e_d_e_d_e 32
-cat init_d_e_d_e_d_e_d_e.* > init_d_e_d_e_d_e_d_e
-mpiexec -n 12 ../cmake-build-release/main_trace_gS_from_negatives init_d_e_d_e_d_e_d_e init_d_e_d_e_d_e_d_e_d 3
-cat init_d_e_d_e_d_e_d_e_d.* > init_d_e_d_e_d_e_d_e_d
-wc -l init_d_e_d_e_d_e_d_e_d                     #=> 61,860,400  (3.7GB)
+cat init_d.* > init_d
+mpiexec -n $PAR ../cmake-build-release/main_trace_gSS_from_cccccd init_d init_de 8
+cat init_de.* > init_de
+mpiexec -n $PAR ../cmake-build-release/main_trace_gS_from_negatives init_de init_ded 8
+cat init_ded.* > init_ded
+mpiexec -n $PAR ../cmake-build-release/main_trace_gSS_from_cccccd init_ded init_dede 16
+cat init_dede.* > init_dede
+mpiexec -n $PAR ../cmake-build-release/main_trace_gS_from_negatives init_dede init_deded 6
+cat init_deded.* > init_deded
+mpiexec -n $PAR ../cmake-build-release/main_trace_gSS_from_cccccd init_deded init_dedede 22
+cat init_dedede.* > init_dedede
+mpiexec -n $PAR ../cmake-build-release/main_trace_gS_from_negatives init_dedede init_dededed 6
+cat init_dededed.* > init_dededed
+mpiexec -n $PAR ../cmake-build-release/main_trace_gSS_from_cccccd init_dededed init_dededede 32
+cat init_dededede.* > init_dededede
+mpiexec -n $PAR ../cmake-build-release/main_trace_gS_from_negatives init_dededede init_dedededed 3
+cat init_dedededed.* > init_dedededed
+wc -l init_dedededed                                       #=> 61,860,400  (3.7GB)
 ```
 
 ## Step 2
