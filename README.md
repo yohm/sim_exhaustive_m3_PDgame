@@ -29,21 +29,21 @@ make
 Initial filtering.
 
 ```
-../cmake-build-release/main_trace_negative_defensible init init_d 12
+../cmake-build-release/main_trace_gS_from_negatives init init_d 12
 ../cmake-build-release/main_trace_gSS_from_cccccd init_d.0 8 > init_d_e
-mpiexec -n 12 ../cmake-build-release/main_trace_negative_defensible init_d_e init_d_e_d 8
+mpiexec -n 12 ../cmake-build-release/main_trace_gS_from_negatives init_d_e init_d_e_d 8
 cat init_d_e_d.* > init_d_e_d
 mpiexec -n 12 ../cmake-build-release/main_trace_gSS_from_cccccd init_d_e_d init_d_e_d_e 16
 cat init_d_e_d_e.* > init_d_e_d_e
-mpiexec -n 12 ../cmake-build-release/main_trace_negative_defensible init_d_e_d_e init_d_e_d_e_d 6
+mpiexec -n 12 ../cmake-build-release/main_trace_gS_from_negatives init_d_e_d_e init_d_e_d_e_d 6
 cat init_d_e_d_e_d.* > init_d_e_d_e_d
 mpiexec -n 12 ../cmake-build-release/main_trace_gSS_from_cccccd init_d_e_d_e_d init_d_e_d_e_d_e 22
 cat init_d_e_d_e_d_e.* > init_d_e_d_e_d_e
-mpiexec -n 12 ../cmake-build-release/main_trace_negative_defensible init_d_e_d_e init_d_e_d_e_d 6
+mpiexec -n 12 ../cmake-build-release/main_trace_gS_from_negatives init_d_e_d_e init_d_e_d_e_d 6
 cat init_d_e_d_e_d_e_d.* > init_d_e_d_e_d_e_d
 mpiexec -n 12 ../cmake-build-release/main_trace_gSS_from_cccccd init_d_e_d_e_d_e_d init_d_e_d_e_d_e_d_e 32
 cat init_d_e_d_e_d_e_d_e.* > init_d_e_d_e_d_e_d_e
-mpiexec -n 12 ../cmake-build-release/main_trace_negative_defensible init_d_e_d_e_d_e_d_e init_d_e_d_e_d_e_d_e_d 3
+mpiexec -n 12 ../cmake-build-release/main_trace_gS_from_negatives init_d_e_d_e_d_e_d_e init_d_e_d_e_d_e_d_e_d 3
 cat init_d_e_d_e_d_e_d_e_d.* > init_d_e_d_e_d_e_d_e_d
 wc -l init_d_e_d_e_d_e_d_e_d                     #=> 61,860,400  (3.7GB)
 ```

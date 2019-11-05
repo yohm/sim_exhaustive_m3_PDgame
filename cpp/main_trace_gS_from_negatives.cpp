@@ -8,7 +8,7 @@
 #include <deque>
 #include "mpi.h"
 #include "Strategy.hpp"
-#include "TraceNegativeDefensible.hpp"
+#include "TraceGSNegatives.hpp"
 
 using namespace std;
 
@@ -23,7 +23,7 @@ void test() {
   Strategy s1("cdddcccdc_cd_cdc_c_dcdcd____ddddc_c_c__c__d___dd_______c______dd");
   // Strategy s1("cd**cdcdd*cd**cd****cdcc*c****cdcd**cdcc**cd***c***ccd*d******cd");
 
-  TraceNegativeDefensibleResult_t res = TraceNegativeDefensible(s1, 8, 64);
+  TraceGSNegativesResult_t res = TraceGSNegatives(s1, 8, 64);
   for(auto s: res.passed) {
     cout << s.ToString() << endl;
   }
@@ -71,11 +71,11 @@ int main(int argc, char** argv) {
       Strategy str(s.c_str());
       if(str.ActionAt("cccccc") == U) { str.SetAction("cccccc", C); }
       assert(str.ActionAt("cccccc") == C);
-      TraceNegativeDefensibleResult_t res = TraceNegativeDefensible(str, atoi(argv[3]), n_target_fixed);
-      for(const auto& s: res.passed) {
-        fout << s.ToString() << endl;
-        if(s.NumU() == 0) { n_determined += s.Size(); }
-        else { n_pending += s.Size(); }
+      TraceGSNegativesResult_t res = TraceGSNegatives(str, atoi(argv[3]), n_target_fixed);
+      for(const Strategy& stra: res.passed) {
+        fout << stra.ToString() << endl;
+        if(stra.NumU() == 0) { n_determined += stra.Size(); }
+        else { n_pending += stra.Size(); }
       }
       n_rejected += res.n_rejected;
     }

@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 11)
 
 #set(CMAKE_VERBOSE_MAKEFILE 1)
 
-set(SOURCE_FILES Action.cpp Action.hpp Strategy.cpp Strategy.hpp DirectedGraph.hpp DirectedGraph.cpp TraceNegativeDefensible.hpp TraceNegativeDefensible.cpp TopologicalEfficiency.hpp TopologicalEfficiency.cpp)
+set(SOURCE_FILES Action.cpp Action.hpp Strategy.cpp Strategy.hpp DirectedGraph.hpp DirectedGraph.cpp TraceGSNegatives.hpp TraceGSNegatives.cpp TopologicalEfficiency.hpp TopologicalEfficiency.cpp)
 find_package(MPI)
 include_directories(SYSTEM ${MPI_INCLUDE_PATH} /usr/local/include/eigen3)
 
@@ -15,8 +15,8 @@ add_executable(test_DirectedGraph test_DirectedGraph.cpp ${SOURCE_FILES})
 add_executable(main_trace_gSS_from_cccccd main_trace_gSS_from_cccccd.cpp ${SOURCE_FILES})
 target_link_libraries(main_trace_gSS_from_cccccd ${MPI_LIBRARIES})
 
-add_executable(main_trace_negative_defensible main_trace_negative_defensible.cpp ${SOURCE_FILES})
-target_link_libraries(main_trace_negative_defensible ${MPI_LIBRARIES})
+add_executable(main_trace_gS_from_negatives main_trace_gS_from_negatives.cpp ${SOURCE_FILES})
+target_link_libraries(main_trace_gS_from_negatives ${MPI_LIBRARIES})
 
 add_executable(main_topological_efficiency main_topological_efficiency.cpp ${SOURCE_FILES})
 target_link_libraries(main_topological_efficiency ${MPI_LIBRARIES})

@@ -1,6 +1,6 @@
 #include "TopologicalEfficiency.hpp"
 #include "Strategy.hpp"
-#include "TraceNegativeDefensible.hpp"
+#include "TraceGSNegatives.hpp"
 
 namespace {
 
@@ -57,7 +57,7 @@ namespace {
 
     if( str.NumU() > 0 && to_be_fixed.size() > 8 ) {
       Strategy s = str;
-      TraceNegativeDefensibleResult_t res = TraceNegativeDefensible(s, 4, 64);
+      TraceGSNegativesResult_t res = TraceGSNegatives(s, 4, 64);
       n_indefensible += res.n_rejected;
       std::vector<Strategy> ans;
       for(const Strategy& x: res.passed) {

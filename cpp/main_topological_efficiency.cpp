@@ -12,7 +12,7 @@
 #include "mpi.h"
 #include "Strategy.hpp"
 #include "TopologicalEfficiency.hpp"
-#include "TraceNegativeDefensible.hpp"
+#include "TraceGSNegatives.hpp"
 
 using namespace std;
 
@@ -200,7 +200,7 @@ int main(int argc, char** argv) {
       { // check defensibility against efficient strategies
         std::vector<std::string> strings;
         for(const Strategy& s: res1.efficient) {
-          TraceNegativeDefensibleResult_t res_d = TraceNegativeDefensible(s, 64, 64);
+          TraceGSNegativesResult_t res_d = TraceGSNegatives(s, 64, 64);
           for(const Strategy& s: res_d.passed) { strings.push_back(s.ToString()); }
           n_passed += res_d.NumDefensible();
           n_rejected += res_d.n_rejected;

@@ -1,13 +1,13 @@
-#include "TraceNegativeDefensible.hpp"
+#include "TraceGSNegatives.hpp"
 #include <iostream>
 #include <vector>
 #include "Strategy.hpp"
 
 namespace {
 
-  typedef TraceNegativeDefensibleResult_t res_t;
+  typedef TraceGSNegativesResult_t res_t;
 
-  std::vector<State> UndeterminedNegativeNode(const Strategy& s) {
+  std::vector<State> UndeterminedNegativeNodes(const Strategy &s) {
     std::vector<State> ret;
     for(uint64_t i=0; i<64; i++) {
       if( (i&9)==1 ) { // "**c**d"
@@ -39,41 +39,13 @@ namespace {
     }
 
     std::vector<State> negs = s.NegativeDanglingStates();
-    std::vector<State> undetermined = UndeterminedNegativeNode(s);
-    /*
-    for(auto s: negs) {
-      std::cerr << s << std::endl;
-    }
-    std::cerr << std::endl;
-    for(auto s: undetermined) {
-      std::cerr << s << std::endl;
-    }
-     */
+    std::vector<State> undetermined = UndeterminedNegativeNodes(s);
+
     if(negs.size() > 0 || undetermined.size() > 0) {
       if(negs.size() > 0) { DP("negative dangling node is found: " << negs[0]); }
       else { DP("negative undetermined node is found: " << undetermined[0]); }
 
-      // if(negs.size() + undetermined.size() < 16)  // heuristic
-      { // check defensibility of wildcard
-        /*
-        Strategy _s = ReplaceUwithW(s);
-        if(_s.IsDefensible()) {
-          DP("WILDCARD worked! at depth " << depth << " : " << negs.size()+undetermined.size());
-          res.passed.push_back(_s);
-          return;
-        }
-        */
-      }
-
       const State target = (negs.size()>0) ? negs[0] : undetermined[0];
-      /*
-      if( negs.size() >= depth ) {
-        DP("too many negative dangling states. Impossible to judge : " << negs.size() << " " << depth );
-        n_pending++;
-        found.push_back(s);
-        return;
-      }
-       */
       for(int i=0; i<2; i++) {
         Strategy _s = s;
         Action _a = (i==0 ? C : D);
@@ -90,18 +62,19 @@ namespace {
     else { // no negative undetermined node && no negative dangling node. It must be defensible.
       DP("No negative dangling node and undetermined node. must be defensible");
       Strategy _s = ReplaceUwithW(s);
-      assert( _s.IsDefensible() );
+      if(!_s.IsDefensible()) { throw std::runtime_error("must not happen"); }
       res.passed.push_back(_s);
     }
   }
 }
 
-TraceNegativeDefensibleResult_t TraceNegativeDefensible(Strategy str, int max_depth, int target_fixed) {
+// check defensibility by tracing g(S,*) from negative dangling nodes.
+TraceGSNegativesResult_t TraceGSNegatives(Strategy str, int max_depth, int target_fixed) {
   res_t res;
   if( ! str.IsDefensible() ) { // must be called since d_matrix must be prepared
-    throw "must not happen";
+    throw std::runtime_error("must not happen");
   }
-  if(str.NumU() == 0) {
+  if(str.NumU() == 0) {  // it is sure that the strategy is defensible
     res.passed.push_back(str);
   }
   else {
