@@ -1,17 +1,17 @@
-#include "TopologicalEfficiency.hpp"
+#include "CheckEfficiencyByGraph.hpp"
 #include "Strategy.hpp"
 #include "TraceGSNegatives.hpp"
 
 namespace {
 
-  typedef TopologicalEfficiencyResult_t res_t;
+  typedef CheckEfficiencyResult_t res_t;
 
   // Fix action of s at State n, and return the defensibility
   bool FixAction(Strategy& s, long n, Action a) {
     if(s.NumU() > 0) {
       return s.SetActionAndRecalcD(State(n), a);
     }
-    else {
+    else {  // defensibility is already assured in the previous steps
       s.SetAction(State(n), a);
       return true;
     }
@@ -73,6 +73,7 @@ namespace {
     }
   }
 
+  // find nodes having no outgoing link by BFS starting from ini
   std::vector<long> FindNodeWithoutOutlink(const DirectedGraph& g, long ini) {
     std::vector<long> ans;
     std::stack<long> stk;
@@ -175,7 +176,7 @@ namespace {
     return ans;
   }
 
-  void JudgeEfficiencyDFS2(const Strategy& strategy, res_t & f) {
+  void JudgeEfficiencyDFS(const Strategy &strategy, res_t &f) {
     const DirectedGraph g0 = strategy.ITG(false);
     components_t L;
     const components_t sccs = g0.NonTransitionComponents();
@@ -191,6 +192,7 @@ namespace {
     DirectedGraph gn = g0;
     long errors = 0;
 
+    // polish unjudged based on gn
     auto FilterUnjudged = [&unjudged](const DirectedGraph& gn) {
       std::vector<int> to_be_removed;
       for(int l: unjudged) {
@@ -226,7 +228,7 @@ namespace {
       for(int l : unjudged) {
         if( gn.Reachable(0, l) ) {  // inefficient
           DP("[inefficient] path 0->" << l << "exists in g_" << errors);
-          assert( errors > 1 ); // when errors=1, this cannot happen
+          assert( errors > 1 ); // when errors=1, this cannot happen because one-bit tolerance is checked in the previous steps
           f.n_rejected += strategy.Size();
           return;
         }
@@ -237,7 +239,7 @@ namespace {
           DP("Fixing nodes starting from :" << l);
           std::vector<Strategy> strategies2 = FixStates(strategy, gn, l, f.n_rejected);
           for(const Strategy& s: strategies2) {
-            JudgeEfficiencyDFS2(s, f);
+            JudgeEfficiencyDFS(s, f);
           }
           return;
         }
@@ -248,15 +250,15 @@ namespace {
 
 }
 
-TopologicalEfficiencyResult_t CheckTopologicalEfficiency(Strategy& str) {
-  TopologicalEfficiencyResult_t res;
+CheckEfficiencyResult_t CheckEfficiencyByGraph(Strategy &str) {
+  CheckEfficiencyResult_t res;
   if( !str.IsDefensible() ) {
     res.n_rejected += str.Size();
     return std::move(res);
   }
   std::vector<Strategy> assigned = FixL0(str, res.n_rejected);
   for(const Strategy& s: assigned) {
-    JudgeEfficiencyDFS2(s, res);
+    JudgeEfficiencyDFS(s, res);
   }
   return std::move(res);
 }

@@ -11,7 +11,7 @@
 #include <chrono>
 #include "mpi.h"
 #include "Strategy.hpp"
-#include "TopologicalEfficiency.hpp"
+#include "CheckEfficiencyByGraph.hpp"
 #include "TraceGSNegatives.hpp"
 
 using namespace std;
@@ -36,7 +36,7 @@ using namespace std;
 
 void test_strategy(const std::string& str, int64_t ED=-1, int64_t E=-1, int64_t R=-1) {
   Strategy s(str.c_str()); // is efficient
-  TopologicalEfficiencyResult_t res = CheckTopologicalEfficiency(s);
+  CheckEfficiencyResult_t res = CheckEfficiencyByGraph(s);
   res.PrintStrategies(std::cout);
   assert( s.Size() == res.n_efficient_and_defensible + res.n_rejected + res.NumEfficient() );
   if(ED>=0) { assert( res.n_efficient_and_defensible == ED ); }
@@ -150,8 +150,8 @@ int main(int argc, char** argv) {
   int num_procs = 0;
   MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
 
-  const int N_FILES = std::atoi(argv[2]);
-  if(N_FILES <= 0) { throw "invalid input"; }
+  const int N_FILES = std::strtol(argv[2],NULL,0);
+  if(N_FILES <= 0) { throw std::runtime_error("invalid input"); }
   const int PROCS_PER_FILE = num_procs / N_FILES;
   char infile[256];
   sprintf(infile, argv[1], my_rank / PROCS_PER_FILE);
@@ -159,7 +159,7 @@ int main(int argc, char** argv) {
   ifstream fin(infile);
   if( !fin.is_open() ) {
     std::cerr << "[Error] No input file " << infile << std::endl;
-    throw "no input file";
+    throw std::runtime_error("no input file");
   }
 
   char outfile[256];
@@ -189,7 +189,7 @@ int main(int argc, char** argv) {
       Strategy s1(line.c_str());
       
       auto m0 = std::chrono::system_clock::now();
-      TopologicalEfficiencyResult_t res1 = CheckTopologicalEfficiency(s1);
+      CheckEfficiencyResult_t res1 = CheckEfficiencyByGraph(s1);
       n_passed += res1.n_efficient_and_defensible;
       n_rejected += res1.n_rejected;
       auto m1 = std::chrono::system_clock::now();
@@ -199,9 +199,9 @@ int main(int argc, char** argv) {
 
       { // check defensibility against efficient strategies
         std::vector<std::string> strings;
-        for(const Strategy& s: res1.efficient) {
-          TraceGSNegativesResult_t res_d = TraceGSNegatives(s, 64, 64);
-          for(const Strategy& s: res_d.passed) { strings.push_back(s.ToString()); }
+        for(const Strategy& se: res1.efficient) {
+          TraceGSNegativesResult_t res_d = TraceGSNegatives(se, 64, 64);
+          for(const Strategy& sd: res_d.passed) { strings.push_back(sd.ToString()); }
           n_passed += res_d.NumDefensible();
           n_rejected += res_d.n_rejected;
         }

@@ -1,17 +1,17 @@
-#ifndef TOPOLOGICAL_EFFICIENCY_HPP
-#define TOPOLOGICAL_EFFICIENCY_HPP
+#ifndef CHECK_EFFICIENCY_BY_GRAPH_HPP
+#define CHECK_EFFICIENCY_BY_GRAPH_HPP
 
 #include <iostream>
 #include "Strategy.hpp"
 #include "MyLib.hpp"
 
-class TopologicalEfficiencyResult_t {
+class CheckEfficiencyResult_t {
 public:
   std::vector<std::string> efficient_and_defensible;
   std::vector<Strategy> efficient;  // efficient, but defensibility is not assured
   uint64_t n_efficient_and_defensible;
   uint64_t n_rejected;
-  TopologicalEfficiencyResult_t() : n_efficient_and_defensible(0), n_rejected(0) {};
+  CheckEfficiencyResult_t() : n_efficient_and_defensible(0), n_rejected(0) {};
   uint64_t NumEfficient() const {
     uint64_t n = 0;
     for(const Strategy& s: efficient) { n += s.Size(); }
@@ -28,6 +28,6 @@ public:
   }
 };
 
-TopologicalEfficiencyResult_t CheckTopologicalEfficiency(Strategy& str);
+CheckEfficiencyResult_t CheckEfficiencyByGraph(Strategy &str);
 
 #endif
