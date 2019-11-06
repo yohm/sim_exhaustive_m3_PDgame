@@ -13,7 +13,7 @@
 
 typedef std::map<std::string,int64_t> histo_t;
 void Print(const histo_t& counts, const histo_t& total_counts) {
-  for(auto kv: counts) {
+  for(const auto& kv: counts) {
     std::cout << kv.first << " " << kv.second << " " << total_counts.at(kv.first) << std::endl;
   }
 }
@@ -35,7 +35,7 @@ int main(int argc, char** argv) {
   std::ifstream fin(argv[1]);
   if( !fin.is_open() ) {
     std::cerr << "[Error] No input file " << argv[1] << std::endl;
-    throw "no input file";
+    throw std::runtime_error("no input file");
   }
 
   const State init_state(argv[2]);
@@ -60,7 +60,7 @@ int main(int argc, char** argv) {
       current = str.NextITGState(State(current));
       if(current < 0) { oss << -1; break; }
     }
-    if( histo.size() > 17 ) { std::cerr << s << ' ' << histo.size() << std::endl; }
+    // if( histo.size() > 17 ) { std::cerr << s << ' ' << histo.size() << std::endl; }
     std::string key = oss.str();
     if( counts.find(key) == counts.end() ) { counts[key] = 1; }
     else { counts[key]++; }

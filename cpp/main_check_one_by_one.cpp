@@ -46,7 +46,7 @@ void CheckDFS(const Strategy& s, Counts& counter) {
     if( e && !l ) {
       l = s.IsEfficient(0.000001);  // check with a smaller threshold
       if(!l) {
-        l = s.IsEfficient(0.0000001);  // check with a smaller threshold
+        l = s.IsEfficient(0.0000001);  // check with an even smaller threshold
       }
     }
     if( e != l ) {
@@ -130,19 +130,23 @@ int main(int argc, char** argv) {
   int num_procs = 0;
   MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
 
-  const int N_FILES = std::atoi(argv[2]);
-  if(N_FILES <= 0) { throw "invalid input"; }
+  const int N_FILES = std::strtol(argv[2],NULL,0);
+  if(N_FILES <= 0) { throw std::runtime_error("invalid input"); }
   const int PROCS_PER_FILE = num_procs / N_FILES;
   char infile[256];
   sprintf(infile, argv[1], my_rank / PROCS_PER_FILE);
   std::cerr << "reading " << infile << " @ rank " << my_rank << std::endl;
   std::ifstream fin(infile);
+  if( !fin.is_open() ) {
+    std::cerr << "[Error] No input file " << infile << std::endl;
+    throw std::runtime_error("no input file");
+  }
 
   char outfile[256];
   sprintf(outfile, argv[3], my_rank);
   std::ofstream fout(outfile);
 
-  const int mode = std::atoi(argv[4]);
+  const int mode = std::strtol(argv[4],NULL,0);
   std::mt19937 rnd( my_rank );
 
   Counts total;
