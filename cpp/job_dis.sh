@@ -7,7 +7,7 @@
 #PJM --mpi "proc=1200"
 #PJM --stg-transfiles all
 #PJM --mpi "use-rankdir"
-#PJM --stgin  "rank=* ./main_distinguishability.out %r:./"
+#PJM --stgin  "rank=* ./main_filter_distinguishable.out %r:./"
 #PJM --stgin  "rank=* /home/ra000014/a03115/work/sim_exhaustive_m3_PDgame/cpp/data/run_2/merged/passed.%05r %r:./"
 #PJM --stgout "rank=* %r:./dis.%05r /data/ra000014/a03115/m3_PDgame/%j/%05r/"
 #PJM --stgout "rank=* %r:./dis.passed.%05r /data/ra000014/a03115/m3_PDgame/%j/%05r/"
@@ -18,5 +18,5 @@
 
 ulimit -s 8192
 
-mpiexec -ofout-proc stdout.txt -oferr-proc stderr.txt ./main_distinguishability.out passed.%05d 1200 dis.%05d dis.passed.%05d
+mpiexec -ofout-proc stdout.txt -oferr-proc stderr.txt ./main_filter_distinguishable.out passed.%05d 1200 dis.%05d dis.passed.%05d
 

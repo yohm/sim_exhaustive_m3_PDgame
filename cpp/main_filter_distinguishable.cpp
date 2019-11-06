@@ -13,7 +13,7 @@
 #include "Strategy.hpp"
 #include "MyLib.hpp"
 
-// judge distinguishability based on transition graph
+// judge distinguishability based on transition graph g(S, AllC)
 
 class DistinguishabilityResult_t {
 public:
@@ -309,8 +309,8 @@ int main(int argc, char** argv) {
   int num_procs = 0;
   MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
 
-  const int N_FILES = std::atoi(argv[2]);
-  if(N_FILES <= 0) { throw "invalid input"; }
+  const int N_FILES = std::strtol(argv[2],NULL,0);
+  if(N_FILES <= 0) { throw std::runtime_error("invalid input"); }
   const int PROCS_PER_FILE = num_procs / N_FILES;
   char infile[256];
   sprintf(infile, argv[1], my_rank / PROCS_PER_FILE);
@@ -318,7 +318,7 @@ int main(int argc, char** argv) {
   std::ifstream fin(infile);
   if( !fin.is_open() ) {
     std::cerr << "[Error] No input file " << infile << std::endl;
-    throw "no input file";
+    throw std::runtime_error("no input file");
   }
 
   char outfile[256];
@@ -326,7 +326,7 @@ int main(int argc, char** argv) {
   std::ofstream fout(outfile);
   char outfile2[256];
   sprintf(outfile2, argv[4], my_rank);
-  // std::ofstream passed_out(outfile2);
+  std::ofstream passed_out(outfile2);
 
   uint64_t n_passed_total = 0;
   uint64_t n_rejected_total = 0;
@@ -337,7 +337,6 @@ int main(int argc, char** argv) {
       std::cerr << "step: " << count << " @ " << my_rank << std::endl;
       std::cerr << ToC(n_passed_total) << ToC(n_rejected_total) << std::endl;
     }
-
 
     if( count % PROCS_PER_FILE == my_rank%PROCS_PER_FILE ) {
       // std::cerr << "checking: " << line << std::endl;
@@ -355,11 +354,11 @@ int main(int argc, char** argv) {
       n_passed_total += res.n_passed;
       n_rejected_total += res.n_rejected;
 
-      // for(const std::string s: CompressStrategies(res.passed)) { passed_out << s << std::endl; }
+      for(const std::string s: CompressStrategies(res.passed)) { passed_out << s << std::endl; }
     }
   }
   fout.close();
-  // passed_out.close();
+  passed_out.close();
 
   uint64_t n_passed_all_total = 0;
   uint64_t n_rejected_all_total = 0;

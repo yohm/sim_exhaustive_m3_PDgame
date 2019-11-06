@@ -21,8 +21,8 @@ target_link_libraries(main_trace_gS_from_negatives ${MPI_LIBRARIES})
 add_executable(main_filter_efficient_defensible main_filter_efficient_defensible.cpp ${SOURCE_FILES})
 target_link_libraries(main_filter_efficient_defensible ${MPI_LIBRARIES})
 
-add_executable(main_distinguishability main_distinguishability.cpp ${SOURCE_FILES})
-target_link_libraries(main_distinguishability ${MPI_LIBRARIES})
+add_executable(main_filter_distinguishable main_filter_distinguishable.cpp ${SOURCE_FILES})
+target_link_libraries(main_filter_distinguishable ${MPI_LIBRARIES})
 
 add_executable(main_check_one_by_one main_check_one_by_one.cpp ${SOURCE_FILES})
 target_link_libraries(main_check_one_by_one ${MPI_LIBRARIES})
