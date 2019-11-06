@@ -1,5 +1,3 @@
-require 'pp'
-
 def f(i)
   str = i.to_s.reverse
   str.gsub!(/([0-9]{3})/,"\\1,")

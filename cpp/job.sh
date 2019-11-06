@@ -15,9 +15,9 @@
 #PJM --stgin  "rank=6000-7199 /data/ra000014/a03115/m3_PDgame/candidates_s5 %r:./"
 #PJM --stgin  "rank=7200-8399 /data/ra000014/a03115/m3_PDgame/candidates_s6 %r:./"
 #PJM --stgin  "rank=8400-9599 /data/ra000014/a03115/m3_PDgame/candidates_s7 %r:./"
-#PJM --stgout "rank=* %r:./out.%05r /data/ra000014/a03115/m3_PDgame/%j/%r/"
-#PJM --stgout "rank=* %r:./out.passed.%05r /data/ra000014/a03115/m3_PDgame/%j/%r/"
-#PJM --stgout "rank=* %r:./stderr.txt.%r /data/ra000014/a03115/m3_PDgame/%j/%r/"
+#PJM --stgout "rank=* %r:./out.%05r /data/ra000014/a03115/m3_PDgame/%j/%05r/"
+#PJM --stgout "rank=* %r:./out.passed.%05r /data/ra000014/a03115/m3_PDgame/%j/%05r/"
+#PJM --stgout "rank=* %r:./stderr.txt.%r /data/ra000014/a03115/m3_PDgame/%j/%05r/"
 #PJM -s
 
 . /work/system/Env_base

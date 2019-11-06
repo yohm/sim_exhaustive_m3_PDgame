@@ -55,12 +55,58 @@ wc -l init_dedededed                                       #=> 61,860,400  (3.7G
 
 ## Step 2
 
-Run the exhaustive search.
+Get the list of strategies that meet defensibility and efficiency conditions.
+A supercomputer is required.
 
 ```
-ruby ~/work/sim_exhaustive_m3_PDgame/cpp/split.rb init_d_e_d_e_d_e_d_e_d 8 candidates_s%01d
-./k_build.sh    # to build the code at K
+ruby <repository root>/ruby/split.rb init_dedededed 8 candidates_s%01d     # split the list into 8 files
+./k_build.sh    # to build the code on the K computer
 # [TODO] edit job.sh appropriately
 pjsub job.sh
 ```
+
+## Step 3
+
+Get the list of strategies that satisfy distinguishability condition.
+A supercomputer is required.
+
+```
+ruby <repository root>/ruby/merge_and_split.rb '*/out.passed.[0-9]*' 1200 'merged/passed.%05d'
+# the input files located in '*/out.passed....' files are merged and then split into 1200 files in 'merged/' directory.
+./k_build_dis.sh    # to build the code on the K computer
+```
+
+## executable programs
+
+Here is the list of executable programs and their usage.
+
+- main_trace_gSS_from_cccccd
+    - Filter strategy sets by the defensibility condition. Used for an initial screening.
+    - Defensibility of a strategy set is judged by a graph `g(S,*)`.
+        - When the defensibility for a strategy set is not determined, its child strategy sets are recursively tested.
+        - If a child strategy set turned out to be not defensible, it is eliminated from the output. Thus, only the strategy sets whose defensibility is assured or undetermined are shown as the output.
+        - Child strategy sets are created by fixing an action that is traced by a negative path.
+- main_trace_gS_from_negatives
+    - Filter strategy sets by the efficiency and defensibility conditions. Used for an initial screening.
+    - Efficiency of a strategy set is judged using a graph `g(S,S)`.
+        - For a strategy to be efficient, it must recover mutual cooperation from one-bit error. Thus, there must be a path from node `(ccc,ccd)` to `(ccc,ccc)` in `g(S,S)`.
+        - If the path from `(ccc,ccd)` does not reach mutual cooperation, the strategy set is removed from the output.
+        - When the destination of the path is not determined, its child strategy sets are recursively constructed and tested.
+        - Whenever a new child strategy set is constructed, its defensibility is simultaneously checked. If it does not meet the defensibility, it is removed from the output.
+- main_filter_efficient_defensible
+    - Filter strategy sets that are both efficient and defensible.
+    - Used for production runs after initial screening process.
+    - Defensibility is judged by `g(S,*)` and efficiency is judged by `g(S,S)`.
+- main_filter_distinguishable
+    - Filter strategy sets that are distinguishable.
+    - Used for the strategy sets that have passed the defensibility and efficiency tests.
+- main_check_one_by_one
+    - From the list of strategy sets, construct strategies and check if defensibility and efficiency conditions are met.
+    - Used for debugging.
+- main_print_ITG
+    - Print the path in `g(S,S)` starting from a specified node.
+    - Used for investigating how the strategies are recovered from the noise.
+- count_num_strategies
+    - Count the number of strategies in a list of strategy set.
+    - Used for debugging.
 
