@@ -74,7 +74,22 @@ A supercomputer is required.
 ruby <repository root>/ruby/merge_and_split.rb '*/out.passed.[0-9]*' 1200 'merged/passed.%05d'
 # the input files located in '*/out.passed....' files are merged and then split into 1200 files in 'merged/' directory.
 ./k_build_dis.sh    # to build the code on the K computer
+pjsub job_dis.sh
 ```
+
+## Step 4 (Optional)
+
+Against the obtained list of successful strategies, strategies are randomly sampled and check whether the defensibility and efficiency conditions are really meet.
+This is to assure the results obtained in the previous steps.
+To test the efficiency condition, linear algebraic calculation is conducted.
+
+A supercomputer is required for this task.
+
+```
+./k_build_check.sh               # to build the code on the K computer
+pjsub job_check_one_by_one.sh    # submit a job
+```
+
 
 ## executable programs
 

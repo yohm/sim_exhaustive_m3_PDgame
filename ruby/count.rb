@@ -1,3 +1,8 @@
+# count number of strategies from a list of strategy sets
+#
+# usage: ruby count.rb init_dede.*
+#   this will count the number of strategies in files that match the pattern.
+
 def f(i)
   str = i.to_s.reverse
   str.gsub!(/([0-9]{3})/,"\\1,")
