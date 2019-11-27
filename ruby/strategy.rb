@@ -378,6 +378,9 @@ elsif __FILE__ == $0 and ARGV.size == 1
   pp s = Strategy.make_from_str(ARGV[0])
   $stderr.puts s.show_actions_latex
   g = s.transition_graph_with_self
+  $stderr.puts "  defensible? : #{s.defensible?}"
+  $stderr.puts "  efficient?  : #{s.efficient?}"
+  $stderr.puts "  distinguish?: #{s.distinguishable?}"
 
   # analyze g(S,S)
   File.open("g_ss.dot", 'w') do |io|
