@@ -6,9 +6,10 @@ require 'stringio'
 class Strategy
 
   A = [:c,:d]
+  N = 64
 
   def initialize( actions )
-    raise unless actions.size == 64
+    raise unless actions.size == N
     raise unless actions.all? {|a| self.class::A.include?(a) }
     @strategy = actions.dup
   end
@@ -92,6 +93,8 @@ class Strategy
         state
       when Array
         State.new(*state)
+      when Integer
+        State.make_from_id(state)
       when String
         State.make_from_str(state)
       else
@@ -114,8 +117,8 @@ class Strategy
   end
 
   def transition_graph
-    g = DirectedGraph.new(64)
-    64.times do |i|
+    g = DirectedGraph.new(N)
+    N.times do |i|
       s = State.make_from_id(i)
       next_ss = possible_next_states(s)
       next_ss.each do |n|
@@ -126,8 +129,8 @@ class Strategy
   end
 
   def transition_graph_with_self
-    g = DirectedGraph.new(64)
-    64.times do |i|
+    g = DirectedGraph.new(N)
+    N.times do |i|
       s = State.make_from_id(i)
       n = next_state_with_self(s)
       g.add_link( i, n.to_i )
@@ -136,8 +139,8 @@ class Strategy
   end
 
   def transition_graph_with( other_s )
-    g = DirectedGraph.new(64)
-    64.times do |i|
+    g = DirectedGraph.new(N)
+    N.times do |i|
       s = State.make_from_id(i)
       n = s.next_state( action(s), other_s.action(s.swap) )
       g.add_link(i, n.to_i)
@@ -147,7 +150,7 @@ class Strategy
 
   def self.node_attributes
     node_attributes = {}
-    64.times do |i|
+    N.times do |i|
       s = State.make_from_id(i)
       node_attributes[i] = {}
       node_attributes[i][:label] = "#{i}_#{s}"
@@ -161,8 +164,8 @@ class Strategy
   end
 
   def weighted_transition_graph
-    g = DirectedWeightedGraph.new(64)
-    64.times do |i|
+    g = DirectedWeightedGraph.new(N)
+    N.times do |i|
       s = State.make_from_id(i)
       ns = possible_next_states(s)
       ns.each do |n|
@@ -176,7 +179,7 @@ class Strategy
   def efficient?
     g0 = transition_graph_with_self
 
-    judged = Array.new(64, false)
+    judged = Array.new(N, false)
     judged[0] = true
 
     g = g0
@@ -201,10 +204,10 @@ class Strategy
   end
 
   def distinguishable?
-    allc = Strategy.make_from_str('c'*64)
+    allc = Strategy.make_from_str('c'*N)
     g = transition_graph_with(allc)
 
-    judged = Array.new(64, false)
+    judged = Array.new(N, false)
     judged[0] = true
 
     while true
