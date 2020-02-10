@@ -111,21 +111,24 @@ class Ecosystem {
 };
 
 int main(int argc, char** argv) {
-  if( argc != 10 ) {
+  if( argc != 8 ) {
     std::cerr << "Error : invalid argument" << std::endl;
-    std::cerr << "  Usage : " << argv[0] << " <R> <T> <S> <P> <N> <sigma> <error rate> <tmax> <rand_seed>" << std::endl;
+    std::cerr << "  Usage : " << argv[0] << " <benefit> <cost> <N> <sigma> <error rate> <tmax> <rand_seed>" << std::endl;
     return 1;
   }
 
-  double R = std::strtod(argv[1], nullptr);
-  double T = std::strtod(argv[2], nullptr);
-  double S = std::strtod(argv[3], nullptr);
-  double P = std::strtod(argv[4], nullptr);
-  uint64_t N = std::strtoull(argv[5], nullptr,0);
-  double sigma = std::strtod(argv[6], nullptr);
-  double e = std::strtod(argv[7], nullptr);
-  uint64_t tmax = std::strtoull(argv[8], nullptr,0);
-  uint64_t seed = std::strtoull(argv[9], nullptr,0);
+  double benefit = std::strtod(argv[1], nullptr);
+  double cost = std::strtod(argv[2], nullptr);
+
+  double R = benefit - cost;
+  double T = benefit;
+  double S = -cost;
+  double P = 0;
+  uint64_t N = std::strtoull(argv[3], nullptr,0);
+  double sigma = std::strtod(argv[4], nullptr);
+  double e = std::strtod(argv[5], nullptr);
+  uint64_t tmax = std::strtoull(argv[6], nullptr,0);
+  uint64_t seed = std::strtoull(argv[7], nullptr,0);
   double epsilon = 0.1;
 
   Ecosystem eco(seed);
@@ -149,10 +152,19 @@ int main(int argc, char** argv) {
   }
 
   auto fractions = ReactiveStrategy::PartnerRivalFractions(R,T,S,P,epsilon);
-  double other = static_cast<double>(tmax - partner_count - rival_count) / tmax / (1.0 - fractions.first - fractions.second);
-  double partner = static_cast<double>(partner_count) / tmax / fractions.first;
-  double rival = static_cast<double>(rival_count) / tmax / fractions.second;
-  std::cout << other << ' ' << partner << ' ' << rival << ' ' << coop_rate/tmax << std::endl;
+  double other = static_cast<double>(tmax - partner_count - rival_count) / tmax;
+  double partner = static_cast<double>(partner_count) / tmax;
+  double rival = static_cast<double>(rival_count) / tmax;
+  double other_f = static_cast<double>(tmax - partner_count - rival_count) / tmax / (1.0 - fractions.first - fractions.second);
+  double partner_f = static_cast<double>(partner_count) / tmax / fractions.first;
+  double rival_f = static_cast<double>(rival_count) / tmax / fractions.second;
+  std::cout << "{\"other\":" << other << ", "
+            << "\"partner\":" << partner << ", "
+            << "\"rival\":" << rival << ", "
+            << "\"other_frac\":" << other_f << ", "
+            << "\"partner_frac\":" << partner_f << ", "
+            << "\"rival_frac\":" << rival_f << ", "
+            << "\"cooperation_rate\":" << coop_rate/tmax << " }" << std::endl;
 
   return 0;
 }
