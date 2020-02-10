@@ -113,7 +113,7 @@ class Ecosystem {
 int main(int argc, char** argv) {
   if( argc != 8 ) {
     std::cerr << "Error : invalid argument" << std::endl;
-    std::cerr << "  Usage : " << argv[0] << " <benefit> <cost> <N> <sigma> <error rate> <tmax> <rand_seed>" << std::endl;
+    std::cerr << "  Usage : " << argv[0] << " <benefit> <cost> <N> <N_sigma> <error rate> <tmax> <rand_seed>" << std::endl;
     return 1;
   }
 
@@ -125,7 +125,8 @@ int main(int argc, char** argv) {
   double S = -cost;
   double P = 0;
   uint64_t N = std::strtoull(argv[3], nullptr,0);
-  double sigma = std::strtod(argv[4], nullptr);
+  double N_sigma = std::strtod(argv[4], nullptr);
+  double sigma = N_sigma / N;
   double e = std::strtod(argv[5], nullptr);
   uint64_t tmax = std::strtoull(argv[6], nullptr,0);
   uint64_t seed = std::strtoull(argv[7], nullptr,0);
