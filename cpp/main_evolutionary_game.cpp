@@ -255,7 +255,7 @@ int main(int argc, char** argv) {
   double other_f = static_cast<double>(tmax - partner_count - rival_count) / tmax / ((1.0-capri_rate)*(1.0 - fractions.first - fractions.second));
   double partner_f = static_cast<double>(partner_count) / tmax / ((1.0-capri_rate)*fractions.first);
   double rival_f = static_cast<double>(rival_count) / tmax / ((1.0-capri_rate)*fractions.second);
-  double capri_f = static_cast<double>(capri_count) / tmax / capri_rate;
+  double capri_f = (capri_count > 0) ? static_cast<double>(capri_count) / tmax / capri_rate : 0.0;
   std::cout << "{\"other\":" << other << ", "
             << "\"partner\":" << partner << ", "
             << "\"rival\":" << rival << ", "
