@@ -2,10 +2,12 @@ require 'pp'
 require_relative 'state'
 require_relative 'graph'
 require 'stringio'
+require 'nmatrix'
 
 class Strategy
 
   A = [:c,:d]
+  N = 64
 
   def initialize( actions )
     raise unless actions.size == 64
@@ -247,6 +249,66 @@ class Strategy
     end
     return gn
   end
+
+  # returns array[64]
+  #
+  # solve x = Ux,
+  # where U is the transition probability matrix, x is the vector of stationary probability
+  def stationary_prob(e, b_strategy)
+    require 'pry'
+    u = _U_matrix(e, b_strategy)
+    N.times {|i| u[i][i] -= 1.0 } # subtract unit matrix
+    N.times {|i| u[N-1][i] += 1.0 }   # normalization condition
+    u = NMatrix[*u]
+
+    b = Array.new(N) { Array.new(1, 0.0) }
+    b[N-1][0] = 1.0
+    b = NMatrix[*b]
+
+    u.solve(b).to_a.flatten
+  end
+
+  # U: transition probability matrix
+  # U_ij: transition probability from j to i
+  def _U_matrix(e, b_strategy)
+    u = Array.new(N) { Array.new(N, 0.0) }
+    N.times do |i|
+      si = State.make_from_id(i)
+      N.times do |j|
+        sj = State.make_from_id(j)
+        act_a = action(sj)
+        act_b = b_strategy.action( sj.swap )
+        sjn = sj.next_state(act_a, act_b)
+        u[i][j] = _uij(si, sjn, e)
+      end
+    end
+    u
+  end
+
+  def _uij( si, sjn, e )
+    if si.a_3 == sjn.a_3 and si.a_2 == sjn.a_2 and si.b_3 == sjn.b_3 and si.b_2 == sjn.b_2
+      d = 2
+      d -= 1 if si.a_1 == sjn.a_1
+      d -= 1 if si.b_1 == sjn.b_1
+      case d
+      when 0
+        (1.0 - e) * (1.0 - e)
+      when 1
+        (1.0 - e) * e
+      when 2
+        e * e
+      end
+    else
+      0.0
+    end
+  end
+
+  ALLC = self.make_from_str('c'*64)
+  ALLD = self.make_from_str('c'*64)
+  TFT = self.make_from_str('cd'*32)
+  TFT_ATFT = self.make_from_str("cdcdcdcddccddccdcdcccdccdccddccdcdcdcdcddccddccdcdcccdccdccddccd")
+  WSLS = self.make_from_str(64.times.each.map {|i| (i[0] == i[3]) ? 'c' : 'd' }.join)
+  CAPRI = self.make_from_str("cdddcdddcdcddddddcddcdddddddddddcdcdcdcdddddddddddddcdccddddddcd")
 end
 
 if __FILE__ == $0 and ARGV.size == 0
@@ -271,6 +333,10 @@ if __FILE__ == $0 and ARGV.size == 0
       assert_equal true, strategy.defensible?
       assert_equal false, strategy.efficient?
       assert_equal true, strategy.distinguishable?
+
+      v = strategy.stationary_prob(0.0001, strategy)
+      (0..62).all? {|i| assert_in_delta(0.0, v[i], 0.01) }
+      assert_in_delta(1.0, v[63], 0.01)
     end
 
     def test_allC
@@ -291,6 +357,10 @@ if __FILE__ == $0 and ARGV.size == 0
       assert_equal false, strategy.defensible?
       assert_equal true, strategy.efficient?
       assert_equal false, strategy.distinguishable?
+
+      v = strategy.stationary_prob(0.0001, strategy)
+      (1..63).all? {|i| assert_in_delta(0.0, v[i], 0.01) }
+      assert_in_delta(1.0, v[0], 0.01)
     end
 
     def test_tft
@@ -311,6 +381,15 @@ if __FILE__ == $0 and ARGV.size == 0
       assert_equal true, strategy.defensible?
       assert_equal false, strategy.efficient?
       assert_equal false, strategy.distinguishable?
+
+      v = strategy.stationary_prob(0.0001, strategy)
+      (0..63).each do |i|
+        if [0,21,42,63].include?(i)  # cccccc, cdcdcd, dcdcdc, dddddd
+          assert_in_delta(0.25, v[i], 0.01)
+        else
+          assert_in_delta(0.0, v[i], 0.01)
+        end
+      end
     end
 
     def test_tft_atft
@@ -333,6 +412,15 @@ if __FILE__ == $0 and ARGV.size == 0
       end
       # ccc,ccd -> ccd,cdd -> cdd,ddc -> ddc,dcc -> dcc,ccc -> ccc,ccc
       assert_equal [1,11,30,52,32,0], recovery_path
+
+      v = strategy.stationary_prob(0.0001, strategy)
+      (0..63).each do |i|
+        if i == 0
+          assert_in_delta(1.0, v[i], 0.01)
+        else
+          assert_in_delta(0.0, v[i], 0.01)
+        end
+      end
     end
 
     def test_tft_atft_variants
@@ -351,6 +439,15 @@ if __FILE__ == $0 and ARGV.size == 0
         assert_equal true, strategy.defensible?
         assert_equal true, strategy.efficient?
         assert_equal true, strategy.distinguishable?
+
+        v = strategy.stationary_prob(0.0001, strategy)
+        (0..63).each do |i|
+          if i == 0
+            assert_in_delta(1.0, v[i], 0.01)
+          else
+            assert_in_delta(0.0, v[i], 0.01)
+          end
+        end
       end
     end
 
@@ -372,6 +469,15 @@ if __FILE__ == $0 and ARGV.size == 0
       assert_equal false, strategy.defensible?
       assert_equal true, strategy.efficient?
       assert_equal true, strategy.distinguishable?
+
+      v = strategy.stationary_prob(0.0001, strategy)
+      (0..63).each do |i|
+        if i == 0
+          assert_in_delta(1.0, v[i], 0.01)
+        else
+          assert_in_delta(0.0, v[i], 0.01)
+        end
+      end
     end
   end
 elsif __FILE__ == $0 and ARGV.size == 1
@@ -434,5 +540,22 @@ elsif __FILE__ == $0 and ARGV.size == 2
     io.puts str1.transition_graph_with(str2).to_dot
     $stderr.puts "g_s1_s2.dot was written"
   end
+  
+  v = str1.stationary_prob(0.0001, str2)
+  # $stderr.puts v.inspect
+  payoffs = [0.0, 0.0, 0.0, 0.0]  # cc,cd,dc,dd
+  Strategy::N.times do |i|
+    si = State.make_from_id(i)
+    if si.a_1 == :c and si.b_1 == :c
+      payoffs[0] += v[i]
+    elsif si.a_1 == :c and si.b_1 == :d
+      payoffs[1] += v[i]
+    elsif si.a_1 == :d and si.b_1 == :c
+      payoffs[2] += v[i]
+    elsif si.a_1 == :d and si.b_1 == :d
+      payoffs[3] += v[i]
+    end
+  end
+  $stderr.puts "#{payoffs[0]} R + #{payoffs[1]} S + #{payoffs[2]} T + #{payoffs[3]} P"
 end
 
