@@ -34,7 +34,7 @@ class ReactiveStrategy {
   }
   static std::pair<double,double> PartnerRivalFractions(double R, double T, double S, double P, double epsilon) {
     double q_star = std::min( 1.0-(T-R)/(R-S), (R-P)/(T-P) );
-    if( q_star < epsilon ) { throw std::runtime_error("q_start is smaller than epsilon"); }
+    if( q_star < epsilon ) { throw std::runtime_error("q_star is smaller than epsilon"); }
     double partner_area = 0.5 * epsilon * epsilon + (q_star-epsilon) * epsilon + M_PI * epsilon * epsilon * 0.25;
     double rival_area = (1.0-epsilon) * epsilon + 0.5 * epsilon * epsilon;
     return std::make_pair(partner_area, rival_area);
