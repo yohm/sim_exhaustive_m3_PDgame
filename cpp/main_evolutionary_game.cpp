@@ -74,9 +74,11 @@ class ReactiveStrategy {
 
 class ReactiveStrategyOrCAPRI {
   public:
-  ReactiveStrategyOrCAPRI(int _is_capri_ta, double _p, double _q) : is_capri_ta(_is_capri_ta), reactive(_p,_q) {};
+  ReactiveStrategyOrCAPRI(int _is_capri_ta, double _p, double _q) : is_capri_ta(_is_capri_ta), reactive(_p,_q), stat_with_self_valid(false) {};
   int is_capri_ta; // 0: reactive, 1: capri, 2: tft-atft
   ReactiveStrategy reactive;
+  std::array<double,4> stat_with_self;
+  bool stat_with_self_valid;
   int Type(double R, double T, double S, double P, double epsilon) const { // 0: other, 1: partner, 2: rival, 3: capri, 4: tft-atft
     if( is_capri_ta == 1 ) { return 3; }
     else if( is_capri_ta == 2 ) { return 4; }
@@ -84,7 +86,14 @@ class ReactiveStrategyOrCAPRI {
       return reactive.Type(R,T,S,P,epsilon);
     }
   }
-  std::array<double,4> StationaryState(const ReactiveStrategyOrCAPRI& other, double error = 0.0) const {
+  std::array<double,4> StationaryStateWithSelf(double error) {
+    if(!stat_with_self_valid) {
+      stat_with_self = StationaryState(*this, error);
+      stat_with_self_valid = true;
+    }
+    return stat_with_self;
+  }
+  std::array<double,4> StationaryState(const ReactiveStrategyOrCAPRI& other, double error) const {
     if( is_capri_ta == 0 && other.is_capri_ta == 0 ) {
       return reactive.StationaryState(other.reactive, error);
     }
@@ -191,25 +200,22 @@ class Ecosystem {
     std::uniform_real_distribution<double> uni(0.0, 1.0);
     double r = uni(rnd);
     if( r < capri_rate ) {
-      ReactiveStrategyOrCAPRI ret(1, 0.0, 0.0);
-      return ret;
+      return ReactiveStrategyOrCAPRI(1, 0.0, 0.0);
     }
     else if( r < capri_rate + tft_atft_rate) {
-      ReactiveStrategyOrCAPRI ret(2, 0.0, 0.0);
-      return ret;
+      return ReactiveStrategyOrCAPRI(2, 0.0, 0.0);
     }
     else {
-      ReactiveStrategyOrCAPRI ret(0, uni(rnd), uni(rnd));
-      return ret;
+      return ReactiveStrategyOrCAPRI(0, uni(rnd), uni(rnd));
     }
   }
-  double FixationProb(double R, double T, double S, double P, int N, double sigma, double e, const ReactiveStrategyOrCAPRI& mutant) const {
-    const auto xx = mutant.StationaryState(mutant, e);
+  double FixationProb(double R, double T, double S, double P, int N, double sigma, double e, ReactiveStrategyOrCAPRI& mutant) {
+    const auto xx = mutant.StationaryStateWithSelf(e);
     const double s_xx = xx[0] * R + xx[1] * S + xx[2] * T + xx[3] * P;
     const auto xy = mutant.StationaryState(resident, e);
     const double s_xy = xy[0] * R + xy[1] * S + xy[2] * T + xy[3] * P;
     const double s_yx = xy[0] * R + xy[2] * S + xy[1] * T + xy[3] * P;
-    const auto yy = resident.StationaryState(resident, e);
+    const auto yy = resident.StationaryStateWithSelf(e);
     const double s_yy = yy[0] * R + yy[1] * S + yy[2] * T + yy[3] * P;
     // \frac{1}{\rho} = \sum_{i=0}^{N-1} \exp\left( \sigma \sum_{j=1}^{i} \left[(N-j-1)s_{yy} + js_{yx} - (N-j)s_{xy} - (j-1)s_{xx} \right] \right) \\
     //                = \sum_{i=0}^{N-1} \exp\left( \frac{\sigma i}{2} \left[(-i+2N-3)s_{yy} + (j+1)s_{yx} - (-i+2N-1)s_{xy} - (i-1)s_{xx} \right] \right)
