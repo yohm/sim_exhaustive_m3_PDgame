@@ -74,17 +74,18 @@ class ReactiveStrategy {
 
 class ReactiveStrategyOrCAPRI {
   public:
-  ReactiveStrategyOrCAPRI(bool _is_capri, double _p, double _q) : is_capri(_is_capri), reactive(_p,_q) {};
-  bool is_capri;
+  ReactiveStrategyOrCAPRI(int _is_capri_ta, double _p, double _q) : is_capri_ta(_is_capri_ta), reactive(_p,_q) {};
+  int is_capri_ta; // 0: reactive, 1: capri, 2: tft-atft
   ReactiveStrategy reactive;
-  int Type(double R, double T, double S, double P, double epsilon) const { // 0: other, 1: partner, 2: rival, 3: capri
-    if( is_capri ) { return 3; }
+  int Type(double R, double T, double S, double P, double epsilon) const { // 0: other, 1: partner, 2: rival, 3: capri, 4: tft-atft
+    if( is_capri_ta == 1 ) { return 3; }
+    else if( is_capri_ta == 2 ) { return 4; }
     else {
       return reactive.Type(R,T,S,P,epsilon);
     }
   }
   std::array<double,4> StationaryState(const ReactiveStrategyOrCAPRI& other, double error = 0.0) const {
-    if( !is_capri && !other.is_capri ) {
+    if( is_capri_ta == 0 && other.is_capri_ta == 0 ) {
       return reactive.StationaryState(other.reactive, error);
     }
     else {
@@ -99,6 +100,17 @@ class ReactiveStrategyOrCAPRI {
         0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0,
         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0
       };
+      // TFT-ATFT : cdcdcdcddccddccdcdcccdccdccddccdcdcdcdcddccddccdcdcccdccdccddccd
+      const double TFTATFT_P[64] = {
+        1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0,
+        0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0,
+        1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0,
+        0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0,
+        1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0,
+        0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0,
+        1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0,
+        0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0
+      };
       Eigen::Matrix<double,64,64> A;
       // construct A
       for(int i=0; i<64; i++) {
@@ -110,14 +122,19 @@ class ReactiveStrategyOrCAPRI {
           } else {
             int j_inv = (((j & 0b111) << 3) | ((j >> 3) & 0b111));  // j from B's viewpoint
             double coop_prob_A;
-            if (is_capri) { coop_prob_A = CAPRI_P[j]; }
+            if (is_capri_ta == 1) { coop_prob_A = CAPRI_P[j]; }
+            else if( is_capri_ta == 2) { coop_prob_A = TFTATFT_P[j]; }
             else {
               coop_prob_A = ((j & 1) == 0) ? reactive.p : reactive.q;
             }
             double coop_prob_B;
-            if (other.is_capri) {
+            if (other.is_capri_ta == 1) {
               coop_prob_B = CAPRI_P[j_inv];
-            } else {
+            }
+            else if( other.is_capri_ta == 2) {
+              coop_prob_B = TFTATFT_P[j_inv];
+            }
+            else {
               coop_prob_B = ((j_inv & 1) == 0) ? other.reactive.p : other.reactive.q;
             }
 
@@ -159,10 +176,10 @@ class ReactiveStrategyOrCAPRI {
 
 class Ecosystem {
   public:
-  Ecosystem(uint64_t seed) : resident(false,0.01,0.01), rnd(seed) {};
+  Ecosystem(uint64_t seed) : resident(0,0.01,0.01), rnd(seed) {};
   ReactiveStrategyOrCAPRI resident;
-  void UpdateResident(double R, double T, double S, double P, uint64_t N, double sigma, double e, double capri_rate) {
-    ReactiveStrategyOrCAPRI mutant = Mutant(capri_rate);
+  void UpdateResident(double R, double T, double S, double P, uint64_t N, double sigma, double e, double capri_rate, double tft_atft_rate) {
+    ReactiveStrategyOrCAPRI mutant = Mutant(capri_rate, tft_atft_rate);
     double rho = FixationProb(R,T,S,P,N,sigma,e,mutant);
     std::uniform_real_distribution<double> uni(0.0, 1.0);
     if( uni(rnd) < rho ) {
@@ -170,14 +187,19 @@ class Ecosystem {
     }
   }
   private:
-  ReactiveStrategyOrCAPRI Mutant(double capri_rate) {
+  ReactiveStrategyOrCAPRI Mutant(double capri_rate, double tft_atft_rate) {
     std::uniform_real_distribution<double> uni(0.0, 1.0);
-    if( uni(rnd) < capri_rate ) {
-      ReactiveStrategyOrCAPRI ret(true, 0.0, 0.0);
+    double r = uni(rnd);
+    if( r < capri_rate ) {
+      ReactiveStrategyOrCAPRI ret(1, 0.0, 0.0);
+      return ret;
+    }
+    else if( r < capri_rate + tft_atft_rate) {
+      ReactiveStrategyOrCAPRI ret(2, 0.0, 0.0);
       return ret;
     }
     else {
-      ReactiveStrategyOrCAPRI ret(false, uni(rnd), uni(rnd));
+      ReactiveStrategyOrCAPRI ret(0, uni(rnd), uni(rnd));
       return ret;
     }
   }
@@ -202,9 +224,9 @@ class Ecosystem {
 };
 
 int main(int argc, char** argv) {
-  if( argc != 9 ) {
+  if( argc != 10 ) {
     std::cerr << "Error : invalid argument" << std::endl;
-    std::cerr << "  Usage : " << argv[0] << " <benefit> <cost> <N> <N_sigma> <error rate> <tmax> <capri_rate> <rand_seed>" << std::endl;
+    std::cerr << "  Usage : " << argv[0] << " <benefit> <cost> <N> <N_sigma> <error rate> <tmax> <capri_rate> <tft_atft_rate> <rand_seed>" << std::endl;
     return 1;
   }
 
@@ -221,29 +243,32 @@ int main(int argc, char** argv) {
   double e = std::strtod(argv[5], nullptr);
   uint64_t tmax = std::strtoull(argv[6], nullptr,0);
   double capri_rate = std::strtod(argv[7], nullptr);
-  uint64_t seed = std::strtoull(argv[8], nullptr,0);
+  double tft_atft_rate = std::strtod(argv[8], nullptr);
+  uint64_t seed = std::strtoull(argv[9], nullptr,0);
   double epsilon = 0.1;
 
   Ecosystem eco(seed);
   uint64_t partner_count = 0, rival_count = 0;
-  uint64_t capri_count = 0;
+  uint64_t capri_count = 0, tft_atft_count = 0;
   uint64_t t_int = 10000;
   double coop_rate = 0.0;
   for(uint64_t t = 0; t < tmax; t++) {
-    eco.UpdateResident(R,T,S,P,N,sigma,e,capri_rate);
+    eco.UpdateResident(R,T,S,P,N,sigma,e,capri_rate, tft_atft_rate);
     int type = eco.resident.Type(R,T,S,P,epsilon);
     if( type == 1 ) { partner_count++; }
     else if( type == 2 ) { rival_count++; }
     else if( type == 3 ) { capri_count++; }
+    else if( type == 4 ) { tft_atft_count++; }
 
     coop_rate += eco.resident.StationaryState( eco.resident, e )[0];
 
     if( t % t_int == t_int - 1) {
-      double other = static_cast<double>(t - partner_count - rival_count - capri_count) / t;
+      double other = static_cast<double>(t - partner_count - rival_count - capri_count - tft_atft_count) / t;
       double partner = static_cast<double>(partner_count) / t;
       double rival = static_cast<double>(rival_count) / t;
       double capri = static_cast<double>(capri_count) / t;
-      std::cerr << t << ' ' << other << ' ' << partner << ' ' << rival << ' ' << capri << ' ' << coop_rate/t << std::endl;
+      double ta = static_cast<double>(tft_atft_count) / t;
+      std::cerr << t << ' ' << other << ' ' << partner << ' ' << rival << ' ' << capri << ' ' << ta << ' ' << coop_rate/t << std::endl;
     }
   }
 
@@ -252,18 +277,22 @@ int main(int argc, char** argv) {
   double partner = static_cast<double>(partner_count) / tmax;
   double rival = static_cast<double>(rival_count) / tmax;
   double capri = static_cast<double>(capri_count) / tmax;
-  double other_f = static_cast<double>(tmax - partner_count - rival_count) / tmax / ((1.0-capri_rate)*(1.0 - fractions.first - fractions.second));
-  double partner_f = static_cast<double>(partner_count) / tmax / ((1.0-capri_rate)*fractions.first);
-  double rival_f = static_cast<double>(rival_count) / tmax / ((1.0-capri_rate)*fractions.second);
+  double ta = static_cast<double>(tft_atft_count) / tmax;
+  double other_f = static_cast<double>(tmax - partner_count - rival_count) / tmax / ((1.0-capri_rate-tft_atft_rate)*(1.0 - fractions.first - fractions.second));
+  double partner_f = static_cast<double>(partner_count) / tmax / ((1.0-capri_rate-tft_atft_rate)*fractions.first);
+  double rival_f = static_cast<double>(rival_count) / tmax / ((1.0-capri_rate-tft_atft_rate)*fractions.second);
   double capri_f = (capri_count > 0) ? static_cast<double>(capri_count) / tmax / capri_rate : 0.0;
+  double ta_f = (tft_atft_count > 0) ? static_cast<double>(tft_atft_count) / tmax / tft_atft_rate : 0.0;
   std::cout << "{\"other\":" << other << ", "
             << "\"partner\":" << partner << ", "
             << "\"rival\":" << rival << ", "
             << "\"capri\":" << capri << ", "
+            << "\"tft_atft\":" << ta << ", "
             << "\"other_frac\":" << other_f << ", "
             << "\"partner_frac\":" << partner_f << ", "
             << "\"rival_frac\":" << rival_f << ", "
             << "\"capri_frac\":" << capri_f << ", "
+            << "\"tft_atft_frac\":" << ta_f << ", "
             << "\"cooperation_rate\":" << coop_rate/tmax << " }" << std::endl;
 
   return 0;
