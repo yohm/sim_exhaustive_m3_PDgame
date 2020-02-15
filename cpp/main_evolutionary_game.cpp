@@ -279,7 +279,7 @@ int main(int argc, char** argv) {
   }
 
   auto fractions = ReactiveStrategy::PartnerRivalFractions(R,T,S,P,epsilon);
-  double other = static_cast<double>(tmax - partner_count - rival_count - capri_count) / tmax;
+  double other = static_cast<double>(tmax - partner_count - rival_count - capri_count - tft_atft_count) / tmax;
   double partner = static_cast<double>(partner_count) / tmax;
   double rival = static_cast<double>(rival_count) / tmax;
   double capri = static_cast<double>(capri_count) / tmax;
