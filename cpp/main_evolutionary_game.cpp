@@ -195,6 +195,24 @@ class Ecosystem {
       resident = mutant;
     }
   }
+  void MeasureAvgRho(double R, double T, double S, double P, size_t n_samples) {
+    double ave_s_xx = 0.0, ave_s_xy = 0.0, ave_s_yx = 0.0;
+    for(size_t i = 0; i<n_samples; i++) {
+      double e = 0.0;
+      auto mut = Mutant(0.0, e);
+      auto res = ReactiveStrategyOrCAPRI(2, 0.0, 0.0);
+      const auto xx = mut.StationaryStateWithSelf(0.0);
+      const double s_xx = xx[0] * R + xx[1] * S + xx[2] * T + xx[3] * P;
+      const auto xy = mut.StationaryState(res, e);
+      const double s_xy = xy[0] * R + xy[1] * S + xy[2] * T + xy[3] * P;
+      const double s_yx = xy[0] * R + xy[2] * S + xy[1] * T + xy[3] * P;
+      std::cerr << s_xx << ' ' << s_xy << ' ' << s_yx << std::endl;
+      ave_s_xx += s_xx;
+      ave_s_xy += s_xy;
+      ave_s_yx += s_yx;
+    }
+    std::cerr << ave_s_xx/n_samples << ' ' << ave_s_xy/n_samples << ' ' << ave_s_yx/n_samples << std::endl;
+  }
   private:
   ReactiveStrategyOrCAPRI Mutant(double capri_rate, double tft_atft_rate) {
     std::uniform_real_distribution<double> uni(0.0, 1.0);
@@ -254,6 +272,8 @@ int main(int argc, char** argv) {
   double epsilon = 0.1;
 
   Ecosystem eco(seed);
+  // eco.MeasureAvgRho(R,T,S,P, 1000);
+  // return 0;
   uint64_t partner_count = 0, rival_count = 0;
   uint64_t capri_count = 0, tft_atft_count = 0;
   uint64_t t_int = 10000;
