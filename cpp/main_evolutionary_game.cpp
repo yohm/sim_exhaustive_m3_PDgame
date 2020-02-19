@@ -187,8 +187,8 @@ class Ecosystem {
   public:
   Ecosystem(uint64_t seed) : resident(0,0.01,0.01), rnd(seed) {};
   ReactiveStrategyOrCAPRI resident;
-  void UpdateResident(double R, double T, double S, double P, uint64_t N, double sigma, double e, double capri_rate, double tft_atft_rate) {
-    ReactiveStrategyOrCAPRI mutant = Mutant(capri_rate, tft_atft_rate);
+  void UpdateResident(double R, double T, double S, double P, uint64_t N, double sigma, double e, double capri_rate, double tft_atft_rate, size_t discrete_level) {
+    ReactiveStrategyOrCAPRI mutant = Mutant(capri_rate, tft_atft_rate, discrete_level);
     double rho = FixationProb(R,T,S,P,N,sigma,e,mutant);
     std::uniform_real_distribution<double> uni(0.0, 1.0);
     if( uni(rnd) < rho ) {
@@ -199,7 +199,7 @@ class Ecosystem {
     double ave_s_xx = 0.0, ave_s_xy = 0.0, ave_s_yx = 0.0;
     for(size_t i = 0; i<n_samples; i++) {
       double e = 0.0;
-      auto mut = Mutant(0.0, e);
+      auto mut = Mutant(0.0, e, 0);
       auto res = ReactiveStrategyOrCAPRI(2, 0.0, 0.0);
       const auto xx = mut.StationaryStateWithSelf(0.0);
       const double s_xx = xx[0] * R + xx[1] * S + xx[2] * T + xx[3] * P;
@@ -214,7 +214,7 @@ class Ecosystem {
     std::cerr << ave_s_xx/n_samples << ' ' << ave_s_xy/n_samples << ' ' << ave_s_yx/n_samples << std::endl;
   }
   private:
-  ReactiveStrategyOrCAPRI Mutant(double capri_rate, double tft_atft_rate) {
+  ReactiveStrategyOrCAPRI Mutant(double capri_rate, double tft_atft_rate, size_t discrete_level) {
     std::uniform_real_distribution<double> uni(0.0, 1.0);
     double r = uni(rnd);
     if( r < capri_rate ) {
@@ -224,7 +224,14 @@ class Ecosystem {
       return ReactiveStrategyOrCAPRI(2, 0.0, 0.0);
     }
     else {
-      return ReactiveStrategyOrCAPRI(0, uni(rnd), uni(rnd));
+      if(discrete_level > 0) {
+        auto dis_uni = std::uniform_int_distribution<size_t>(0,discrete_level);
+        double d = static_cast<double>(discrete_level);
+        return ReactiveStrategyOrCAPRI(0, dis_uni(rnd)/d, dis_uni(rnd)/d);
+      }
+      else {
+        return ReactiveStrategyOrCAPRI(0, uni(rnd), uni(rnd));
+      }
     }
   }
   double FixationProb(double R, double T, double S, double P, int N, double sigma, double e, ReactiveStrategyOrCAPRI& mutant) {
@@ -248,9 +255,9 @@ class Ecosystem {
 };
 
 int main(int argc, char** argv) {
-  if( argc != 10 ) {
+  if( argc != 11 ) {
     std::cerr << "Error : invalid argument" << std::endl;
-    std::cerr << "  Usage : " << argv[0] << " <benefit> <cost> <N> <N_sigma> <error rate> <tmax> <capri_rate> <tft_atft_rate> <rand_seed>" << std::endl;
+    std::cerr << "  Usage : " << argv[0] << " <benefit> <cost> <N> <N_sigma> <error rate> <tmax> <capri_rate> <tft_atft_rate> <discrete_level> <rand_seed>" << std::endl;
     return 1;
   }
 
@@ -268,8 +275,9 @@ int main(int argc, char** argv) {
   uint64_t tmax = std::strtoull(argv[6], nullptr,0);
   double capri_rate = std::strtod(argv[7], nullptr);
   double tft_atft_rate = std::strtod(argv[8], nullptr);
-  uint64_t seed = std::strtoull(argv[9], nullptr,0);
-  double epsilon = 0.1;
+  size_t discrete_level = std::strtoul(argv[9], nullptr, 0);
+  uint64_t seed = std::strtoull(argv[10], nullptr,0);
+  double epsilon = 0.099;
 
   Ecosystem eco(seed);
   // eco.MeasureAvgRho(R,T,S,P, 1000);
@@ -279,7 +287,7 @@ int main(int argc, char** argv) {
   uint64_t t_int = 10000;
   double coop_rate = 0.0;
   for(uint64_t t = 0; t < tmax; t++) {
-    eco.UpdateResident(R,T,S,P,N,sigma,e,capri_rate, tft_atft_rate);
+    eco.UpdateResident(R,T,S,P,N,sigma,e,capri_rate, tft_atft_rate, discrete_level);
     int type = eco.resident.Type(R,T,S,P,epsilon);
     if( type == 1 ) { partner_count++; }
     else if( type == 2 ) { rival_count++; }
