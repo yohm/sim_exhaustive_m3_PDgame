@@ -185,7 +185,7 @@ class ReactiveStrategyOrCAPRI {
 
 class Ecosystem {
   public:
-  Ecosystem(uint64_t seed) : resident(0,0.01,0.01), rnd(seed) {};
+  Ecosystem(uint64_t seed) : resident(0,0.0,0.0), rnd(seed) {};
   ReactiveStrategyOrCAPRI resident;
   void UpdateResident(double R, double T, double S, double P, uint64_t N, double sigma, double e, double capri_rate, double tft_atft_rate, size_t discrete_level) {
     ReactiveStrategyOrCAPRI mutant = Mutant(capri_rate, tft_atft_rate, discrete_level);
@@ -198,15 +198,29 @@ class Ecosystem {
   void MeasureAvgRho(double R, double T, double S, double P, size_t n_samples) {
     double ave_s_xx = 0.0, ave_s_xy = 0.0, ave_s_yx = 0.0;
     for(size_t i = 0; i<n_samples; i++) {
-      double e = 0.0;
-      auto mut = Mutant(0.0, e, 0);
+      double e = 0.1;
+      // auto mut = Mutant(0.0, 0.0, 10);
+      auto mut = ReactiveStrategyOrCAPRI(0, 1.0, 0.5);
       auto res = ReactiveStrategyOrCAPRI(2, 0.0, 0.0);
-      const auto xx = mut.StationaryStateWithSelf(0.0);
+      const auto xx = mut.StationaryStateWithSelf(e);
       const double s_xx = xx[0] * R + xx[1] * S + xx[2] * T + xx[3] * P;
       const auto xy = mut.StationaryState(res, e);
       const double s_xy = xy[0] * R + xy[1] * S + xy[2] * T + xy[3] * P;
       const double s_yx = xy[0] * R + xy[2] * S + xy[1] * T + xy[3] * P;
-      std::cerr << s_xx << ' ' << s_xy << ' ' << s_yx << std::endl;
+      const auto yy = res.StationaryStateWithSelf(e);
+      const double s_yy = yy[0] * R + yy[1] * S + yy[2] * T + yy[3] * P;
+      std::cerr << s_xx << ' ' << s_xy << ' ' << s_yx << ' ' << s_yy << std::endl;
+      std::cerr << (s_yy - s_xx) << ' ' << (s_yx - s_xy) << ' ' << (s_yy - s_xy) << std::endl;
+
+      size_t N = 50;
+      double sigma = 10.0 / N;
+      double rho_inv = 0.0;
+      for(int i=0; i<N; i++) {
+        double x = sigma * i * 0.5 * ( (2*N-3-i)*s_yy + (i+1)*s_yx - (2*N-1-i)*s_xy - (i-1)*s_xx );
+        rho_inv += std::exp(x);
+      }
+      double rho = 1.0 / rho_inv;
+      std::cerr << rho << std::endl;
       ave_s_xx += s_xx;
       ave_s_xy += s_xy;
       ave_s_yx += s_yx;
@@ -295,6 +309,7 @@ int main(int argc, char** argv) {
     else if( type == 4 ) { tft_atft_count++; }
 
     coop_rate += eco.resident.StationaryState( eco.resident, e )[0];
+    // std::cerr << eco.resident.reactive.p << ' ' << eco.resident.reactive.q << std::endl;
 
     if( t % t_int == t_int - 1) {
       double other = static_cast<double>(t - partner_count - rival_count - capri_count - tft_atft_count) / t;
