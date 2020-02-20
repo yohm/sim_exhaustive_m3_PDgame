@@ -23,7 +23,7 @@ class ReactiveStrategy {
     }
     if( q < epsilon ) {
       if( partner_d < epsilon ) {
-        return ( q < partner_d ) ? 2 : 1;
+        return ( q <= partner_d ) ? 2 : 1;
       }
       else return 2;
     }
