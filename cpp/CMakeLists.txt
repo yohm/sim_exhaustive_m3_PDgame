@@ -33,4 +33,5 @@ target_link_libraries(main_print_ITG ${MPI_LIBRARIES})
 add_executable(count_num_strategies count_num_strategies.cpp)
 
 add_executable(main_evolutionary_game main_evolutionary_game.cpp)
+add_executable(main_payoff_histo main_payoff_histo.cpp)
 
