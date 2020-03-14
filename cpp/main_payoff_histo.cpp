@@ -9,6 +9,7 @@
 #include <cassert>
 #include <random>
 #include <Eigen/Dense>
+#include <fstream>
 
 class MixedStrategy {
   public:
@@ -127,16 +128,30 @@ int main(int argc, char** argv) {
       1.0, p_c, 1.0, p_c, 1.0, p_c, 1.0, p_c
   };
   const MixedStrategy GTFT(GTFT_P);
+  // AllD:
+  const std::array<double,64> AllD_P = {0.0};
+  const MixedStrategy AllD(AllD_P);
 
-  uint64_t seed = 1234567890;
+
+  const uint64_t seed = 1234567890;
   int n_sample = atoi(argv[1]);
-  Histo_t histo = CalcHistoPayoffs(CAPRI, seed, n_sample);
-  for(int i=histo.size()-1; i>=0; i--) {
-    for(int j=0; j<histo[i].size(); j++) {
-      std::cout << histo[i][j];
-      if( j != histo.size() -1 ) { std::cout << ' '; }
+
+  auto calc_payoffs = [seed, n_sample](const MixedStrategy& stra, const std::string& fname) {
+    Histo_t histo = CalcHistoPayoffs(stra, seed, n_sample);
+    std::ofstream fout(fname);
+    for(int i=histo.size()-1; i>=0; i--) {
+      for(int j=0; j<histo[i].size(); j++) {
+        fout << histo[i][j];
+        if( j != histo.size() -1 ) { fout << ' '; }
+      }
+      fout << '\n';
     }
-    std::cout << '\n';
-  }
+    fout.close();
+  };
+  calc_payoffs(CAPRI, "capri.dat");
+  calc_payoffs(TFTATFT, "tft_atft.dat");
+  calc_payoffs(GTFT, "gtft.dat");
+  calc_payoffs(AllD, "alld.dat");
+
   return 0;
 }
