@@ -1,5 +1,7 @@
 # Comprehensive enumeration of successful strategies for memory-3 Prisoner's Dilemma game
 
+This is a repository for the source code used in the study ["Five rules for friendly rivalry in direct reciprocity" Scientific Reports, **10**, 16904 (2020)](https://www.nature.com/articles/s41598-020-73855-x).
+
 C++ and ruby codes are located in 'cpp' and 'ruby' directories, respectively.
 Ruby code is prepared for quick and interactive inspection and debugging while C++ code is for the actual enumeration process.
 
