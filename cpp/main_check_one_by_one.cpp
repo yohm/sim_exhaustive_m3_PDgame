@@ -40,7 +40,7 @@ struct Counts {
 void CheckDFS(const Strategy& s, Counts& counter) {
   assert( s.NumU() == 0 );
   if( s.NumFixed() == 64 ) {
-    bool d = s.IsDefensible2();
+    bool d = s.IsDefensible();
     bool e = s.IsEfficientTopo();
     bool l = s.IsEfficient();
     if( e && !l ) {

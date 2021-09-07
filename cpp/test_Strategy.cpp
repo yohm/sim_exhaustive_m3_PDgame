@@ -199,7 +199,6 @@ void test_MetaStrategy() {
 }
 
 void test_TFTATFT() {
-  // [TODO] test TFT-ATFT strategy
   // 0  *cc*cc : c , 16 *dc*cc : c
   // 1  *cc*cd : d , 17 *dc*cd : d
   // 2  *cc*dc : c , 18 *dc*dc : c

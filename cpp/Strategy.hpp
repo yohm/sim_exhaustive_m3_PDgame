@@ -106,8 +106,8 @@ public:
 
 class Strategy {
 public:
-  Strategy( const std::array<Action,64>& acts ); // construct a strategy from a list of actions
-  Strategy( const char acts[64] );
+  explicit Strategy( const std::array<Action,64>& acts ); // construct a strategy from a list of actions
+  explicit Strategy( const char acts[64] );
   std::array<Action,64> actions;
 
   std::string ToString() const;
@@ -119,12 +119,11 @@ public:
 
   Action ActionAt( const State& s ) const { return actions[s.ID()]; }
   void SetAction( const State& s, Action a ) { assert(actions[s.ID()]==U||actions[s.ID()]==W); actions[s.ID()] = a; d_matrix_ready = false; }
-  int NumFixed() const { int c=0; for(auto a: actions) { if(a==C||a==D) c++;} return c; }
-  int NumU() const { int c=0; for(auto a: actions) { if(a==U) c++;} return c; }
-  uint64_t Size() const { return (1ULL << (64 - NumFixed())); }
-  bool IsDefensible();  // check defensibility. If defensible, m_d is also calculated
-  bool IsDefensible2() const;  // check defensibility without caching d matrix
-  std::array<double,64> StationaryState(double e=0.0001, const Strategy* coplayer = NULL) const; // all actions must be fixed to calculated stationary state
+  uint64_t NumFixed() const { int c=0; for(auto a: actions) { if(a==C||a==D) c++;} return c; }
+  uint64_t NumU() const { int c=0; for(auto a: actions) { if(a==U) c++;} return c; }
+  uint64_t Size() const { return (1ULL << (64ULL - NumFixed())); }
+  bool IsDefensible() const;  // check defensibility. If defensible, m_d is also calculated
+  std::array<double,64> StationaryState(double e=0.0001, const Strategy* coplayer = nullptr) const; // all actions must be fixed to calculated stationary state
   bool IsEfficient(double e=0.00001, double th=0.95) const {
     return (StationaryState(e)[0]>th);
   } // check efficiency. all actions must be fixed
@@ -141,8 +140,8 @@ public:
   int NextITGState(const State& s) const; // Trace the intra-transition graph by one step
 private:
   typedef std::array<std::array<int8_t,64>,64> d_matrix_t;
-  d_matrix_t m_d;
-  bool d_matrix_ready;
+  mutable d_matrix_t m_d;
+  mutable bool d_matrix_ready;
   std::vector<State> NextPossibleStates(State current) const;
 };
 
