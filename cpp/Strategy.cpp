@@ -95,9 +95,14 @@ bool Strategy::IsDefensible() const {
 
 // set action[s]=a, and recalculate `m_d`. If not defensible, return false.
 bool Strategy::SetActionAndRecalcD(const State &sk, Action a) {
-  assert(actions[sk.ID()]==U);
-
-  assert(d_matrix_ready);
+  if (actions[sk.ID()]!=U) {
+    std::cerr << sk.ID() << " has already been fixed." << std::endl;
+    throw std::runtime_error("state is already assigned");
+  }
+  if (!d_matrix_ready) {
+    std::cerr << "d_matrix is not ready" << std::endl;
+    throw std::runtime_error("d_matrix is not ready");
+  }
 
   d_matrix_ready = false;
 
