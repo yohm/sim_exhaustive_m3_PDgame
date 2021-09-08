@@ -104,6 +104,44 @@ class Strategy
     @strategy[s.to_i] = act
   end
 
+  def minimal_memory_length
+    # memory-length of self
+    self_memory_length = 0
+    (0..63).each do |i|
+      histo_i = State::ALL_STATES[i]
+      ((i+1)..63).each do |j|
+        histo_j = State::ALL_STATES[j]
+        if histo_i[3..5] == histo_j[3..5] and @strategy[i] != @strategy[j]  # opponents history is identical but prescribed action is different
+          if histo_i[1..2] == histo_j[1..2]
+            self_memory_length = 3 if self_memory_length < 3  # memory length cannot be 0
+          elsif histo_i[2] == histo_j[2]
+            self_memory_length = 2 if self_memory_length < 2  # memory length cannot be 0
+          else
+            self_memory_length = 1 if self_memory_length < 1  # memory length cannot be 0
+          end
+        end
+      end
+    end
+    # memory-length of other
+    other_memory_length = 0
+    (0..63).each do |i|
+      histo_i = State::ALL_STATES[i]
+      ((i+1)..63).each do |j|
+        histo_j = State::ALL_STATES[j]
+        if histo_i[0..2] == histo_j[0..2] and @strategy[i] != @strategy[j]  # self history is identical but prescribed action is different
+          if histo_i[4..5] == histo_j[4..5]
+            other_memory_length = 3 if other_memory_length < 3  # memory length cannot be 0
+          elsif histo_i[5] == histo_j[5]
+            other_memory_length = 2 if other_memory_length < 2  # memory length cannot be 0
+          else
+            other_memory_length = 1 if other_memory_length < 1  # memory length cannot be 0
+          end
+        end
+      end
+    end
+    [self_memory_length, other_memory_length]
+  end
+
   def possible_next_states(current)
     act_a = action(current)
     n1 = current.next_state(act_a,:c)
@@ -339,6 +377,8 @@ if __FILE__ == $0 and ARGV.size == 0
       v = strategy.stationary_prob(0.0001, strategy)
       (0..62).all? {|i| assert_in_delta(0.0, v[i], 0.01) }
       assert_in_delta(1.0, v[63], 0.01)
+
+      assert_equal([0,0], strategy.minimal_memory_length)
     end
 
     def test_allC
@@ -363,6 +403,8 @@ if __FILE__ == $0 and ARGV.size == 0
       v = strategy.stationary_prob(0.0001, strategy)
       (1..63).all? {|i| assert_in_delta(0.0, v[i], 0.01) }
       assert_in_delta(1.0, v[0], 0.01)
+
+      assert_equal([0,0], strategy.minimal_memory_length)
     end
 
     def test_tft
@@ -392,6 +434,8 @@ if __FILE__ == $0 and ARGV.size == 0
           assert_in_delta(0.0, v[i], 0.01)
         end
       end
+
+      assert_equal([0,1], strategy.minimal_memory_length)
     end
 
     def test_tft_atft
@@ -423,6 +467,8 @@ if __FILE__ == $0 and ARGV.size == 0
           assert_in_delta(0.0, v[i], 0.01)
         end
       end
+
+      assert_equal([2,2], strategy.minimal_memory_length)
     end
 
     def test_tft_atft_variants
@@ -480,15 +526,27 @@ if __FILE__ == $0 and ARGV.size == 0
           assert_in_delta(0.0, v[i], 0.01)
         end
       end
+
+      assert_equal([1,1], strategy.minimal_memory_length)
+    end
+
+    def test_capri
+      strategy = Strategy.make_from_str("cdddcdddcdcddddddcddcdddddddddddcdcdcdcdddddddddddddcdccddddddcd")
+
+      assert_equal true, strategy.defensible?
+      assert_equal true, strategy.efficient?
+      assert_equal true, strategy.distinguishable?
+      assert_equal [3,3], strategy.minimal_memory_length
     end
   end
 elsif __FILE__ == $0 and ARGV.size == 1
   pp s = Strategy.make_from_str(ARGV[0])
   $stderr.puts s.show_actions_latex
   g = s.transition_graph_with_self
-  $stderr.puts "  defensible? : #{s.defensible?}"
-  $stderr.puts "  efficient?  : #{s.efficient?}"
-  $stderr.puts "  distinguish?: #{s.distinguishable?}"
+  $stderr.puts "  defensible?     : #{s.defensible?}"
+  $stderr.puts "  efficient?      : #{s.efficient?}"
+  $stderr.puts "  distinguishable?: #{s.distinguishable?}"
+  $stderr.puts "  memory length   : #{s.minimal_memory_length.inspect}"
 
   # analyze g(S,S)
   File.open("g_ss.dot", 'w') do |io|
@@ -512,7 +570,7 @@ elsif __FILE__ == $0 and ARGV.size == 1
     end
   end
   $stderr.puts "transition probs between SCCs: #{transition_probs.inspect}"
-  
+
   # g(S, AllC)
   def g_s_allc(str)
     File.open("g_s_allc.dot", 'w') do |io|
@@ -542,7 +600,7 @@ elsif __FILE__ == $0 and ARGV.size == 2
     io.puts str1.transition_graph_with(str2).to_dot
     $stderr.puts "g_s1_s2.dot was written"
   end
-  
+
   v = str1.stationary_prob(0.0001, str2)
   # $stderr.puts v.inspect
   payoffs = [0.0, 0.0, 0.0, 0.0]  # cc,cd,dc,dd
