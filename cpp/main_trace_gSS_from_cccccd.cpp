@@ -106,7 +106,7 @@ void Explore(const Strategy& s, const State& a_state, const std::set<uint64_t>& 
   }
 }
 
-vector<Strategy> SelectEfficientDefensible(Strategy str, int max_depth) {
+vector<Strategy> SelectEfficientDefensible(Strategy str, const int max_depth) {
   const State init("cccccd");
   std::set<uint64_t> histo;
   histo.insert(init.ID());
@@ -133,7 +133,7 @@ void test() {
 Strategy ReplaceWwithU(const Strategy& s) {
   Strategy _s = s;
   for(int i=0; i<64; i++) { if( _s.actions[i] == W ) { _s.actions[i] = U; } }
-  return std::move(_s);
+  return _s;
 }
 
 int main(int argc, char** argv) {
@@ -166,6 +166,8 @@ int main(int argc, char** argv) {
   sprintf(outfile, (out_format+".%02d").c_str(), my_rank);
   std::ofstream fout(outfile);
 
+  const int max_depth = strtol(argv[3], nullptr,0);
+
   vector<Strategy> ins;
   int count = 0;
   for( string s; fin >> s; count++ ) {
@@ -178,10 +180,11 @@ int main(int argc, char** argv) {
       Strategy str = ReplaceWwithU(_str);
 
       assert(str.ActionAt("cccccc") == C);
-      auto found = SelectEfficientDefensible(str, strtol(argv[3],NULL,0));
+      auto found = SelectEfficientDefensible(str, max_depth);
       for(const auto& stra: found) {
-        fout << stra.ToString() << endl;
+        fout << stra.ToString() << "\n";
       }
+      fout.flush();
     }
   }
   std::cerr << my_rank << " : recovered/pending/indefensible/rejected : " << n_recovered << " / " << n_pending << " / " << n_indefensible << " / " << n_rejected_by_loop << std::endl;

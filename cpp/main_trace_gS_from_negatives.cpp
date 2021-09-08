@@ -46,7 +46,7 @@ int main(int argc, char** argv) {
 
   int n_target_fixed = 64;
   if( argc == 5 ) {
-    n_target_fixed = strtol(argv[4], NULL, 0);
+    n_target_fixed = strtol(argv[4], nullptr, 0);
   }
 
   int my_rank = 0;
@@ -64,6 +64,8 @@ int main(int argc, char** argv) {
   sprintf(outfile, (out_format+".%02d").c_str(), my_rank);
   std::ofstream fout(outfile);
 
+  const int max_depth = strtol(argv[3], nullptr, 0);
+
   int count = 0;
   uint64_t n_determined = 0, n_pending = 0, n_rejected = 0;
   for( string s; fin >> s; count++ ) {
@@ -75,12 +77,13 @@ int main(int argc, char** argv) {
       Strategy str(s.c_str());
       if(str.ActionAt("cccccc") == U) { str.SetAction("cccccc", C); }
       assert(str.ActionAt("cccccc") == C);
-      TraceGSNegativesResult_t res = TraceGSNegatives(str, strtol(argv[3],NULL,0), n_target_fixed);
+      TraceGSNegativesResult_t res = TraceGSNegatives(str, max_depth, n_target_fixed);
       for(const Strategy& stra: res.passed) {
-        fout << stra.ToString() << endl;
+        fout << stra.ToString() << "\n";
         if(stra.NumU() == 0) { n_determined += stra.Size(); }
         else { n_pending += stra.Size(); }
       }
+      fout.flush();
       n_rejected += res.n_rejected;
     }
   }
