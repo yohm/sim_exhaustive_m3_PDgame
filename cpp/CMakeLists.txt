@@ -7,7 +7,7 @@ set(CMAKE_CXX_STANDARD 11)
 
 set(SOURCE_FILES Action.cpp Action.hpp Strategy.cpp Strategy.hpp DirectedGraph.hpp DirectedGraph.cpp TraceGSNegatives.hpp TraceGSNegatives.cpp CheckEfficiencyByGraph.hpp CheckEfficiencyByGraph.cpp)
 find_package(MPI)
-include_directories(SYSTEM ${MPI_INCLUDE_PATH} /usr/local/include/eigen3)
+include_directories(SYSTEM ${MPI_INCLUDE_PATH} ${PROJECT_SOURCE_DIR}/eigen)
 
 add_executable(test_Strategy test_Strategy.cpp ${SOURCE_FILES})
 add_executable(test_DirectedGraph test_DirectedGraph.cpp ${SOURCE_FILES})

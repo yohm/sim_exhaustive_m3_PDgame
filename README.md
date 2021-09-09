@@ -10,7 +10,7 @@ Ruby code is prepared for quick and interactive inspection and debugging while C
 - [cmake](https://cmake.org/)
 - [Eigen](http://eigen.tuxfamily.org/index.php?title=Main_Page)
     - Eigen is a C++ template library for linear algebra: matrices, vectors, numerical solvers, and related algorithms.
-    - If you're using macOS, run `brew install eigen`.
+    - Included in this repository as a submodule.
 - An MPI library such as OpenMPI or mpich.
 
 ## Build
@@ -19,6 +19,7 @@ Use cmake to build the code.
 If something went wrong, path to the libraries might be wrong. Edit CMakeLists.txt to make it conform to your environment.
 
 ```
+git submodule update --init --recursive
 cd cpp
 mkdir build
 cd build
