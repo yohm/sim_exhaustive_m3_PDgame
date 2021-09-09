@@ -19,9 +19,17 @@ class Strategy
     @strategy.join('')
   end
 
+  def to_i
+    ans = 0
+    N.times do |i|
+      ans += (1<<i) if @strategy[i] == :d
+    end
+    ans
+  end
+
   def inspect
     sio = StringIO.new
-    sio.puts to_s
+    sio.puts to_s, to_i
     State::ALL_STATES.each_with_index do |stat,idx|
       sio.print "#{@strategy[idx]}|#{stat.map(&:to_s).join}\t"
       sio.print "\n" if idx % 8 == 7
@@ -63,6 +71,17 @@ class Strategy
     raise "invalid format" unless bits =~ /\A[cd]{64}\z/
     actions = bits.each_char.map(&:to_sym)
     self.new( actions )
+  end
+
+  def self.make_from_id(id)
+    mapped = N.times.each.map do |i|
+      if (id & (1<<i)) == 0
+        :c
+      else
+        :d
+      end
+    end
+    self.new(mapped)
   end
 
   def action( state )
@@ -370,6 +389,7 @@ if __FILE__ == $0 and ARGV.size == 0
 
       next_state = strategy.next_state_with_self(s)
       assert_equal 'cddcdd', next_state.to_s
+      assert_equal 2**64-1, strategy.to_i
       assert_equal true, strategy.defensible?
       assert_equal false, strategy.efficient?
       assert_equal true, strategy.distinguishable?
@@ -396,6 +416,7 @@ if __FILE__ == $0 and ARGV.size == 0
       next_state = strategy.next_state_with_self(s)
       assert_equal 'cdccdc', next_state.to_s
 
+      assert_equal 0, strategy.to_i
       assert_equal false, strategy.defensible?
       assert_equal true, strategy.efficient?
       assert_equal false, strategy.distinguishable?
@@ -422,6 +443,7 @@ if __FILE__ == $0 and ARGV.size == 0
       next_state = strategy.next_state_with_self(s)
       assert_equal 'cddcdd', next_state.to_s
 
+      assert_equal 12297829382473034410, strategy.to_i
       assert_equal true, strategy.defensible?
       assert_equal false, strategy.efficient?
       assert_equal false, strategy.distinguishable?
@@ -447,6 +469,7 @@ if __FILE__ == $0 and ARGV.size == 0
       strategy = Strategy.new(acts)
       assert_equal strategy.to_s, "cdcdcdcddccddccdcdcccdccdccddccdcdcdcdcddccddccdcdcccdccdccddccd"
 
+      assert_equal 11034550995003808170, strategy.to_i
       assert_equal true, strategy.defensible?
       assert_equal true, strategy.efficient?
       assert_equal true, strategy.distinguishable?
@@ -514,6 +537,8 @@ if __FILE__ == $0 and ARGV.size == 0
       next_state = strategy.next_state_with_self(s)
       assert_equal 'cdccdc', next_state.to_s
 
+      assert_equal 6172840429334713770, strategy.to_i
+
       assert_equal false, strategy.defensible?
       assert_equal true, strategy.efficient?
       assert_equal true, strategy.distinguishable?
@@ -533,10 +558,22 @@ if __FILE__ == $0 and ARGV.size == 0
     def test_capri
       strategy = Strategy.make_from_str("cdddcdddcdcddddddcddcdddddddddddcdcdcdcdddddddddddddcdccddddddcd")
 
+      assert_equal 13776510895052946158, strategy.to_i
+
       assert_equal true, strategy.defensible?
       assert_equal true, strategy.efficient?
       assert_equal true, strategy.distinguishable?
       assert_equal [3,3], strategy.minimal_memory_length
+    end
+
+    def test_capri_variant
+      strategy = Strategy.make_from_id(13775942446455061162)
+
+      assert_equal "cdcdcdcdcdcddddddcddcdccddddddcdcdcdcdcdcdcddddddcddcdccddddddcd", strategy.to_s
+      assert_equal true, strategy.defensible?
+      assert_equal true, strategy.efficient?
+      assert_equal true, strategy.distinguishable?
+      assert_equal [2,3], strategy.minimal_memory_length
     end
   end
 elsif __FILE__ == $0 and ARGV.size == 1
