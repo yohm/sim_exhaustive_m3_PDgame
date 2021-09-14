@@ -7,6 +7,7 @@
 #include <utility>
 #include <deque>
 #include <random>
+#include <chrono>
 #include "mpi.h"
 #include "Strategy.hpp"
 #include "MyLib.hpp"
